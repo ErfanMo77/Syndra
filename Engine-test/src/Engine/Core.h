@@ -1,4 +1,5 @@
 #pragma once
+#include <memory>
 
 #ifdef FB_PLATFORM_WINDOWS
 	#ifdef ENGINE_BUILD_DLL
@@ -12,3 +13,4 @@
 #endif // FB_PLATFORM_WINDOWS
 
 #define BIT(x) (1 << x)
+#include "Log.h"

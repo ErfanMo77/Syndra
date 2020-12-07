@@ -19,6 +19,10 @@ project "Engine-test"
 	targetdir ("bin/" .. outputDir .. "/%{prj.name}")
 	objdir ("bin-int/" .. outputDir .. "/%{prj.name}")
 
+	pchheader "lpch.h"
+	pchsource "Engine-test/src/lpch.cpp"
+	
+
 	files
 	{
 		"%{prj.name}/src/**.h",

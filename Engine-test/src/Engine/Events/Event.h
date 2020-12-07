@@ -1,9 +1,10 @@
 #pragma once
+
 #include <functional>
+#include <sstream>
 
 #include "Engine/Core.h"
-#include "spdlog/fmt/ostr.h"
-#include <sstream>
+
 
 namespace Engine {
 
