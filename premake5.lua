@@ -1,6 +1,6 @@
 workspace "Engine-test"
 	architecture "x64"
-
+	startproject "Sandbox" 
 	configurations
 	{
 		"Debug",
@@ -8,8 +8,14 @@ workspace "Engine-test"
 		"Dist"
 	}
 
-startproject "Sandbox" 
+
+
 outputDir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
+
+IncludeDir = {}
+IncludeDir["GLFW"] = "Engine-test/vendor/GLFW/include"
+
+
 
 project "Engine-test"
 	location "Engine-test"
@@ -26,13 +32,20 @@ project "Engine-test"
 	files
 	{
 		"%{prj.name}/src/**.h",
-		"%{prj.name}/src/**.cpp",
+		"%{prj.name}/src/**.cpp"
 	}
 
 	includedirs
 	{
 		"%{prj.name}/src",
-		"%{prj.name}/vendor/spdlog/include"
+		"%{prj.name}/vendor/spdlog/include",
+		"%{IncludeDir.GLFW}"
+	}
+
+	links
+	{
+		"GLFW",
+		"opengl32.lib"
 	}
 
 	filter "system:windows"
@@ -63,6 +76,7 @@ project "Engine-test"
 		defines "FB_DIST"
 		optimize "On"
 
+include "Engine-test/vendor/GLFW"
 
 project "Sandbox"
 	location "Sandbox"
