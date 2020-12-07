@@ -10,6 +10,7 @@ namespace Engine {
 	class ENGINE_API Log
 	{
 	public:
+
 		static void init();
 		inline static std::shared_ptr<spdlog::logger>& GetCoreLogger() { return s_CoreLogger; }
 		inline static std::shared_ptr<spdlog::logger>& GetClientLogger() { return s_ClientLogger; }
