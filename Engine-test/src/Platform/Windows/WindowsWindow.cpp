@@ -2,7 +2,7 @@
 #include "Platform/Windows/WindowsWindow.h"
 
 //#include "/Core/Input.h"
-
+#include "Glad/glad.h"
 #include "Engine/Events/ApplicationEvent.h"
 #include "Engine/Events/MouseEvent.h"
 #include "Engine/Events/KeyEvent.h"
@@ -65,6 +65,7 @@ namespace Engine {
 		//m_Context = GraphicsContext::Create(m_Window);
 		/*m_Context->Init();*/
 		//EG_CORE_INFO(m_Window);
+		int status = gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
 		glfwSetWindowUserPointer(m_Window, &m_Data);
 		SetVSync(true);
 
