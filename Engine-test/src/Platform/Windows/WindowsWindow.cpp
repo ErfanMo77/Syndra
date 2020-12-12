@@ -69,7 +69,7 @@ namespace Engine {
 		SetVSync(true);
 
 		// Set GLFW callbacks
-		/*glfwSetWindowSizeCallback(m_Window, [](GLFWwindow* window, int width, int height)
+		glfwSetWindowSizeCallback(m_Window, [](GLFWwindow* window, int width, int height)
 			{
 				WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
 				data.Width = width;
@@ -78,7 +78,7 @@ namespace Engine {
 				WindowResizeEvent event(width, height);
 				data.EventCallback(event);
 			});
-
+		
 		glfwSetWindowCloseCallback(m_Window, [](GLFWwindow* window)
 			{
 				WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
@@ -156,7 +156,7 @@ namespace Engine {
 
 				MouseMovedEvent event((float)xPos, (float)yPos);
 				data.EventCallback(event);
-			});*/
+			});
 		
 	}
 

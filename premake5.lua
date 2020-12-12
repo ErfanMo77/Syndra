@@ -14,8 +14,10 @@ outputDir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 
 IncludeDir = {}
 IncludeDir["GLFW"] = "Engine-test/vendor/GLFW/include"
+IncludeDir["Glad"] = "Engine-test/vendor/Glad/include"
 
-
+include "Engine-test/vendor/GLFW"
+include "Engine-test/vendor/Glad"
 
 project "Engine-test"
 	location "Engine-test"
@@ -39,12 +41,14 @@ project "Engine-test"
 	{
 		"%{prj.name}/src",
 		"%{prj.name}/vendor/spdlog/include",
-		"%{IncludeDir.GLFW}"
+		"%{IncludeDir.GLFW}",
+		"%{IncludeDir.Glad}"
 	}
 
 	links
 	{
 		"GLFW",
+		"Glad",
 		"opengl32.lib"
 	}
 
@@ -76,7 +80,6 @@ project "Engine-test"
 		defines "FB_DIST"
 		optimize "On"
 
-include "Engine-test/vendor/GLFW"
 
 project "Sandbox"
 	location "Sandbox"

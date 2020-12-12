@@ -1,6 +1,7 @@
 #pragma once
 #include "Core.h"
 #include "Engine/Window.h"
+#include "Engine/Events/Event.h"
 #include "Engine/Events/ApplicationEvent.h"
 
 namespace Engine {
@@ -10,9 +11,17 @@ namespace Engine {
 	public:
 		Application();
 		virtual ~Application();
+		void OnEvent(Event& e);
 		void Run();
+
 	private:
-		std::unique_ptr<Window> m_window;
+		
+		bool OnWindowClose(WindowCloseEvent& e);
+		bool OnWindowResize(WindowResizeEvent& e);
+
+	private:
+		Scope<Window> m_window;
+		bool m_Running;
 	};
 
 	Application* CreateApplication();
