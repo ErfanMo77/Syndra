@@ -1,9 +1,9 @@
 project "Glad"
 	kind "StaticLib"
 	language "C"
-	outdir = "Debug-windows-x86_64"
-	targetdir ("C:/Users/MSI/source/repos/Engine-test/bin/" .. outdir .. "/%{prj.name}")
-	objdir ("C:/Users/MSI/source/repos/Engine-test/bin-int/" .. outdir .. "/%{prj.name}")
+
+	targetdir ("%{wks.location}/bin/" .. outputDir .. "/%{prj.name}")
+	objdir ("%{wks.location}/bin-int/" .. outputDir .. "/%{prj.name}")
 
 	files
 	{

@@ -8,9 +8,11 @@ workspace "Engine-test"
 		"Dist"
 	}
 
-
-
 outputDir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
+
+	
+
+
 
 IncludeDir = {}
 IncludeDir["GLFW"] = "Engine-test/vendor/GLFW/include"
