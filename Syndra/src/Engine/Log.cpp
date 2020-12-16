@@ -4,7 +4,7 @@
 #include "spdlog/sinks/basic_file_sink.h"
 #include "spdlog/fmt/ostr.h"
 
-namespace Engine {
+namespace Syndra {
 
 	std::shared_ptr<spdlog::logger> Log::s_CoreLogger;
 	std::shared_ptr<spdlog::logger> Log::s_ClientLogger;

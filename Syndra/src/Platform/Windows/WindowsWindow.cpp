@@ -11,60 +11,60 @@
 
 //#include "Platform/OpenGL/OpenGLContext.h"
 
-namespace Engine {
+namespace Syndra {
 
 	static uint8_t s_GLFWWindowCount = 0;
 
 	static void GLFWErrorCallback(int error, const char* description)
 	{
-		EG_CORE_ERROR("GLFW Error ({0}): {1}", error, description);
+		SN_CORE_ERROR("GLFW Error ({0}): {1}", error, description);
 	}
 
 	WindowsWindow::WindowsWindow(const WindowProps& props)
 	{
 
-		//EG_PROFILE_FUNCTION();
+		//SN_PROFILE_FUNCTION();
 		Init(props);
 	}
 
 	WindowsWindow::~WindowsWindow()
 	{
-		//EG_PROFILE_FUNCTION();
+		//SN_PROFILE_FUNCTION();
 
 		Shutdown();
 	}
 
 	void WindowsWindow::Init(const WindowProps& props)
 	{
-		//EG_PROFILE_FUNCTION();
+		//SN_PROFILE_FUNCTION();
 
 		m_Data.Title = props.Title;
 		m_Data.Width = props.Width;
 		m_Data.Height = props.Height;
 
-		EG_CORE_INFO("Creating window {0} ({1}, {2})", props.Title, props.Width, props.Height);
+		SN_CORE_INFO("Creating window {0} ({1}, {2})", props.Title, props.Width, props.Height);
 
 		if (s_GLFWWindowCount == 0)
 		{
-			//EG_PROFILE_SCOPE("glfwInit");
+			//SN_PROFILE_SCOPE("glfwInit");
 			int success = glfwInit();
-			//EG_CORE_ASSERT(success, "Could not initialize GLFW!");
+			//SN_CORE_ASSERT(success, "Could not initialize GLFW!");
 			glfwSetErrorCallback(GLFWErrorCallback);
 		}
 
 		{
-			//EG_PROFILE_SCOPE("glfwCreateWindow");
-#if defined(EG_DEBUG)
-			if (Renderer::GetAPI() == RendererAPI::API::OpenGL)
-				glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GLFW_TRUE);
-#endif
+			//SN_PROFILE_SCOPE("glfwCreateWindow");
+//#if defined(SN_DEBUG)
+//			if (Renderer::GetAPI() == RendererAPI::API::OpenGL)
+//				glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GLFW_TRUE);
+//#endif
 			m_Window = glfwCreateWindow((int)props.Width, (int)props.Height, m_Data.Title.c_str(), nullptr, nullptr);
 			++s_GLFWWindowCount;
 		}
 		glfwMakeContextCurrent(m_Window);
 		//m_Context = GraphicsContext::Create(m_Window);
 		/*m_Context->Init();*/
-		//EG_CORE_INFO(m_Window);
+		//SN_CORE_INFO(m_Window);
 		int status = gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
 		glfwSetWindowUserPointer(m_Window, &m_Data);
 		SetVSync(true);
@@ -163,7 +163,7 @@ namespace Engine {
 
 	void WindowsWindow::Shutdown()
 	{
-		//EG_PROFILE_FUNCTION();
+		//SN_PROFILE_FUNCTION();
 
 		glfwDestroyWindow(m_Window);
 		--s_GLFWWindowCount;
@@ -176,7 +176,7 @@ namespace Engine {
 
 	void WindowsWindow::OnUpdate()
 	{
-		//EG_PROFILE_FUNCTION();
+		//SN_PROFILE_FUNCTION();
 
 		glfwPollEvents();
 		glfwSwapBuffers(m_Window);
@@ -184,7 +184,7 @@ namespace Engine {
 
 	void WindowsWindow::SetVSync(bool enabled)
 	{
-		//EG_PROFILE_FUNCTION();
+		//SN_PROFILE_FUNCTION();
 
 		if (enabled)
 			glfwSwapInterval(1);

@@ -3,7 +3,7 @@
 #include "Event.h"
 #include "Engine/MouseCodes.h"
 
-namespace Engine {
+namespace Syndra {
 
 	class MouseMovedEvent : public Event
 	{

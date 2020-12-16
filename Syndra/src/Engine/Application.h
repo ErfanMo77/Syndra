@@ -4,7 +4,7 @@
 #include "Engine/Events/Event.h"
 #include "Engine/Events/ApplicationEvent.h"
 
-namespace Engine {
+namespace Syndra {
 
 	class ENGINE_API Application
 	{

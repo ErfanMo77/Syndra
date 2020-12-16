@@ -1,4 +1,4 @@
-workspace "Engine-test"
+workspace "Syndra-Engine"
 	architecture "x64"
 	startproject "Sandbox" 
 	configurations
@@ -15,14 +15,14 @@ outputDir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 
 
 IncludeDir = {}
-IncludeDir["GLFW"] = "Engine-test/vendor/GLFW/include"
-IncludeDir["Glad"] = "Engine-test/vendor/Glad/include"
+IncludeDir["GLFW"] = "Syndra/vendor/GLFW/include"
+IncludeDir["Glad"] = "Syndra/vendor/Glad/include"
 
-include "Engine-test/vendor/GLFW"
-include "Engine-test/vendor/Glad"
+include "Syndra/vendor/GLFW"
+include "Syndra/vendor/Glad"
 
-project "Engine-test"
-	location "Engine-test"
+project "Syndra"
+	location "Syndra"
 	kind "SharedLib"
 	language "C++"
 
@@ -30,7 +30,7 @@ project "Engine-test"
 	objdir ("bin-int/" .. outputDir .. "/%{prj.name}")
 
 	pchheader "lpch.h"
-	pchsource "Engine-test/src/lpch.cpp"
+	pchsource "Syndra/src/lpch.cpp"
 	
 
 	files
@@ -55,14 +55,14 @@ project "Engine-test"
 	}
 
 	filter "system:windows"
-		cppdialect "C++17"
+		cppdialect "C++latest"
 		staticruntime "On"
 		systemversion "latest"
 
 	defines
 	{
-		"FB_PLATFORM_WINDOWS",
-		"ENGINE_BUILD_DLL",
+		"SN_PLATFORM_WINDOWS",
+		"SYNDRA_BUILD_DLL",
 		"GLFW_INCLUDE_NONE"
 	}
 
@@ -72,15 +72,15 @@ project "Engine-test"
 	}
 
 	filter "configurations:Debug"
-		defines "FB_DEBUG"
+		defines "SN_DEBUG"
 		symbols "On"
 		
 	filter "configurations:release"
-		defines "FB_RELEASE"
+		defines "SN_RELEASE"
 		optimize "On"	
 		
 	filter "configurations:Dist"
-		defines "FB_DIST"
+		defines "SN_DIST"
 		optimize "On"
 
 
@@ -100,13 +100,13 @@ project "Sandbox"
 
 	includedirs 
 	{
-		"Engine-test/vendor/spdlog/include",
-		"Engine-test/src"
+		"Syndra/vendor/spdlog/include",
+		"Syndra/src"
 	}
 
 	links
 	{
-		"Engine-test"
+		"Syndra"
 	}
 
 	filter "system:windows"
@@ -116,17 +116,17 @@ project "Sandbox"
 
 	defines
 	{
-		"FB_PLATFORM_WINDOWS"
+		"SN_PLATFORM_WINDOWS"
 	}
 
 	filter "configurations:Debug"
-		defines "FB_DEBUG"
+		defines "SN_DEBUG"
 		symbols "On"
 		
 	filter "configurations:release"
-		defines "FB_RELEASE"
+		defines "SN_RELEASE"
 		optimize "On"	
 		
 	filter "configurations:Dist"
-		defines "FB_DIST"
+		defines "SN_DIST"
 		optimize "On"

@@ -5,7 +5,7 @@
 
 #include <vector>
 
-namespace Engine {
+namespace Syndra {
 
 	class LayerStack
 	{

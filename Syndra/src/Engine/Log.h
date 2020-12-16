@@ -6,7 +6,7 @@
 #include <spdlog/fmt/ostr.h>
 #pragma warning(pop)
 
-namespace Engine {
+namespace Syndra {
 	class ENGINE_API Log
 	{
 	public:
@@ -23,18 +23,18 @@ namespace Engine {
 }
 
 // core log macros
-#define EG_CORE_ERROR(...)  ::Engine::Log::GetCoreLogger()->error(__VA_ARGS__)
-#define EG_CORE_WARN(...)	::Engine::Log::GetCoreLogger()->warn(__VA_ARGS__)
-#define EG_CORE_TRACE(...)	::Engine::Log::GetCoreLogger()->trace(__VA_ARGS__)
-#define EG_CORE_INFO(...)	::Engine::Log::GetCoreLogger()->info(__VA_ARGS__)
-#define EG_CORE_FATAL(...)	::Engine::Log::GetCoreLogger()->fatal(__VA_ARGS__)
-
-// client log macros
-#define EG_ERROR(...)		::Engine::Log::GetClientLogger()->error(__VA_ARGS__)
-#define EG_WARN(...)		::Engine::Log::GetClientLogger()->warn(__VA_ARGS__)
-#define EG_TRACE(...)		::Engine::Log::GetClientLogger()->trace(__VA_ARGS__)
-#define EG_INFO(...)		::Engine::Log::GetClientLogger()->info(__VA_ARGS__)
-#define EG_FATAL(...)		::Engine::Log::GetClientLogger()->fatal(__VA_ARGS__)
+#define SN_CORE_ERROR(...)  ::Syndra::Log::GetCoreLogger()->error(__VA_ARGS__)
+#define SN_CORE_WARN(...)	::Syndra::Log::GetCoreLogger()->warn(__VA_ARGS__)
+#define SN_CORE_TRACE(...)	::Syndra::Log::GetCoreLogger()->trace(__VA_ARGS__)
+#define SN_CORE_INFO(...)	::Syndra::Log::GetCoreLogger()->info(__VA_ARGS__)
+#define SN_CORE_FATAL(...)	::Syndra::Log::GetCoreLogger()->fatal(__VA_ARGS__)
+			 
+// client log macros		 
+#define SN_ERROR(...)		::Syndra::Log::GetClientLogger()->error(__VA_ARGS__)
+#define SN_WARN(...)		::Syndra::Log::GetClientLogger()->warn(__VA_ARGS__)
+#define SN_TRACE(...)		::Syndra::Log::GetClientLogger()->trace(__VA_ARGS__)
+#define SN_INFO(...)		::Syndra::Log::GetClientLogger()->info(__VA_ARGS__)
+#define SN_FATAL(...)		::Syndra::Log::GetClientLogger()->fatal(__VA_ARGS__)
 
 
 

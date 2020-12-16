@@ -6,7 +6,7 @@
 #include "Engine/Timestep.h"
 #include "Engine/Events/Event.h"
 
-namespace Engine {
+namespace Syndra {
 
 	class Layer
 	{

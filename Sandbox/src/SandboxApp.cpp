@@ -1,7 +1,7 @@
 #include <Engine.h>
 #include "Engine/EntryPoint.h"
 
-class Sandbox : public Engine::Application {
+class Sandbox : public Syndra::Application {
 
 public:
 
@@ -15,6 +15,6 @@ public:
 
 };
 
-Engine::Application* Engine::CreateApplication() {
+Syndra::Application* Syndra::CreateApplication() {
 	return new Sandbox();
 }
