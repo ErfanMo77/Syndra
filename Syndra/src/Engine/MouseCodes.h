@@ -1,7 +1,7 @@
 #pragma once
 #include <cstdint>
 
-namespace Engine
+namespace Syndra
 {
 	using MouseCode = uint16_t;
 

@@ -6,7 +6,7 @@
 #include <spdlog/fmt/ostr.h>
 #pragma warning(pop)
 
-namespace Engine {
+namespace Syndra {
 	class ENGINE_API Log
 	{
 	public:

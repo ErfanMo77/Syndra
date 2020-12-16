@@ -3,7 +3,7 @@
 #include "Event.h"
 #include "../KeyCodes.h"
 
-namespace Engine {
+namespace Syndra {
 
 	class KeyEvent : public Event
 	{

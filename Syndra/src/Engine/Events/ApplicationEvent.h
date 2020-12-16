@@ -2,7 +2,7 @@
 
 #include "Event.h"
 
-namespace Engine {
+namespace Syndra {
 
 	class WindowResizeEvent : public Event
 	{

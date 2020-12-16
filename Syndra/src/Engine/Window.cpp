@@ -5,7 +5,7 @@
 #include "Platform/Windows/WindowsWindow.h"
 #endif
 
-namespace Engine
+namespace Syndra
 {
 	Scope<Window> Window::Create(const WindowProps& props)
 	{

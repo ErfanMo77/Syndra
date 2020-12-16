@@ -11,7 +11,7 @@
 
 //#include "Platform/OpenGL/OpenGLContext.h"
 
-namespace Engine {
+namespace Syndra {
 
 	static uint8_t s_GLFWWindowCount = 0;
 

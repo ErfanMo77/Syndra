@@ -1,7 +1,7 @@
 #include "lpch.h"
 #include "Engine/LayerStack.h"
 
-namespace Engine {
+namespace Syndra {
 
 	LayerStack::~LayerStack()
 	{

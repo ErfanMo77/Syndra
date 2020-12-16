@@ -4,15 +4,15 @@
 
 #ifdef FB_PLATFORM_WINDOWS
 
-extern Engine::Application* Engine::CreateApplication();
+extern Syndra::Application* Syndra::CreateApplication();
 
 int main(int argc, char** argv) 
 {
-	Engine::Log::init();
+	Syndra::Log::init();
 	EG_CORE_WARN("This is from Engine!");
 	EG_INFO("HELLO!");
 
-	auto app = Engine::CreateApplication();
+	auto app = Syndra::CreateApplication();
 	app->Run();
 	delete app;
 }

@@ -1,7 +1,7 @@
 #pragma once
 #include <memory>
 
-#ifdef FB_PLATFORM_WINDOWS
+#ifdef SN_PLATFORM_WINDOWS
 	#ifdef ENGINE_BUILD_DLL
 		#define ENGINE_API __declspec(dllexport)
 	#else
@@ -34,7 +34,7 @@
 
 #define SN_BIND_EVENT_FN(fn) [this](auto&&... args) -> decltype(auto) { return this->fn(std::forward<decltype(args)>(args)...); }
 
-namespace Engine {
+namespace Syndra {
 
 	template<typename T>
 	using Scope = std::unique_ptr<T>;

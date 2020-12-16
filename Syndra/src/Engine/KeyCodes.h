@@ -1,7 +1,7 @@
 #pragma once
 #include <cstdint>
 
-namespace Engine
+namespace Syndra
 {
 	using KeyCode = uint16_t;
 
