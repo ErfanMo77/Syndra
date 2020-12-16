@@ -18,7 +18,7 @@ namespace Syndra {
 
 	void Application::OnEvent(Event& e)
 	{
-		EG_CORE_TRACE(e);
+		SN_CORE_TRACE(e);
 		EventDispatcher dispatcher(e);
 		dispatcher.Dispatch<WindowCloseEvent>(SN_BIND_EVENT_FN(Application::OnWindowClose));
 		dispatcher.Dispatch<WindowResizeEvent>(SN_BIND_EVENT_FN(Application::OnWindowResize));
@@ -28,7 +28,7 @@ namespace Syndra {
 	{
 		std::cout << "Welcome to Engine!!!";
 		WindowResizeEvent e(1280, 720);
-		EG_TRACE(e);
+		SN_TRACE(e);
 		while (m_Running)
 		{
 			glClearColor(0, 0.5, 1, 1);

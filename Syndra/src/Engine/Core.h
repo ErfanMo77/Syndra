@@ -2,7 +2,7 @@
 #include <memory>
 
 #ifdef SN_PLATFORM_WINDOWS
-	#ifdef ENGINE_BUILD_DLL
+	#ifdef SYNDRA_BUILD_DLL
 		#define ENGINE_API __declspec(dllexport)
 	#else
 		#define ENGINE_API __declspec(dllimport)
@@ -13,22 +13,22 @@
 #endif // FB_PLATFORM_WINDOWS
 
 #define BIT(x) (1 << x)
-#ifdef HZ_DEBUG
-#if defined(HZ_PLATFORM_WINDOWS)
-#define HZ_DEBUGBREAK() __debugbreak()
+#ifdef SN_DEBUG
+#if defined(SN_PLATFORM_WINDOWS)
+#define SN_DEBUGBREAK() __debugbreak()
 #elif defined(HZ_PLATFORM_LINUX)
 #include <signal.h>
-#define HZ_DEBUGBREAK() raise(SIGTRAP)
+#define SN_DEBUGBREAK() raise(SIGTRAP)
 #else
 #error "Platform doesn't support debugbreak yet!"
 #endif
-#define HZ_ENABLE_ASSERTS
+#define SN_ENABLE_ASSERTS
 #else
-#define HZ_DEBUGBREAK()
+#define SN_DEBUGBREAK()
 #endif
 
-#define HZ_EXPAND_MACRO(x) x
-#define HZ_STRINGIFY_MACRO(x) #x
+#define SN_EXPAND_MACRO(x) x
+#define SN_STRINGIFY_MACRO(x) #x
 
 #define BIT(x) (1 << x)
 

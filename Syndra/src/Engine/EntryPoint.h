@@ -2,15 +2,15 @@
 #include "Application.h"
 
 
-#ifdef FB_PLATFORM_WINDOWS
+#ifdef SN_PLATFORM_WINDOWS
 
 extern Syndra::Application* Syndra::CreateApplication();
 
 int main(int argc, char** argv) 
 {
 	Syndra::Log::init();
-	EG_CORE_WARN("This is from Engine!");
-	EG_INFO("HELLO!");
+	SN_CORE_WARN("This is from Engine!");
+	SN_INFO("HELLO!");
 
 	auto app = Syndra::CreateApplication();
 	app->Run();
