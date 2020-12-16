@@ -1,6 +1,6 @@
 [submodule "Engine-test/vendor/spdlog"]
-	path = Engine-test/vendor/spdlog
+	path = Syndra/vendor/spdlog
 	url = https://github.com/gabime/spdlog.git
 [submodule "Engine-test/vendor/GLFW"]
-	path = Engine-test/vendor/GLFW
+	path = Syndra/vendor/GLFW
 	url = https://github.com/ErfanMo77/glfw.git
