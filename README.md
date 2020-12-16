@@ -1,5 +1,5 @@
 # Syndra Engine
-Syndra is an early-stage 3D rendering engine being developed for windows platform following [The Cherno](https://www.youtube.com/channel/UCQ-W1KE9EYfdxhL6S4twUNw) game engine tutorials.
+Syndra is an early-stage 3D real-time rendering engine being developed for windows platform following [The Cherno](https://www.youtube.com/channel/UCQ-W1KE9EYfdxhL6S4twUNw) game engine tutorials.
 
 ## Getting Started
 Visual Studio 2019 is recommended.
