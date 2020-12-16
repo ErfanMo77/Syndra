@@ -1,1 +1,1 @@
-# Syndra [![License]](https://github.com/ErfanMo77/Syndra-Engine/blob/master/LICENSE)
+# Syndra ![License](https://github.com/ErfanMo77/Syndra-Engine/blob/master/LICENSE)
