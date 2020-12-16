@@ -3,6 +3,7 @@ Syndra is an early-stage 3D rendering engine being developed for windows platfor
 
 ## Getting Started
 Visual Studio 2019 is recommended.
+
 Start by cloning the repository with `git clone --recursive https://github.com/ErfanMo77/Syndra-Engine`.
 
 If the repository was cloned non-recursively previously, use `git submodule update --init` to clone the necessary submodules.
