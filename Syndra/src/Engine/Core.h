@@ -2,11 +2,15 @@
 #include <memory>
 
 #ifdef SN_PLATFORM_WINDOWS
-	#ifdef SYNDRA_BUILD_DLL
-		#define ENGINE_API __declspec(dllexport)
-	#else
-		#define ENGINE_API __declspec(dllimport)
-	#endif // ENGINE_BUILD_DLL
+	#if SN_DYNAMIC_LINK
+		#ifdef SYNDRA_BUILD_DLL
+			#define ENGINE_API __declspec(dllexport)
+		#else
+			#define ENGINE_API __declspec(dllimport)
+		#endif // ENGINE_BUILD_DLL
+#else
+	#define ENGINE_API
+#endif
 #else
 #error Engine only supports windows
 

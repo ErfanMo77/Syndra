@@ -17,4 +17,4 @@ int main(int argc, char** argv)
 	delete app;
 }
 
-#endif // FB_PLATFORM_WINDOWS
+#endif // SN_PLATFORM_WINDOWS

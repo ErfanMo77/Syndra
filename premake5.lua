@@ -10,10 +10,6 @@ workspace "Syndra-Engine"
 
 outputDir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 
-	
-
-
-
 IncludeDir = {}
 IncludeDir["GLFW"] = "Syndra/vendor/GLFW/include"
 IncludeDir["Glad"] = "Syndra/vendor/Glad/include"
@@ -23,8 +19,10 @@ include "Syndra/vendor/Glad"
 
 project "Syndra"
 	location "Syndra"
-	kind "SharedLib"
+	kind "StaticLib"
 	language "C++"
+	cppdialect "C++17"
+	staticruntime "on"
 
 	targetdir ("bin/" .. outputDir .. "/%{prj.name}")
 	objdir ("bin-int/" .. outputDir .. "/%{prj.name}")
@@ -56,7 +54,7 @@ project "Syndra"
 
 	filter "system:windows"
 		cppdialect "C++latest"
-		staticruntime "On"
+		staticruntime "on"
 		systemversion "latest"
 
 	defines
@@ -66,28 +64,25 @@ project "Syndra"
 		"GLFW_INCLUDE_NONE"
 	}
 
-	postbuildcommands
-	{
-		("{COPY} %{cfg.buildtarget.relpath} ../bin/" .. outputDir .. "/Sandbox")
-	}
-
 	filter "configurations:Debug"
 		defines "SN_DEBUG"
-		symbols "On"
+		symbols "on"
 		
 	filter "configurations:release"
 		defines "SN_RELEASE"
-		optimize "On"	
+		optimize "on"	
 		
 	filter "configurations:Dist"
 		defines "SN_DIST"
-		optimize "On"
+		optimize "on"
 
 
 project "Sandbox"
 	location "Sandbox"
 	kind "ConsoleApp"
 	language "C++"
+	cppdialect "C++17"
+	staticruntime "on"
 
 	targetdir ("bin/" .. outputDir .. "/%{prj.name}")
 	objdir ("bin-int/" .. outputDir .. "/%{prj.name}")
@@ -110,8 +105,7 @@ project "Sandbox"
 	}
 
 	filter "system:windows"
-		cppdialect "C++17"
-		staticruntime "On"
+		staticruntime "on"
 		systemversion "latest"
 
 	defines
@@ -121,12 +115,12 @@ project "Sandbox"
 
 	filter "configurations:Debug"
 		defines "SN_DEBUG"
-		symbols "On"
+		symbols "on"
 		
 	filter "configurations:release"
 		defines "SN_RELEASE"
-		optimize "On"	
+		optimize "on"	
 		
 	filter "configurations:Dist"
 		defines "SN_DIST"
-		optimize "On"
+		optimize "on"
