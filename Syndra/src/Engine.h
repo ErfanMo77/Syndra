@@ -6,3 +6,4 @@
 //Entry point
 #include "Engine/EntryPoint.h"
 
+#include "Engine/Debug/ImGuiLayer.h"
