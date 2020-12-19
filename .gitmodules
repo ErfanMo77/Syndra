@@ -4,3 +4,6 @@
 [submodule "Syndra/vendor/GLFW"]
 	path = Syndra/vendor/GLFW
 	url = https://github.com/ErfanMo77/glfw.git
+[submodule "Syndra/vendor/imgui"]
+	path = Syndra/vendor/imgui
+	url = https://github.com/ErfanMo77/imgui.git
