@@ -68,11 +68,6 @@ project "Syndra"
 		"GLFW_INCLUDE_NONE"
 	}
 
-	postbuildcommands
-	{
-		("{COPY} %{cfg.buildtarget.relpath} \"../bin/" .. outputDir .. "/Sandbox/\"")
-	}
-
 	filter "configurations:Debug"
 		defines "SN_DEBUG"
 		symbols "on"
