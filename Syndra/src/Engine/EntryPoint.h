@@ -9,8 +9,7 @@ extern Syndra::Application* Syndra::CreateApplication();
 int main(int argc, char** argv) 
 {
 	Syndra::Log::init();
-	SN_CORE_WARN("This is from Engine!");
-	SN_INFO("HELLO!");
+	SN_WARN("HELLO! Welcome to Syndra!");
 
 	auto app = Syndra::CreateApplication();
 	app->Run();

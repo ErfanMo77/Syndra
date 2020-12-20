@@ -22,6 +22,8 @@ namespace  Syndra {
 		ImGui::CreateContext();
 		ImGui::StyleColorsDark();
 
+
+
 		ImGuiIO& io = ImGui::GetIO();
 		io.BackendFlags |= ImGuiBackendFlags_HasMouseCursors;
 		io.BackendFlags |= ImGuiBackendFlags_HasSetMousePos;
@@ -54,7 +56,7 @@ namespace  Syndra {
 
 	void ImGuiLayer::OnDetach()
 	{
-
+		ImGui_ImplOpenGL3_Shutdown();
 	}
 
 	void ImGuiLayer::OnUpdate()
@@ -81,7 +83,85 @@ namespace  Syndra {
 
 	void ImGuiLayer::OnEvent(Event& event)
 	{
+		
+		EventDispatcher dispatcher(event);
+		dispatcher.Dispatch<MouseButtonPressedEvent>([&](MouseButtonPressedEvent e) {
+			return OnMouseButtonPressedEvent(e);
+		});
 
+		dispatcher.Dispatch<MouseButtonReleasedEvent>([&](MouseButtonReleasedEvent e) {
+			return OnMouseButtonReleasedEvent(e);
+		});
+
+		dispatcher.Dispatch<MouseMovedEvent>([&](MouseMovedEvent e) {
+			return OnMouseMovedEvent(e);
+		});
+
+		dispatcher.Dispatch<MouseScrolledEvent>([&](MouseScrolledEvent e) {
+			return OnMouseScrolledEvent(e);
+		});
+
+		dispatcher.Dispatch<KeyPressedEvent>([&](KeyPressedEvent e) {
+			return OnKeyPressedEvent(e);
+		});
+
+		dispatcher.Dispatch<KeyReleasedEvent>([&](KeyReleasedEvent e) {
+			return OnKeyReleasedEvent(e);
+		});
+
+		dispatcher.Dispatch<KeyTypedEvent>([&](KeyTypedEvent e) {
+			return OnKeyTypedEvent(e);
+		});
+	}
+
+	bool ImGuiLayer::OnMouseButtonPressedEvent(MouseButtonPressedEvent& e)
+	{
+		ImGuiIO& io = ImGui::GetIO();
+		io.MouseDown[e.GetMouseButton()] = true;
+		return false;
+	}
+
+	bool ImGuiLayer::OnMouseButtonReleasedEvent(MouseButtonReleasedEvent& e)
+	{
+		ImGuiIO& io = ImGui::GetIO();
+		io.MouseDown[e.GetMouseButton()] = false;
+		return false;
+	}
+
+	bool ImGuiLayer::OnMouseMovedEvent(MouseMovedEvent& e)
+	{
+		ImGuiIO& io = ImGui::GetIO();
+		io.MousePos = ImVec2(e.GetX(), e.GetY());
+		return false;
+		
+	}
+
+	bool ImGuiLayer::OnMouseScrolledEvent(MouseScrolledEvent& e)
+	{
+		ImGuiIO& io = ImGui::GetIO();
+		io.MouseWheel = e.GetYOffset();
+		io.MouseWheelH = e.GetXOffset();
+		return false;
+	}
+
+	bool ImGuiLayer::OnKeyPressedEvent(KeyPressedEvent& e)
+	{
+		return false;
+	}
+
+	bool ImGuiLayer::OnKeyReleasedEvent(KeyReleasedEvent& e)
+	{
+		return false;
+	}
+
+	bool ImGuiLayer::OnKeyTypedEvent(KeyTypedEvent& e)
+	{
+		return false;
+	}
+
+	bool ImGuiLayer::OnWindowResizeEvent(WindowResizeEvent& e)
+	{
+		return false;
 	}
 
 }
