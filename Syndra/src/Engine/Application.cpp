@@ -1,5 +1,6 @@
 #include "lpch.h"
 #include "Application.h"
+#include "Input.h"
 #include "GLFW/glfw3.h"
 #include "glad/glad.h"
 
@@ -9,7 +10,6 @@ namespace Syndra {
 
 	Application::Application()
 	{
-		_ASSERT(!s_Instance, "already exists!");
 		s_Instance = this;
 		m_window = Scope<Window>(Window::Create());
 		m_window->SetEventCallback(SN_BIND_EVENT_FN(Application::OnEvent));
@@ -52,7 +52,9 @@ namespace Syndra {
 			glClearColor(0, 0.5, 0.7, 1);
 			glClear(GL_COLOR_BUFFER_BIT);
 
-
+			if (Input::IsKeyPressed(Key::A)) {
+				SN_TRACE("A is pressed");
+			}
 			for (Layer* layer : m_LayerStack) {
 				layer->OnUpdate();
 			}
