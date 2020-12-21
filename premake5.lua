@@ -14,6 +14,7 @@ IncludeDir = {}
 IncludeDir["GLFW"] = "Syndra/vendor/GLFW/include"
 IncludeDir["Glad"] = "Syndra/vendor/Glad/include"
 IncludeDir["imgui"] = "Syndra/vendor/imgui"
+IncludeDir["glm"] = "Syndra/vendor/glm"
 
 include "Syndra/vendor/GLFW"
 include "Syndra/vendor/Glad"
@@ -36,7 +37,9 @@ project "Syndra"
 	files
 	{
 		"%{prj.name}/src/**.h",
-		"%{prj.name}/src/**.cpp"
+		"%{prj.name}/src/**.cpp",
+		"vendor/glm/glm/**.hpp",
+		"vendor/glm/glm/**.inl",
 	}
 
 	includedirs
@@ -45,7 +48,8 @@ project "Syndra"
 		"%{prj.name}/vendor/spdlog/include",
 		"%{IncludeDir.GLFW}",
 		"%{IncludeDir.Glad}",
-		"%{IncludeDir.imgui}"
+		"%{IncludeDir.imgui}",
+		"%{IncludeDir.glm}"
 	}
 
 	links
@@ -100,7 +104,8 @@ project "Sandbox"
 	includedirs 
 	{
 		"Syndra/vendor/spdlog/include",
-		"Syndra/src"
+		"Syndra/src",
+		"%{IncludeDir.glm}"
 	}
 
 	links
