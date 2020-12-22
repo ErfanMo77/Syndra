@@ -49,6 +49,7 @@ namespace Syndra {
 	{
 		SN_CORE_WARN("Driver: {0}",glGetString(GL_VENDOR));
 		SN_CORE_WARN("Renderer: {0}",glGetString(GL_RENDERER));		
+		SN_CORE_WARN("Version: {0}",glGetString(GL_VERSION));		
 		while (m_Running)
 		{
 			glClearColor(0, 0.5, 0.7, 1);
