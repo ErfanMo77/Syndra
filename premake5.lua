@@ -105,7 +105,8 @@ project "Sandbox"
 	{
 		"Syndra/vendor/spdlog/include",
 		"Syndra/src",
-		"%{IncludeDir.glm}"
+		"%{IncludeDir.glm}",
+		"%{IncludeDir.imgui}"
 	}
 
 	links

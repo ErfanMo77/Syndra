@@ -6,6 +6,6 @@
 //Entry point
 #include "Engine/EntryPoint.h"
 
-#include "Engine/Debug/ImGuiLayer.h"
+#include "Engine/ImGui/ImGuiLayer.h"
 
 #include "Engine/Input.h"

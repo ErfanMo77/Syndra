@@ -6,7 +6,6 @@ class Sandbox : public Syndra::Application {
 public:
 
 	Sandbox() {
-		PushLayer(new Syndra::ImGuiLayer());
 	}
 
 	~Sandbox() {
