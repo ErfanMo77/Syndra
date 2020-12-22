@@ -2,7 +2,7 @@
 #include "Core.h"
 #include "Layer.h"
 #include "LayerStack.h"
-#include "Engine/Debug/ImGuiLayer.h"
+#include "Engine/ImGui/ImGuiLayer.h"
 #include "Engine/Window.h"
 #include "Engine/Events/Event.h"
 #include "Engine/Events/ApplicationEvent.h"
@@ -29,6 +29,7 @@ namespace Syndra {
 
 	private:
 		Scope<Window> m_window;
+		ImGuiLayer* m_ImGuiLayer;
 		bool m_Running;
 		static Application* s_Instance;
 		LayerStack m_LayerStack;
