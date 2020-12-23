@@ -1,15 +1,13 @@
 #include "lpch.h"
 #include "Platform/Windows/WindowsWindow.h"
 
-//#include "/Core/Input.h"
-#include "Glad/glad.h"
 #include "Engine/Events/ApplicationEvent.h"
 #include "Engine/Events/MouseEvent.h"
 #include "Engine/Events/KeyEvent.h"
 
-//#include "Hazel/Renderer/Renderer.h"
+//#include "Engine/Renderer/Renderer.h"
 
-//#include "Platform/OpenGL/OpenGLContext.h"
+#include "Platform/OpenGL/OpenGLContext.h"
 
 namespace Syndra {
 
@@ -63,11 +61,10 @@ namespace Syndra {
 			m_Window = glfwCreateWindow((int)props.Width, (int)props.Height, m_Data.Title.c_str(), nullptr, nullptr);
 			++s_GLFWWindowCount;
 		}
-		glfwMakeContextCurrent(m_Window);
-		//m_Context = GraphicsContext::Create(m_Window);
-		/*m_Context->Init();*/
+		m_Context = new OpenGLContext(m_Window);
+		m_Context->Init();
 		//SN_CORE_INFO(m_Window);
-		int status = gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
+
 		glfwSetWindowUserPointer(m_Window, &m_Data);
 		SetVSync(true);
 
@@ -181,7 +178,7 @@ namespace Syndra {
 		//SN_PROFILE_FUNCTION();
 
 		glfwPollEvents();
-		glfwSwapBuffers(m_Window);
+		m_Context->SwapBuffers();
 	}
 
 	void WindowsWindow::SetVSync(bool enabled)
