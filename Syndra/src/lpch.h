@@ -19,11 +19,11 @@
 #include <vector>
 #include <unordered_map>
 #include <unordered_set>
-
+#include <stdint.h>
 #include "Engine/core.h"
 
 #include "Engine/Log.h"
 
-#ifdef FB_PLATFORM_WINDOWS
+#ifdef SN_PLATFORM_WINDOWS
 #include "windows.h"
-#endif // FB_PLATFORM_WINDOWS
+#endif // SN_PLATFORM_WINDOWS
