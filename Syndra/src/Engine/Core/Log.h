@@ -7,7 +7,7 @@
 #pragma warning(pop)
 
 namespace Syndra {
-	class ENGINE_API Log
+	class Log
 	{
 	public:
 

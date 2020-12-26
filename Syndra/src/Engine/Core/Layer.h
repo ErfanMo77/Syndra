@@ -2,8 +2,8 @@
 
 #pragma once
 
-#include "Engine/Core.h"
-#include "Engine/Timestep.h"
+#include "Engine/Core/Core.h"
+#include "Engine/Core/Timestep.h"
 #include "Engine/Events/Event.h"
 
 namespace Syndra {

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Event.h"
-#include "Engine/MouseCodes.h"
+#include "Engine/Core/MouseCodes.h"
 
 namespace Syndra {
 

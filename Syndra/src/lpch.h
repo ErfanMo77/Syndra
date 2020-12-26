@@ -20,9 +20,9 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <stdint.h>
-#include "Engine/core.h"
+#include "Engine/Core/core.h"
 
-#include "Engine/Log.h"
+#include "Engine/Core/Log.h"
 
 #ifdef SN_PLATFORM_WINDOWS
 #include "windows.h"

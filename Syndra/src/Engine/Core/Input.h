@@ -2,8 +2,8 @@
 
 #include <glm/glm.hpp>
 
-#include "Engine/KeyCodes.h"
-#include "Engine/MouseCodes.h"
+#include "Engine/Core/KeyCodes.h"
+#include "Engine/Core/MouseCodes.h"
 
 namespace Syndra {
 

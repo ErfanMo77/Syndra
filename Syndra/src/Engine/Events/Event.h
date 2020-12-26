@@ -3,7 +3,7 @@
 #include <functional>
 #include <sstream>
 
-#include "Engine/Core.h"
+#include "Engine/Core/Core.h"
 
 
 namespace Syndra {

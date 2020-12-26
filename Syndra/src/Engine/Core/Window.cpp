@@ -1,5 +1,5 @@
 #include "lpch.h"
-#include "Engine/Window.h"
+#include "Engine/Core/Window.h"
 
 #ifdef SN_PLATFORM_WINDOWS
 #include "Platform/Windows/WindowsWindow.h"
