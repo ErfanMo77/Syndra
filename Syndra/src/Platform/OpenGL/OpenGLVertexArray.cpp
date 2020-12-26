@@ -36,14 +36,4 @@ namespace Syndra {
 
 	}
 
-	const std::vector<Syndra::Ref<Syndra::VertexBuffer>>& OpenGLVertexArray::GetVertexBuffers() const
-	{
-
-	}
-
-	const Syndra::Ref<Syndra::IndexBuffer>& OpenGLVertexArray::GetIndexBuffer() const
-	{
-
-	}
-
 }
