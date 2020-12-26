@@ -8,6 +8,7 @@
 #include "Engine/Events/ApplicationEvent.h"
 #include "Engine/Renderer/Buffer.h"
 #include "Engine/Renderer/Shader.h"
+#include "Engine/Renderer/VertexArray.h"
 #include "Platform/OpenGL/OpenGLBuffer.h"
 
 namespace Syndra {
@@ -31,10 +32,10 @@ namespace Syndra {
 		bool OnWindowClose(WindowCloseEvent& e);
 
 	private:
-		unsigned int m_VertexArray;
-		Scope<Window> m_window;
-		Scope<VertexBuffer> m_VertexBuffer;
-		Scope<IndexBuffer> m_IndexBuffer;
+		Ref<Window> m_window;
+		Ref<VertexArray> m_VertexArray;
+		Ref<VertexBuffer> m_VertexBuffer;
+		Ref<IndexBuffer> m_IndexBuffer;
 		Scope<Shader> m_Shader;
 		ImGuiLayer* m_ImGuiLayer;
 		

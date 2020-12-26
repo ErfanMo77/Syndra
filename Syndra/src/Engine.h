@@ -1,11 +1,11 @@
 #pragma once
 
 //Applications
-#include "Engine/Application.h"
+#include "Engine/Core/Application.h"
 
 //Entry point
-#include "Engine/EntryPoint.h"
+#include "Engine/Core/EntryPoint.h"
 
 #include "Engine/ImGui/ImGuiLayer.h"
 
-#include "Engine/Input.h"
+#include "Engine/Core/Input.h"

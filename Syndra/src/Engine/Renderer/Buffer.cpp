@@ -5,7 +5,7 @@
 
 namespace Syndra {
 
-	VertexBuffer* VertexBuffer::Create(float* vertices, uint32_t size)
+	Ref<VertexBuffer> VertexBuffer::Create(float* vertices, uint32_t size)
 	{
 		switch (Renderer::GetAPI())
 		{
@@ -13,14 +13,14 @@ namespace Syndra {
 			SN_CORE_ASSERT(false,"RendererAPI::NONE is not supported!");
 			return nullptr;
 		case RendererAPI::OpenGL:
-			return new OpenGLVertexBuffer(vertices, size);
+			return CreateRef<OpenGLVertexBuffer>(vertices, size);
 		}
 
 		SN_CORE_ASSERT(false, "Unknown API!");
 		return nullptr;
 	}
 
-	IndexBuffer* IndexBuffer::Create(uint32_t* vertices, uint32_t count)
+	Ref<IndexBuffer> IndexBuffer::Create(uint32_t* vertices, uint32_t count)
 	{
 		switch (Renderer::GetAPI())
 		{
@@ -28,7 +28,7 @@ namespace Syndra {
 			SN_CORE_ASSERT(false, "RendererAPI::NONE is not supported!");
 			return nullptr;
 		case RendererAPI::OpenGL:
-			return new OpenGLIndexBuffer(vertices, count);
+			return CreateRef<OpenGLIndexBuffer>(vertices, count);
 		}
 
 		SN_CORE_ASSERT(false, "Unknown API!");
