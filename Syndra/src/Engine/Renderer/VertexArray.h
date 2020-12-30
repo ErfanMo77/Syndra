@@ -1,7 +1,5 @@
 #pragma once
 
-#pragma once
-
 #include <memory>
 #include "Engine/Renderer/Buffer.h"
 

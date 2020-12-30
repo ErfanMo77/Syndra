@@ -10,6 +10,7 @@
 #include "Engine/Renderer/Shader.h"
 #include "Engine/Renderer/VertexArray.h"
 #include "Platform/OpenGL/OpenGLBuffer.h"
+#include "Engine/Renderer/Renderer.h"
 
 namespace Syndra {
 

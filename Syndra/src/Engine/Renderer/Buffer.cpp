@@ -1,5 +1,6 @@
 #include "lpch.h"
 #include "Buffer.h"
+#include "Renderer.h"
 #include "Platform/OpenGL/OpenGLBuffer.h"
 
 
@@ -9,10 +10,10 @@ namespace Syndra {
 	{
 		switch (Renderer::GetAPI())
 		{
-		case RendererAPI::NONE:
-			SN_CORE_ASSERT(false,"RendererAPI::NONE is not supported!");
+		case RendererAPI::API::NONE:
+			SN_CORE_ASSERT(false, "RendererAPI::NONE is not supported!");
 			return nullptr;
-		case RendererAPI::OpenGL:
+		case RendererAPI::API::OpenGL:
 			return CreateRef<OpenGLVertexBuffer>(vertices, size);
 		}
 
@@ -24,10 +25,10 @@ namespace Syndra {
 	{
 		switch (Renderer::GetAPI())
 		{
-		case RendererAPI::NONE:
+		case RendererAPI::API::NONE:
 			SN_CORE_ASSERT(false, "RendererAPI::NONE is not supported!");
 			return nullptr;
-		case RendererAPI::OpenGL:
+		case RendererAPI::API::OpenGL:
 			return CreateRef<OpenGLIndexBuffer>(vertices, count);
 		}
 

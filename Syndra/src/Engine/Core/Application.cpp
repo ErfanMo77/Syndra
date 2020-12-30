@@ -2,7 +2,7 @@
 #include "Application.h"
 #include "Input.h"
 #include "GLFW/glfw3.h"
-#include "glad/glad.h"
+
 
 namespace Syndra {
 
@@ -19,8 +19,8 @@ namespace Syndra {
 		m_VertexArray = VertexArray::Create();
 		
 		float vertices[3 * 7] = {
-			-0.5f, -0.5f, 0.0f, 0.0f,0.8f,0.0f,1.0f,
-			 0.5f, -0.5f, 0.0f, 0.8f,0.3f,0.0f,1.0f,
+			-0.5f, -0.5f, 0.0f, 1.0f,0.5f,0.0f,1.0f,
+			 0.5f, -0.5f, 0.0f, 0.8f,0.4f,0.4f,1.0f,
 			 0.0f,  0.5f, 0.0f, 0.1f,0.0,0.8f,1.0f
 		};
 
@@ -98,16 +98,18 @@ namespace Syndra {
 
 	void Application::Run()
 	{
-		SN_CORE_WARN("Driver: {0}",glGetString(GL_VENDOR));
-		SN_CORE_WARN("Renderer: {0}",glGetString(GL_RENDERER));		
-		SN_CORE_WARN("Version: {0}",glGetString(GL_VERSION));
+
 		while (m_Running)
 		{
-			glClearColor(0.0f, 0.5f, 0.7f, 1.0f);
-			glClear(GL_COLOR_BUFFER_BIT);
+			RenderCommand::SetClearColor({ 0.0f, 0.5f, 0.7f, 1.0f });
+			RenderCommand::Clear();
+
+			Renderer::BeginScene();
+
 			m_Shader->Bind();
-			m_VertexArray->Bind();
-			glDrawElements(GL_TRIANGLES, m_IndexBuffer->GetCount(), GL_UNSIGNED_INT, nullptr);
+			Renderer::Submit(m_VertexArray);
+
+			Renderer::EndScene();
 
 			for (Layer* layer : m_LayerStack) {
 				layer->OnUpdate();

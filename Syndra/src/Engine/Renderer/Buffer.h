@@ -1,6 +1,5 @@
 #pragma once
 #include <stdint.h>
-#include "Engine/Renderer/Renderer.h"
 
 
 namespace Syndra {

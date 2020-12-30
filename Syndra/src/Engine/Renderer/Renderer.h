@@ -1,21 +1,17 @@
 #pragma once
+#include "Engine/Renderer/RenderCommand.h"
 
 namespace Syndra {
-
-	enum class RendererAPI {
-		NONE = 0,
-		OpenGL = 1
-	};
 
 	class Renderer
 	{
 	public:
-		inline static RendererAPI GetAPI() { return s_RendererAPI; }
-		inline static void SetAPI(RendererAPI api) { s_RendererAPI = api; }
+		static void BeginScene();
+		static void EndScene();
 
-	private:
-		static RendererAPI s_RendererAPI;
-		
+		static void Submit(const std::shared_ptr<VertexArray>& vertexArray);
+
+		inline static RendererAPI::API GetAPI() { return RendererAPI::GetAPI(); }
 	};
 
 }
