@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Event.h"
-#include "../KeyCodes.h"
+#include "Engine/Core/KeyCodes.h"
 
 namespace Syndra {
 

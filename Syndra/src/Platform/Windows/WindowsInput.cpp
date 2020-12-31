@@ -1,7 +1,7 @@
 #include "lpch.h"
-#include "Engine/Input.h"
+#include "Engine/Core/Input.h"
 
-#include "Engine/Application.h"
+#include "Engine/Core/Application.h"
 #include <GLFW/glfw3.h>
 
 namespace Syndra {

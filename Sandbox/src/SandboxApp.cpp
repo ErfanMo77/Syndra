@@ -1,5 +1,5 @@
 #include <Engine.h>
-#include "Engine/EntryPoint.h"
+#include "Engine/Core/EntryPoint.h"
 #include "imgui.h"
 
 class DummyLayer : public Syndra::Layer {
