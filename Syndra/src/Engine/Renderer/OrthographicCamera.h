@@ -2,6 +2,7 @@
 #include <glm/glm.hpp>
 
 namespace Syndra {
+
 	class OrthographicCamera
 	{
 	public:

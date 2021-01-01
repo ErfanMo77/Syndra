@@ -5,7 +5,8 @@
 class DummyLayer : public Syndra::Layer {
 
 public:
-	DummyLayer() :Layer("Dummy") 
+	DummyLayer() :Layer("Dummy") ,
+		 m_Camera(-1,1,-1,1)
 	{
 	}
 	
@@ -47,13 +48,15 @@ public:
 			
 			layout(location = 0) in vec3 a_pos;
 			layout(location = 1) in vec4 a_col;
+
+			uniform mat4 u_ViewProjection;
 				
 			out vec3 v_pos;
 			out vec4 v_col;
 			void main(){
 				v_pos = a_pos;
 				v_col = a_col;
-				gl_Position = vec4(a_pos,1.0);
+				gl_Position = u_ViewProjection * vec4(a_pos,1.0);
 			}
 			
 		)";
@@ -77,11 +80,11 @@ public:
 	{
 		Syndra::RenderCommand::SetClearColor({ 0.0f, 0.5f, 0.7f, 1.0f });
 		Syndra::RenderCommand::Clear();
+		//m_Camera->OnUpdate(1/60.0f);
+		Syndra::Renderer::BeginScene(m_Camera);
 
-		Syndra::Renderer::BeginScene();
 
-		m_Shader->Bind();
-		Syndra::Renderer::Submit(m_VertexArray);
+		Syndra::Renderer::Submit(m_Shader,m_VertexArray);
 
 		Syndra::Renderer::EndScene();
 	}
@@ -94,6 +97,7 @@ private:
 	Syndra::Ref<Syndra::VertexBuffer> m_VertexBuffer;
 	Syndra::Ref<Syndra::IndexBuffer> m_IndexBuffer;
 	Syndra::Ref<Syndra::Shader> m_Shader;
+	Syndra::OrthographicCamera m_Camera;
 };
 
 
