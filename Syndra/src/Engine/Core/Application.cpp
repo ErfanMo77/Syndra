@@ -1,6 +1,6 @@
 #include "lpch.h"
-#include "Application.h"
-#include "Input.h"
+#include "Engine/Core/Application.h"
+#include "Engine/Core/Input.h"
 #include "GLFW/glfw3.h"
 
 

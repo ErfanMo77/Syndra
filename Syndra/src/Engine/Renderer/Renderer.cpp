@@ -1,6 +1,6 @@
 #include "lpch.h"
 #include "Engine/Renderer/Renderer.h"
-#include "RenderCommand.h"
+#include "Engine/Renderer/RenderCommand.h"
 
 namespace Syndra {
 

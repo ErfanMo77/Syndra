@@ -41,6 +41,7 @@ public:
 		m_IndexBuffer = Syndra::IndexBuffer::Create(indices, sizeof(indices) / sizeof(uint32_t));
 		m_VertexArray->SetIndexBuffer(m_IndexBuffer);
 
+		
 		std::string vertexSrc = R"(
 			#version 460 core
 			
@@ -68,7 +69,7 @@ public:
 				color = v_col;
 			}		
 		)";
-		m_Shader.reset(new Syndra::Shader(vertexSrc, fragSrc));
+		m_Shader = Syndra::Shader::Create("test", vertexSrc, fragSrc);
 		Syndra::RenderCommand::Init();
 	}
 
