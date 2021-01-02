@@ -10,6 +10,10 @@
 
 #include "Engine/Core/Input.h"
 
+#include "Engine/Events/Event.h"
+
+#include "Engine/Core/Layer.h"
+
 #include "Engine/Renderer/Renderer.h"
 
 #include "Engine/Renderer/Buffer.h"

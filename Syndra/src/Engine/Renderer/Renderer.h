@@ -9,7 +9,7 @@ namespace Syndra {
 	class Renderer
 	{
 	public:
-		static void BeginScene(const OrthographicCamera& camera);
+		static void BeginScene(const PerspectiveCamera& camera);
 		static void EndScene();
 
 		static void Submit(const Ref<Shader>& shader, const Ref<VertexArray>& vertexArray);

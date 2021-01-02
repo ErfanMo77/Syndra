@@ -9,6 +9,8 @@ namespace Syndra {
 		SN_CORE_WARN("Driver: {0}", glGetString(GL_VENDOR));
 		SN_CORE_WARN("Renderer: {0}", glGetString(GL_RENDERER));
 		SN_CORE_WARN("Version: {0}", glGetString(GL_VERSION));
+		glEnable(GL_MULTISAMPLE);
+		glEnable(GL_DEPTH_TEST);
 	}
 
 	void OpenGLRendererAPI::SetClearColor(const glm::vec4& color)
@@ -23,7 +25,7 @@ namespace Syndra {
 
 	void OpenGLRendererAPI::DrawIndexed(const Ref<VertexArray>& vertexArray)
 	{
-		glDrawElements(GL_TRIANGLES, vertexArray->GetIndexBuffer()->GetCount(), GL_UNSIGNED_INT, nullptr);
+		glDrawArrays(GL_TRIANGLES,0,36);
 	}
 
 }

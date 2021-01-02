@@ -25,15 +25,6 @@ namespace Syndra {
 
 	void Application::OnEvent(Event& e)
 	{
-		if (e.IsInCategory(EventCategoryApplication))
-		{
-			SN_CORE_WARN(e);
-		}
-		else
-		{
-			SN_CORE_INFO(e);
-		}
-
 		EventDispatcher dispatcher(e);
 		dispatcher.Dispatch<WindowCloseEvent>(SN_BIND_EVENT_FN(Application::OnWindowClose));
 
@@ -48,11 +39,14 @@ namespace Syndra {
 
 	void Application::Run()
 	{
-
 		while (m_Running)
 		{
+			float time = (float)glfwGetTime();
+			Timestep ts = time - m_lastFrameTime;
+			m_lastFrameTime = time;
+
 			for (Layer* layer : m_LayerStack) {
-				layer->OnUpdate();
+				layer->OnUpdate(ts);
 			}
 			m_ImGuiLayer->Begin();
 			for (Layer* Layer : m_LayerStack)

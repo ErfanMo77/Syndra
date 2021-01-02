@@ -6,9 +6,9 @@ namespace Syndra {
 
 	Renderer::SceneData* Renderer::m_SceneData = new Renderer::SceneData;
 
-	void Renderer::BeginScene(const OrthographicCamera& camera)
+	void Renderer::BeginScene(const PerspectiveCamera& camera)
 	{
-		m_SceneData->ViewProjectionMatrix = camera.GetViewProjectionMatrix();
+		m_SceneData->ViewProjectionMatrix = camera.GetViewProjection();
 	}
 
 	void Renderer::EndScene()
