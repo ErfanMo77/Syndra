@@ -11,10 +11,11 @@ workspace "Syndra-Engine"
 outputDir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 
 IncludeDir = {}
-IncludeDir["GLFW"] = "Syndra/vendor/GLFW/include"
-IncludeDir["Glad"] = "Syndra/vendor/Glad/include"
+IncludeDir["GLFW"] =  "Syndra/vendor/GLFW/include"
+IncludeDir["Glad"] =  "Syndra/vendor/Glad/include"
 IncludeDir["imgui"] = "Syndra/vendor/imgui"
-IncludeDir["glm"] = "Syndra/vendor/glm"
+IncludeDir["glm"] =   "Syndra/vendor/glm"
+IncludeDir["stb_image"] =   "Syndra/vendor/stb_image"
 
 include "Syndra/vendor/GLFW"
 include "Syndra/vendor/Glad"
@@ -38,8 +39,10 @@ project "Syndra"
 	{
 		"%{prj.name}/src/**.h",
 		"%{prj.name}/src/**.cpp",
-		"vendor/glm/glm/**.hpp",
-		"vendor/glm/glm/**.inl",
+		"%{prj.name}/vendor/glm/glm/**.hpp",
+		"%{prj.name}/vendor/glm/glm/**.inl",
+		"%{prj.name}/vendor/stb_image/**.h",
+		"%{prj.name}/vendor/stb_image/**.cpp"
 	}
 
 	includedirs
@@ -49,7 +52,8 @@ project "Syndra"
 		"%{IncludeDir.GLFW}",
 		"%{IncludeDir.Glad}",
 		"%{IncludeDir.imgui}",
-		"%{IncludeDir.glm}"
+		"%{IncludeDir.glm}",
+		"%{IncludeDir.stb_image}"
 	}
 
 	links
