@@ -2,6 +2,7 @@
 #include "Engine/Core/KeyCodes.h"
 #include "Engine/Core/Input.h"
 #include "Engine/Renderer/PerspectiveCamera.h"
+#include "glad/glad.h"
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/quaternion.hpp>
@@ -79,6 +80,9 @@ namespace Syndra{
 	{
 		EventDispatcher dispatcher(e);
 		dispatcher.Dispatch<MouseScrolledEvent>(SN_BIND_EVENT_FN(PerspectiveCamera::OnMouseScroll));
+		dispatcher.Dispatch<WindowResizeEvent>([&](WindowResizeEvent e){
+			return OnResize(e);
+		});
 	}
 
 	bool PerspectiveCamera::OnMouseScroll(MouseScrolledEvent& e)
@@ -86,6 +90,15 @@ namespace Syndra{
 		float delta = e.GetYOffset() * 0.1f;
 		MouseZoom(delta);
 		UpdateView();
+		return false;
+	}
+	
+	bool PerspectiveCamera::OnResize(WindowResizeEvent& e) {
+		m_ViewportWidth = e.GetWidth();
+		m_ViewportHeight = e.GetHeight();
+		SN_INFO(e);
+		UpdateProjection();
+		glViewport(0, 0, e.GetWidth(), e.GetHeight());
 		return false;
 	}
 

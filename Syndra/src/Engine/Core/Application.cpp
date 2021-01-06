@@ -41,6 +41,9 @@ namespace Syndra {
 	{
 		while (m_Running)
 		{
+			if (Input::IsKeyPressed(Key::Escape)) {
+				m_Running = false;
+			}
 			float time = (float)glfwGetTime();
 			Timestep ts = time - m_lastFrameTime;
 			m_lastFrameTime = time;

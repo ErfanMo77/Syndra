@@ -2,6 +2,7 @@
 #include "Engine/Renderer/Camera.h"
 #include "Engine/Core/Timestep.h"
 #include "Engine/Events/Event.h"
+#include "Engine/Events/ApplicationEvent.h"
 #include "Engine/Events/MouseEvent.h"
 
 #include <glm/glm.hpp>
@@ -38,6 +39,7 @@ namespace Syndra {
 		void UpdateView();
 
 		bool OnMouseScroll(MouseScrolledEvent & e);
+		bool OnResize(WindowResizeEvent& e);
 
 		void MousePan(const glm::vec2 & delta);
 		void MouseRotate(const glm::vec2 & delta);

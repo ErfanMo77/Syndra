@@ -145,19 +145,23 @@ public:
 
 				float diff = max(dot(norm,lightDir),0);
 				vec3 color = vec3(texture(u_Texture,v_uv));
-				vec3 result = (diff + 0.2)*color;
+				vec3 result = (diff+0.2)*color;
 				
 				fragColor = vec4(result,1.0);
 			}		
 		)";
 		m_Shader = Syndra::Shader::Create("test", vertexSrc, fragSrc);
 
-		m_Texture = Syndra::Texture2D::Create("Assests/Textures/dirt.jpg");
+		m_Texture = Syndra::Texture2D::Create("Assests/Textures/tiles.jpg");
+		float mem = (float)(m_Texture->GetWidth() * m_Texture->GetHeight()* 4 * 1.33f) / 1048576.0f;
+		SN_INFO("memory allocated for textures:{0}",mem);
 		m_Texture->Bind(0);
 		m_Shader->SetInt("u_Texture", 0);
 		Syndra::RenderCommand::Init();
-		m_Camera = new Syndra::PerspectiveCamera(45.0f,1.66f,0.1f,100.0f);
-		m_Camera->SetViewportSize(1600, 900);
+		m_Camera = new Syndra::PerspectiveCamera(45.0f,1.66f,0.1f,1000.0f);
+		auto& app = Syndra::Application::Get();
+
+		m_Camera->SetViewportSize(app.GetWindow().GetWidth(), app.GetWindow().GetHeight());
 		
 	}
 
