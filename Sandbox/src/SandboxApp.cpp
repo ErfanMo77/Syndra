@@ -11,7 +11,7 @@ public:
 	}
 	
 	~DummyLayer() {
-
+		delete m_Camera;
 	}
 
 	virtual void OnImGuiRender() override
@@ -124,15 +124,19 @@ public:
 			#version 460 core
 			layout(location = 0) out vec4 color;	
 			
+			uniform sampler2D u_Texture;
 			in vec3 v_pos;
 			in vec2 v_uv;
 
-			void main(){
-				color = vec4(v_uv.x,0,0,1);
+			void main(){	
+				color =	texture(u_Texture,v_uv);
 			}		
 		)";
 		m_Shader = Syndra::Shader::Create("test", vertexSrc, fragSrc);
 
+		m_Texture = Syndra::Texture2D::Create("Assests/Textures/dirt.jpg");
+		m_Texture->Bind(0);
+		m_Shader->SetInt("u_Texture", 0);
 		Syndra::RenderCommand::Init();
 		m_Camera = new Syndra::PerspectiveCamera(45.0f,1.66f,0.1f,100.0f);
 		m_Camera->SetViewportSize(1600, 900);
@@ -141,7 +145,7 @@ public:
 
 	virtual void OnUpdate(Syndra::Timestep ts) override
 	{
-		SN_INFO("Delta time : {0}ms", ts.GetMilliseconds());
+		//SN_INFO("Delta time : {0}ms", ts.GetMilliseconds());
 		Syndra::RenderCommand::SetClearColor({ 0.1f, 0.1f, 0.1f, 1.0f });
 		Syndra::RenderCommand::Clear();
 		m_Camera->OnUpdate(ts);
@@ -159,6 +163,7 @@ private:
 	Syndra::Ref<Syndra::VertexBuffer> m_VertexBuffer;
 	Syndra::Ref<Syndra::IndexBuffer> m_IndexBuffer;
 	Syndra::Ref<Syndra::Shader> m_Shader;
+	Syndra::Ref<Syndra::Texture2D> m_Texture;
 	Syndra::PerspectiveCamera* m_Camera;
 };
 
