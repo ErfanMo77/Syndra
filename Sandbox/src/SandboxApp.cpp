@@ -102,61 +102,16 @@ public:
 			6, 7, 3 };
 		m_IndexBuffer = Syndra::IndexBuffer::Create(indices, sizeof(indices) / sizeof(uint32_t));
 		m_VertexArray->SetIndexBuffer(m_IndexBuffer);
+		
+		m_Shaders.Load("assets/shaders/diffuse.glsl");
 
-		std::string vertexSrc = R"(
-			#version 460 core
-			
-			layout(location = 0) in vec3 a_pos;
-			layout(location = 1) in vec2 a_uv;
-			layout(location = 2) in vec3 a_normal;
-
-			uniform mat4 u_ViewProjection;
-			uniform mat4 u_trans;
-
-			out vec3 v_pos;
-			out vec2 v_uv;
-			out vec3 v_normal;
-			void main(){
-				v_normal = mat3(transpose(inverse(u_trans)))*a_normal;
-				v_pos = vec3(u_trans*vec4(a_pos,1.0));
-				v_uv = a_uv;
-				gl_Position = u_ViewProjection * u_trans *vec4(a_pos,1.0);
-			}
-			
-		)";
-
-		std::string fragSrc = R"(
-			#version 460 core
-			layout(location = 0) out vec4 fragColor;	
-			
-			uniform sampler2D u_Texture;
-
-			uniform vec3 cameraPos;
-			uniform vec3 lightPos;
-
-			in vec3 v_pos;
-			in vec2 v_uv;
-			in vec3 v_normal;
-			void main(){	
-			    vec3 norm = normalize(v_normal);
-				vec3 lightDir = normalize(lightPos - v_pos);
-				vec3 viewDir = normalize(cameraPos - v_pos);
-				vec3 reflectDir = reflect(-lightDir,norm);
-
-				float diff = max(dot(norm,lightDir),0);
-				vec3 color = vec3(texture(u_Texture,v_uv));
-				vec3 result = (diff+0.2)*color;
-				
-				fragColor = vec4(result,1.0);
-			}		
-		)";
-		m_Shader = Syndra::Shader::Create("test", vertexSrc, fragSrc);
-
-		m_Texture = Syndra::Texture2D::Create("Assests/Textures/tiles.jpg");
+		m_Texture = Syndra::Texture2D::Create("assets/Textures/tiles.jpg");
 		float mem = (float)(m_Texture->GetWidth() * m_Texture->GetHeight()* 4 * 1.33f) / 1048576.0f;
 		SN_INFO("memory allocated for textures:{0}",mem);
 		m_Texture->Bind(0);
-		m_Shader->SetInt("u_Texture", 0);
+
+		auto difShader = m_Shaders.Get("diffuse");
+		difShader->SetInt("u_Texture", 0);
 		Syndra::RenderCommand::Init();
 		m_Camera = new Syndra::PerspectiveCamera(45.0f,1.66f,0.1f,1000.0f);
 		auto& app = Syndra::Application::Get();
@@ -173,21 +128,24 @@ public:
 		m_Camera->OnUpdate(ts);
 		Syndra::Renderer::BeginScene(*m_Camera);
 
-		m_Shader->SetMat4("u_trans", glm::translate(glm::mat4(1),glm::vec3(0)));
-		m_Shader->SetFloat3("cameraPos", m_Camera->GetPosition());
-		m_Shader->SetFloat3("lightPos", m_Camera->GetPosition());
+		auto difShader = m_Shaders.Get("diffuse");
+
+		difShader->SetMat4("u_trans", glm::translate(glm::mat4(1),glm::vec3(0)));
+		difShader->SetFloat3("cameraPos", m_Camera->GetPosition());
+		difShader->SetFloat3("lightPos", m_Camera->GetPosition());
 		
-		Syndra::Renderer::Submit(m_Shader,m_VertexArray);
+		Syndra::Renderer::Submit(difShader,m_VertexArray);
 
 		Syndra::Renderer::EndScene();
 	}
 
 
 private:
+	Syndra::ShaderLibrary m_Shaders;
+
 	Syndra::Ref<Syndra::VertexArray> m_VertexArray;
 	Syndra::Ref<Syndra::VertexBuffer> m_VertexBuffer;
 	Syndra::Ref<Syndra::IndexBuffer> m_IndexBuffer;
-	Syndra::Ref<Syndra::Shader> m_Shader;
 	Syndra::Ref<Syndra::Texture2D> m_Texture;
 	Syndra::PerspectiveCamera* m_Camera;
 };

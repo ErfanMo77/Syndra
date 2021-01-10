@@ -11,3 +11,4 @@ bin-int/
 *.log
 imgui.ini
 *.jpg
+*.glsl

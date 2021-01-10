@@ -11,6 +11,8 @@ namespace Syndra {
 		SN_CORE_WARN("Version: {0}", glGetString(GL_VERSION));
 		glEnable(GL_MULTISAMPLE);
 		glEnable(GL_DEPTH_TEST);
+		glCullFace(GL_FRONT);
+		glEnable(GL_CULL_FACE);
 	}
 
 	void OpenGLRendererAPI::SetClearColor(const glm::vec4& color)
