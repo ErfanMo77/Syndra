@@ -16,7 +16,9 @@ public:
 
 	virtual void OnImGuiRender() override
 	{
-		ImGui::ShowStyleEditor();
+		ImGui::Begin("test");
+		ImGui::Text("simple text");
+		ImGui::End();
 	}
 
 	virtual void OnEvent(Syndra::Event& event) override {
@@ -106,8 +108,6 @@ public:
 		m_Shaders.Load("assets/shaders/diffuse.glsl");
 
 		m_Texture = Syndra::Texture2D::Create("assets/Textures/tiles.jpg");
-		float mem = (float)(m_Texture->GetWidth() * m_Texture->GetHeight()* 4 * 1.33f) / 1048576.0f;
-		SN_INFO("memory allocated for textures:{0}",mem);
 		m_Texture->Bind(0);
 
 		auto difShader = m_Shaders.Get("diffuse");
@@ -122,12 +122,15 @@ public:
 
 	virtual void OnUpdate(Syndra::Timestep ts) override
 	{
+		if (Syndra::Input::IsKeyPressed(Syndra::Key::Escape)) {
+			Syndra::Application::Get().Close();
+		}
 		//SN_INFO("Delta time : {0}ms", ts.GetMilliseconds());
 		Syndra::RenderCommand::SetClearColor({ 0.1f, 0.1f, 0.1f, 1.0f });
 		Syndra::RenderCommand::Clear();
 		m_Camera->OnUpdate(ts);
 		Syndra::Renderer::BeginScene(*m_Camera);
-
+		
 		auto difShader = m_Shaders.Get("diffuse");
 
 		difShader->SetMat4("u_trans", glm::translate(glm::mat4(1),glm::vec3(0)));

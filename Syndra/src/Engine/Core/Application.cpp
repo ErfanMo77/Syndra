@@ -41,9 +41,6 @@ namespace Syndra {
 	{
 		while (m_Running)
 		{
-			if (Input::IsKeyPressed(Key::Escape)) {
-				m_Running = false;
-			}
 			float time = (float)glfwGetTime();
 			Timestep ts = time - m_lastFrameTime;
 			m_lastFrameTime = time;
@@ -51,6 +48,7 @@ namespace Syndra {
 			for (Layer* layer : m_LayerStack) {
 				layer->OnUpdate(ts);
 			}
+
 			m_ImGuiLayer->Begin();
 			for (Layer* Layer : m_LayerStack)
 			{
@@ -74,10 +72,22 @@ namespace Syndra {
 		layer->OnAttach();
 	}
 
+	void Application::Close()
+	{
+		SN_INFO("Application closed by user!");
+		m_Running = false;
+	}
+
 	bool Application::OnWindowClose(WindowCloseEvent& e)
 	{
 		m_Running = false;
 		return true;
+	}
+
+	bool Application::OnWindowResize(WindowResizeEvent& e)
+	{	
+		Renderer::OnWindowResize(e.GetWidth(), e.GetHeight());
+		return false;
 	}
 
 }

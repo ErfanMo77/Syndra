@@ -2,7 +2,6 @@
 #include "Engine/Core/KeyCodes.h"
 #include "Engine/Core/Input.h"
 #include "Engine/Renderer/PerspectiveCamera.h"
-#include "glad/glad.h"
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/quaternion.hpp>
@@ -96,9 +95,7 @@ namespace Syndra{
 	bool PerspectiveCamera::OnResize(WindowResizeEvent& e) {
 		m_ViewportWidth = e.GetWidth();
 		m_ViewportHeight = e.GetHeight();
-		SN_INFO(e);
 		UpdateProjection();
-		glViewport(0, 0, e.GetWidth(), e.GetHeight());
 		return false;
 	}
 

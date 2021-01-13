@@ -14,8 +14,14 @@ IncludeDir = {}
 IncludeDir["GLFW"] =  "Syndra/vendor/GLFW/include"
 IncludeDir["Glad"] =  "Syndra/vendor/Glad/include"
 IncludeDir["imgui"] = "Syndra/vendor/imgui"
-IncludeDir["glm"] =   "Syndra/vendor/glm"
-IncludeDir["stb_image"] =   "Syndra/vendor/stb_image"
+IncludeDir["glm"] = "Syndra/vendor/glm"
+IncludeDir["stb_image"] = "Syndra/vendor/stb_image"
+
+group "Dependencies"
+	include "Syndra/vendor/GLFW"
+	include "Syndra/vendor/Glad"
+	include "Syndra/vendor/imgui"
+group ""
 
 include "Syndra/vendor/GLFW"
 include "Syndra/vendor/Glad"
@@ -34,6 +40,7 @@ project "Syndra"
 	pchheader "lpch.h"
 	pchsource "Syndra/src/lpch.cpp"
 	
+
 
 	files
 	{
@@ -63,6 +70,8 @@ project "Syndra"
 		"imgui",
 		"opengl32.lib"
 	}
+	
+
 
 	filter "system:windows"
 		cppdialect "C++latest"

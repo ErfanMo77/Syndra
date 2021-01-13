@@ -14,6 +14,8 @@ namespace Syndra {
 
 		static void Submit(const Ref<Shader>& shader, const Ref<VertexArray>& vertexArray);
 
+		static void OnWindowResize(uint32_t width, uint32_t height);
+
 		inline static RendererAPI::API GetAPI() { return RendererAPI::GetAPI(); }
 
 	private:

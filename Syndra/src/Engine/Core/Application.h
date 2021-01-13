@@ -23,10 +23,11 @@ namespace Syndra {
 
 		static Application& Get() { return *s_Instance; }
 		Window& GetWindow() { return *m_window; }
+		void Close();
 
 	private:
-		
 		bool OnWindowClose(WindowCloseEvent& e);
+		bool OnWindowResize(WindowResizeEvent& e);
 
 	private:
 		Ref<Window> m_window;
