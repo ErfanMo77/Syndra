@@ -1,6 +1,6 @@
 #include "lpch.h"
-#include "Buffer.h"
-#include "Renderer.h"
+#include "Engine/Renderer/Buffer.h"
+#include "Engine/Renderer/Renderer.h"
 #include "Platform/OpenGL/OpenGLBuffer.h"
 
 
