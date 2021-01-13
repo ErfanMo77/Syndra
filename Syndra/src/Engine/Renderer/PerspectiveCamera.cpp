@@ -95,7 +95,7 @@ namespace Syndra{
 	bool PerspectiveCamera::OnResize(WindowResizeEvent& e) {
 		m_ViewportWidth = e.GetWidth();
 		m_ViewportHeight = e.GetHeight();
-		UpdateProjection();
+		//UpdateProjection();
 		return false;
 	}
 

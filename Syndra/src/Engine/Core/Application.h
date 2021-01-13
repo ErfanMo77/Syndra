@@ -34,6 +34,7 @@ namespace Syndra {
 		ImGuiLayer* m_ImGuiLayer;
 		float m_lastFrameTime = 0.0f;
 		bool m_Running;
+		bool m_Minimized = false;
 		static Application* s_Instance;
 		LayerStack m_LayerStack;
 	};
