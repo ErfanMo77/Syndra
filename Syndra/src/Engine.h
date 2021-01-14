@@ -3,9 +3,6 @@
 //Applications
 #include "Engine/Core/Application.h"
 
-//Entry point
-#include "Engine/Core/EntryPoint.h"
-
 #include "Engine/ImGui/ImGuiLayer.h"
 
 #include "Engine/Core/Input.h"
@@ -18,6 +15,7 @@
 
 #include "Engine/Renderer/Buffer.h"
 #include "Engine/Renderer/Shader.h"
+#include "Engine/Renderer/FrameBuffer.h"
 #include "Engine/Renderer/VertexArray.h"
 #include "Engine/Renderer/Texture.h"
 
