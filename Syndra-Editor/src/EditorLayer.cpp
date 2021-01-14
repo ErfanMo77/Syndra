@@ -19,6 +19,10 @@ namespace Syndra {
 	void EditorLayer::OnAttach()
 	{
 		m_VertexArray = VertexArray::Create();
+		FramebufferSpecification fbSpec;
+		fbSpec.Width = 1920;
+		fbSpec.Height = 1080;
+		m_Framebuffer = FrameBuffer::Create(fbSpec);
 
 		float vertices[] = {
 			// back face
@@ -118,6 +122,7 @@ namespace Syndra {
 		if (Input::IsKeyPressed(Key::Escape)) {
 			Application::Get().Close();
 		}
+		m_Framebuffer->Bind();
 		//SN_INFO("Delta time : {0}ms", ts.GetMilliseconds());
 		RenderCommand::SetClearColor({ 0.1f, 0.1f, 0.1f, 1.0f });
 		RenderCommand::Clear();
@@ -133,6 +138,7 @@ namespace Syndra {
 		Renderer::Submit(difShader, m_VertexArray);
 
 		Renderer::EndScene();
+		m_Framebuffer->Unbind();
 	}
 
 	void EditorLayer::OnImGuiRender()
@@ -201,8 +207,11 @@ namespace Syndra {
 			ImGui::EndMenuBar();
 		}
 
+
 		ImGui::Begin("test");
 		ImGui::Text("simple text");
+		uint64_t textureID = m_Framebuffer->GetColorAttachmentRendererID();
+		ImGui::Image(reinterpret_cast<void*>(textureID), ImVec2{1920, 1080 }, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
 		ImGui::End();
 
 		ImGui::End();

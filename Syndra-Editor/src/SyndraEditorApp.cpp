@@ -9,6 +9,7 @@ namespace Syndra {
 	{
 	public:
 		SyndraEditorApp() 
+			:Application("Syndra Editor")
 		{
 			PushLayer(new EditorLayer());
 		}

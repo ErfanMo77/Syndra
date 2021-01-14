@@ -8,10 +8,10 @@ namespace Syndra {
 
 	Application* Application::s_Instance = nullptr;
 
-	Application::Application()
+	Application::Application(const std::string& name)
 	{
 		s_Instance = this;
-		m_window = Window::Create();
+		m_window = Window::Create(WindowProps(name));
 		m_window->SetEventCallback(SN_BIND_EVENT_FN(Application::OnEvent));
 		m_ImGuiLayer = new ImGuiLayer();
 		PushOverlay(m_ImGuiLayer);

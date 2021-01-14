@@ -1,7 +1,7 @@
 #pragma once
-#include "Core.h"
-#include "Layer.h"
-#include "LayerStack.h"
+#include "Engine/Core/Core.h"
+#include "Engine/Core/Layer.h"
+#include "Engine/Core/LayerStack.h"
 #include "Engine/ImGui/ImGuiLayer.h"
 #include "Engine/Core/Window.h"
 #include "Engine/Events/Event.h"
@@ -13,7 +13,7 @@ namespace Syndra {
 	class Application
 	{
 	public:
-		Application();
+		Application(const std::string& name = "");
 		virtual ~Application();
 		void OnEvent(Event& e);
 		void Run();

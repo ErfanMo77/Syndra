@@ -1,5 +1,5 @@
 #pragma once
-#include "Engine.h"
+#include <Engine.h>
 
 namespace Syndra {
 
@@ -19,6 +19,7 @@ namespace Syndra {
 		ShaderLibrary m_Shaders;
 		Ref<VertexArray> m_VertexArray;
 		Ref<VertexBuffer> m_VertexBuffer;
+		Ref<FrameBuffer> m_Framebuffer;
 		Ref<IndexBuffer> m_IndexBuffer;
 		Ref<Texture2D> m_Texture;
 		PerspectiveCamera* m_Camera;
