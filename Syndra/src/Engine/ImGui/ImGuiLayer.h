@@ -21,6 +21,7 @@ namespace Syndra {
 		void Begin();
 		void End();
 		
+		void SetDarkThemeColors();
 		
 	private:
 		float m_time;
