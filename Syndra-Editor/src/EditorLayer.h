@@ -23,6 +23,9 @@ namespace Syndra {
 		Ref<IndexBuffer> m_IndexBuffer;
 		Ref<Texture2D> m_Texture;
 		PerspectiveCamera* m_Camera;
+
+		glm::vec2 m_ViewportSize = { 200.0f,200.0f};
+		glm::vec3 m_CubeColor = { 1.0f,1.0f,1.0f };
 	};
 }
 

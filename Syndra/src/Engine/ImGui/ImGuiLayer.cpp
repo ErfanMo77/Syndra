@@ -63,9 +63,6 @@ namespace  Syndra {
 	{
 
 
-
-
-		
 	}
 
 	void ImGuiLayer::Begin() 

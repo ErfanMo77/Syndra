@@ -1,7 +1,9 @@
 #include "lpch.h"
 #include "EditorLayer.h"
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 #include "imgui.h"
+
 
 namespace Syndra {
 
@@ -20,9 +22,12 @@ namespace Syndra {
 	{
 		m_VertexArray = VertexArray::Create();
 		FramebufferSpecification fbSpec;
-		fbSpec.Width = 1920;
-		fbSpec.Height = 1080;
+		fbSpec.Width = 1280;
+		fbSpec.Height = 720;
 		m_Framebuffer = FrameBuffer::Create(fbSpec);
+		m_Framebuffer->Resize((uint32_t)m_ViewportSize.x, (uint32_t)m_ViewportSize.y);
+
+		m_ViewportSize = { fbSpec.Width,fbSpec.Height };
 
 		float vertices[] = {
 			// back face
@@ -100,16 +105,18 @@ namespace Syndra {
 		m_VertexArray->SetIndexBuffer(m_IndexBuffer);
 
 		m_Shaders.Load("assets/shaders/diffuse.glsl");
+		auto difShader = m_Shaders.Get("diffuse");
+		difShader->Bind();
 
 		m_Texture = Texture2D::Create("assets/Textures/tiles.jpg");
 		m_Texture->Bind(0);
 
-		auto difShader = m_Shaders.Get("diffuse");
+		
 		difShader->SetInt("u_Texture", 0);
 		RenderCommand::Init();
 
 		auto& app = Application::Get();
-		m_Camera->SetViewportSize(app.GetWindow().GetWidth(), app.GetWindow().GetHeight());
+		m_Camera->SetViewportSize((float)app.GetWindow().GetWidth(), (float)app.GetWindow().GetHeight());
 	}
 
 	void EditorLayer::OnDetach()
@@ -119,9 +126,18 @@ namespace Syndra {
 
 	void EditorLayer::OnUpdate(Timestep ts)
 	{
+		if (FramebufferSpecification spec = m_Framebuffer->GetSpecification();
+			m_ViewportSize.x > 0.0f && m_ViewportSize.y > 0.0f && // zero sized framebuffer is invalid
+			(spec.Width != (uint32_t)m_ViewportSize.x || spec.Height != (uint32_t)m_ViewportSize.y))
+		{	
+			m_Framebuffer->Resize((uint32_t)m_ViewportSize.x, (uint32_t)m_ViewportSize.y);
+			m_Camera->SetViewportSize(m_ViewportSize.x, m_ViewportSize.y);
+			//m_ActiveScene->OnViewportResize((uint32_t)m_ViewportSize.x, (uint32_t)m_ViewportSize.y);
+		}
 		if (Input::IsKeyPressed(Key::Escape)) {
 			Application::Get().Close();
 		}
+		RenderCommand::SetClearColor({ 0.1f, 0.1f, 0.1f, 1.0f });
 		m_Framebuffer->Bind();
 		//SN_INFO("Delta time : {0}ms", ts.GetMilliseconds());
 		RenderCommand::SetClearColor({ 0.1f, 0.1f, 0.1f, 1.0f });
@@ -130,10 +146,14 @@ namespace Syndra {
 		Renderer::BeginScene(*m_Camera);
 
 		auto difShader = m_Shaders.Get("diffuse");
-
-		difShader->SetMat4("u_trans", glm::translate(glm::mat4(1), glm::vec3(0)));
+		glm::mat4 trans = glm::translate(glm::mat4(1), glm::vec3(0));
+		trans = glm::scale(trans, m_CubeColor);
+		m_Texture->Bind(0);
+		difShader->SetInt("u_Texture", 0);
+		difShader->SetMat4("u_trans", trans);
 		difShader->SetFloat3("cameraPos", m_Camera->GetPosition());
 		difShader->SetFloat3("lightPos", m_Camera->GetPosition());
+		difShader->SetFloat3("cubeCol", m_CubeColor);
 
 		Renderer::Submit(difShader, m_VertexArray);
 
@@ -209,10 +229,24 @@ namespace Syndra {
 
 
 		ImGui::Begin("test");
-		ImGui::Text("simple text");
-		uint64_t textureID = m_Framebuffer->GetColorAttachmentRendererID();
-		ImGui::Image(reinterpret_cast<void*>(textureID), ImVec2{1920, 1080 }, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
+		
+		ImGui::ColorEdit3("cube color", glm::value_ptr(m_CubeColor));
 		ImGui::End();
+
+		//----------------------------------------------Viewport----------------------------------------//
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{ 0, 0 });
+		ImGui::Begin("Viewport");
+		
+		ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
+
+		m_ViewportSize = { viewportPanelSize.x, viewportPanelSize.y };
+		//m_Camera->SetViewportSize(viewportPanelSize.x, viewportPanelSize.y);
+		//m_CameraController.OnResize(viewportPanelSize.x, viewportPanelSize.y);
+		uint64_t textureID = m_Framebuffer->GetColorAttachmentRendererID();
+		ImGui::Image(reinterpret_cast<void*>(textureID), ImVec2{ m_ViewportSize.x, m_ViewportSize.y }, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
+
+		ImGui::End();
+		ImGui::PopStyleVar();
 
 		ImGui::End();
 	}

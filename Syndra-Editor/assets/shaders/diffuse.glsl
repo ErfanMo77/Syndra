@@ -25,6 +25,7 @@ void main(){
 layout(location = 0) out vec4 fragColor;	
 
 uniform sampler2D u_Texture;
+uniform vec3 cubeCol;
 
 uniform vec3 cameraPos;
 uniform vec3 lightPos;
@@ -42,5 +43,5 @@ void main(){
 	vec3 color = vec3(texture(u_Texture,v_uv));
 	vec3 result = (diff+0.2)*color;
 	
-	fragColor = vec4(result,1.0);
+	fragColor = vec4(result ,1.0);
 }
