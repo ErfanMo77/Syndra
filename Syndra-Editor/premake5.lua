@@ -19,7 +19,8 @@ project "Syndra-Editor"
 		"%{wks.location}/Syndra/src",
 		"%{wks.location}/Syndra/vendor",
 		"%{IncludeDir.glm}",
-		"%{IncludeDir.imgui}"
+		"%{IncludeDir.imgui}",
+		"%{IncludeDir.Glad}"
 	}
 
 	links
