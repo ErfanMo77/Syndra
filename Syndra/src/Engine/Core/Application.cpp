@@ -1,6 +1,6 @@
 #include "lpch.h"
-#include "Application.h"
-#include "Input.h"
+#include "Engine/Core/Application.h"
+#include "Engine/Core/Input.h"
 #include "GLFW/glfw3.h"
 
 
@@ -8,63 +8,13 @@ namespace Syndra {
 
 	Application* Application::s_Instance = nullptr;
 
-	Application::Application()
+	Application::Application(const std::string& name)
 	{
 		s_Instance = this;
-		m_window = Scope<Window>(Window::Create());
+		m_window = Window::Create(WindowProps(name));
 		m_window->SetEventCallback(SN_BIND_EVENT_FN(Application::OnEvent));
 		m_ImGuiLayer = new ImGuiLayer();
 		PushOverlay(m_ImGuiLayer);
-
-		m_VertexArray = VertexArray::Create();
-		
-		float vertices[3 * 7] = {
-			-0.5f, -0.5f, 0.0f, 1.0f,0.5f,0.0f,1.0f,
-			 0.5f, -0.5f, 0.0f, 0.8f,0.4f,0.4f,1.0f,
-			 0.0f,  0.5f, 0.0f, 0.1f,0.0,0.8f,1.0f
-		};
-
-		m_VertexBuffer = VertexBuffer::Create(vertices,sizeof(vertices));
-
-		BufferLayout layout = {
-			{ShaderDataType::Float3,"a_pos"},
-			{ShaderDataType::Float4,"a_col"},
-		};
-		m_VertexBuffer->SetLayout(layout);
-		m_VertexArray->AddVertexBuffer(m_VertexBuffer);
-
-		unsigned int indices[3] = { 0,1,2 };
-		m_IndexBuffer = IndexBuffer::Create(indices, sizeof(indices) / sizeof(uint32_t));
-		m_VertexArray->SetIndexBuffer(m_IndexBuffer);
-
-		std::string vertexSrc = R"(
-			#version 460 core
-			
-			layout(location = 0) in vec3 a_pos;
-			layout(location = 1) in vec4 a_col;
-				
-			out vec3 v_pos;
-			out vec4 v_col;
-			void main(){
-				v_pos = a_pos;
-				v_col = a_col;
-				gl_Position = vec4(a_pos,1.0);
-			}
-			
-		)";
-
-		std::string fragSrc = R"(
-			#version 460 core
-			layout(location = 0) out vec4 color;	
-			
-			in vec3 v_pos;
-			in vec4 v_col;
-
-			void main(){
-				color = v_col;
-			}		
-		)";
-		m_Shader.reset(new Shader(vertexSrc, fragSrc));
 
 	}
 
@@ -75,15 +25,6 @@ namespace Syndra {
 
 	void Application::OnEvent(Event& e)
 	{
-		if (e.IsInCategory(EventCategoryApplication))
-		{
-			SN_CORE_WARN(e);
-		}
-		else
-		{
-			SN_CORE_INFO(e);
-		}
-
 		EventDispatcher dispatcher(e);
 		dispatcher.Dispatch<WindowCloseEvent>(SN_BIND_EVENT_FN(Application::OnWindowClose));
 
@@ -98,28 +39,24 @@ namespace Syndra {
 
 	void Application::Run()
 	{
-
 		while (m_Running)
 		{
-			RenderCommand::SetClearColor({ 0.0f, 0.5f, 0.7f, 1.0f });
-			RenderCommand::Clear();
+			float time = (float)glfwGetTime();
+			Timestep ts = time - m_lastFrameTime;
+			m_lastFrameTime = time;
 
-			Renderer::BeginScene();
+			if (!m_Minimized) {
+				for (Layer* layer : m_LayerStack) {
+					layer->OnUpdate(ts);
+				}
 
-			m_Shader->Bind();
-			Renderer::Submit(m_VertexArray);
-
-			Renderer::EndScene();
-
-			for (Layer* layer : m_LayerStack) {
-				layer->OnUpdate();
+				m_ImGuiLayer->Begin();
+				for (Layer* Layer : m_LayerStack)
+				{
+					Layer->OnImGuiRender();
+				}
+				m_ImGuiLayer->End();
 			}
-			m_ImGuiLayer->Begin();
-			for (Layer* Layer : m_LayerStack)
-			{
-				Layer->OnImGuiRender();
-			}
-			m_ImGuiLayer->End();
 
 			m_window->OnUpdate();
 		}
@@ -137,10 +74,27 @@ namespace Syndra {
 		layer->OnAttach();
 	}
 
+	void Application::Close()
+	{
+		SN_INFO("Application closed by user!");
+		m_Running = false;
+	}
+
 	bool Application::OnWindowClose(WindowCloseEvent& e)
 	{
 		m_Running = false;
 		return true;
+	}
+
+	bool Application::OnWindowResize(WindowResizeEvent& e)
+	{	
+		if (e.GetWidth() == 0 && e.GetHeight() == 0) {
+			m_Minimized = true;
+			return false;
+		}
+		m_Minimized = false;
+		Renderer::OnWindowResize(e.GetWidth(), e.GetHeight());
+		return false;
 	}
 
 }

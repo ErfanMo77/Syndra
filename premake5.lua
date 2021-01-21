@@ -1,6 +1,6 @@
 workspace "Syndra-Engine"
 	architecture "x64"
-	startproject "Sandbox" 
+	startproject "Syndra-Editor" 
 	configurations
 	{
 		"Debug",
@@ -11,14 +11,22 @@ workspace "Syndra-Engine"
 outputDir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 
 IncludeDir = {}
-IncludeDir["GLFW"] = "Syndra/vendor/GLFW/include"
-IncludeDir["Glad"] = "Syndra/vendor/Glad/include"
-IncludeDir["imgui"] = "Syndra/vendor/imgui"
-IncludeDir["glm"] = "Syndra/vendor/glm"
+IncludeDir["GLFW"] =  "%{wks.location}/Syndra/vendor/GLFW/include"
+IncludeDir["Glad"] =  "%{wks.location}/Syndra/vendor/Glad/include"
+IncludeDir["imgui"] = "%{wks.location}/Syndra/vendor/imgui"
+IncludeDir["glm"] = "%{wks.location}/Syndra/vendor/glm"
+IncludeDir["stb_image"] = "%{wks.location}/Syndra/vendor/stb_image"
+
+group "Dependencies"
+	include "Syndra/vendor/GLFW"
+	include "Syndra/vendor/Glad"
+	include "Syndra/vendor/imgui"
+group ""
 
 include "Syndra/vendor/GLFW"
 include "Syndra/vendor/Glad"
 include "Syndra/vendor/imgui"
+include "Syndra-Editor"
 
 project "Syndra"
 	location "Syndra"
@@ -34,12 +42,15 @@ project "Syndra"
 	pchsource "Syndra/src/lpch.cpp"
 	
 
+
 	files
 	{
 		"%{prj.name}/src/**.h",
 		"%{prj.name}/src/**.cpp",
-		"vendor/glm/glm/**.hpp",
-		"vendor/glm/glm/**.inl",
+		"%{prj.name}/vendor/glm/glm/**.hpp",
+		"%{prj.name}/vendor/glm/glm/**.inl",
+		"%{prj.name}/vendor/stb_image/**.h",
+		"%{prj.name}/vendor/stb_image/**.cpp"
 	}
 
 	includedirs
@@ -49,7 +60,8 @@ project "Syndra"
 		"%{IncludeDir.GLFW}",
 		"%{IncludeDir.Glad}",
 		"%{IncludeDir.imgui}",
-		"%{IncludeDir.glm}"
+		"%{IncludeDir.glm}",
+		"%{IncludeDir.stb_image}"
 	}
 
 	links
@@ -59,6 +71,8 @@ project "Syndra"
 		"imgui",
 		"opengl32.lib"
 	}
+	
+
 
 	filter "system:windows"
 		cppdialect "C++latest"
@@ -67,8 +81,6 @@ project "Syndra"
 
 	defines
 	{
-		"SN_PLATFORM_WINDOWS",
-		"SYNDRA_BUILD_DLL",
 		"GLFW_INCLUDE_NONE"
 	}
 
@@ -117,11 +129,6 @@ project "Sandbox"
 	filter "system:windows"
 		staticruntime "on"
 		systemversion "latest"
-
-	defines
-	{
-		"SN_PLATFORM_WINDOWS"
-	}
 
 	filter "configurations:Debug"
 		defines "SN_DEBUG"

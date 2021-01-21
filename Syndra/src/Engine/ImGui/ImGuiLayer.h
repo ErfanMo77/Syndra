@@ -21,8 +21,13 @@ namespace Syndra {
 		void Begin();
 		void End();
 		
+		void SetDarkThemeColors();
+		void SetBlockEvents(bool blockEvents) { m_BlockEvents = blockEvents; }
 		
+		virtual void OnEvent(Event& event) override;
+
 	private:
+		bool m_BlockEvents = true;
 		float m_time;
 	};
 
