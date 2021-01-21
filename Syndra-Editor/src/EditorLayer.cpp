@@ -178,22 +178,24 @@ namespace Syndra {
 		//SN_INFO("Delta time : {0}ms", ts.GetMilliseconds());
 		RenderCommand::SetClearColor(glm::vec4(m_ClearColor,1.0f));
 		RenderCommand::Clear();
-		m_Camera->OnUpdate(ts);
+
+		if (m_ViewportFocused) {
+			m_Camera->OnUpdate(ts);
+		}
 		Renderer::BeginScene(*m_Camera);
 
 		auto difShader = m_Shaders.Get("diffuse");
-		glm::mat4 trans = glm::translate(glm::mat4(1), glm::vec3(0));
-		trans = glm::scale(trans, m_Scale);
+		glm::mat4 trans;
+		trans = glm::scale(glm::mat4(1), m_Scale);
 		difShader->Bind();
 		m_Texture->Bind(0);
 		difShader->SetMat4("u_trans", trans);
 		difShader->SetFloat3("cameraPos", m_Camera->GetPosition());
 		difShader->SetFloat3("lightPos", m_Camera->GetPosition());
 		difShader->SetFloat3("cubeCol", m_CubeColor);
-		//glEnable(GL_CULL_FACE);
-		glEnable(GL_DEPTH_TEST);
+
 		Renderer::Submit(difShader, m_VertexArray);
-		difShader->Unbind();
+
 		Renderer::EndScene();
 		m_OffScreenFB->Unbind();
 
@@ -289,7 +291,11 @@ namespace Syndra {
 		//----------------------------------------------Viewport----------------------------------------//
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{ 0, 0 });
 		ImGui::Begin("Viewport");
-		
+
+		m_ViewportFocused = ImGui::IsWindowFocused();
+		m_ViewportHovered = ImGui::IsWindowHovered();
+		Application::Get().GetImGuiLayer()->SetBlockEvents(!m_ViewportFocused || !m_ViewportHovered);
+
 		ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
 
 		m_ViewportSize = { viewportPanelSize.x, viewportPanelSize.y };

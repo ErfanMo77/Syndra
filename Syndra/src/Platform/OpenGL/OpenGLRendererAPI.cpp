@@ -16,7 +16,7 @@ namespace Syndra {
 		switch (severity)
 		{
 		case GL_DEBUG_SEVERITY_HIGH:         SN_CORE_ERROR(message); return;
-		case GL_DEBUG_SEVERITY_MEDIUM:       SN_CORE_ERROR(message); return;
+		case GL_DEBUG_SEVERITY_MEDIUM:       SN_CORE_INFO(message); return;
 		case GL_DEBUG_SEVERITY_LOW:          SN_CORE_WARN(message); return;
 		case GL_DEBUG_SEVERITY_NOTIFICATION: SN_CORE_TRACE(message); return;
 		}

@@ -24,6 +24,9 @@ namespace Syndra {
 		Ref<Texture2D> m_Texture,m_ScreenTex;
 		PerspectiveCamera* m_Camera;
 
+		bool m_ViewportFocused = false;
+		bool m_ViewportHovered = false;
+
 		glm::vec2 m_ViewportSize = { 200.0f,200.0f};
 		glm::vec3 m_CubeColor = { 1.0f,1.0f,1.0f };
 		glm::vec3 m_Scale = { 1.0f,1.0f,1.0f };

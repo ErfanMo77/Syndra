@@ -23,6 +23,8 @@ namespace Syndra {
 
 		static Application& Get() { return *s_Instance; }
 		Window& GetWindow() { return *m_window; }
+		ImGuiLayer* GetImGuiLayer() const { return m_ImGuiLayer; }
+
 		void Close();
 
 	private:
