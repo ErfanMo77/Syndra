@@ -13,4 +13,4 @@ Then, you can execute GenerateProjects.bat to generate visual studio solution fi
 
 ## Authors
 
-* **Erfan Momeni** - *Initial work* - [erfanmo](https://github.com/ErfanMo77)
+* **Erfan Momeni** - [erfanmo](https://github.com/ErfanMo77)
