@@ -1,5 +1,5 @@
 # Syndra Engine
-Syndra is an early-stage 3D real-time rendering engine being developed for windows platform. tutorials.
+Syndra is an early-stage 3D real-time rendering engine being developed for windows platform.
 
 ## Motivation
 Syndra is my university final year project and I wanted to study how to build 3d game engines.
@@ -19,4 +19,4 @@ Then, you can execute GenerateProjects.bat to generate visual studio solution fi
 * **Erfan Momeni** - [erfanmo](https://github.com/ErfanMo77)
 
 ## Acknowledgments
-[The Cherno](https://www.youtube.com/channel/UCQ-W1KE9EYfdxhL6S4twUNw) game engine 
+[The Cherno](https://www.youtube.com/channel/UCQ-W1KE9EYfdxhL6S4twUNw) game engine series
