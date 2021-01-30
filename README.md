@@ -2,7 +2,7 @@
 Syndra is an early-stage 3D real-time rendering engine being developed for windows platform.
 
 ## Motivation
-Syndra is my university final year project and I wanted to study how to build 3d game engines.
+Syndra is my university's final year project and I wanted to study how to build 3d game engines.
 
 ## Getting Syndra
 Syndra only supports windows for now.
