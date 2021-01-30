@@ -10,3 +10,7 @@ Start by cloning the repository with `git clone --recursive https://github.com/E
 If the repository was cloned non-recursively previously, use `git submodule update --init` to clone the necessary submodules.
 
 Then, you can execute GenerateProjects.bat to generate visual studio solution file.
+
+## Authors
+
+* **Erfan Momeni** - *Initial work* - [erfanmo](https://github.com/ErfanMo77)
