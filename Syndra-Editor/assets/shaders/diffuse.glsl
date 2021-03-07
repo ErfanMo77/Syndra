@@ -43,5 +43,5 @@ void main(){
 	vec3 color = vec3(texture(u_Texture,v_uv));
 	vec3 result = (diff+0.2)*color;
 	
-	fragColor = vec4(norm * cubeCol,1.0);
+	fragColor = vec4(result*cubeCol,1.0);
 }

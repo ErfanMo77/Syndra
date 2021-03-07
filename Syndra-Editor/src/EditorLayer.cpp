@@ -21,6 +21,8 @@ namespace Syndra {
 
 	void EditorLayer::OnAttach()
 	{
+		m_ActiveScene = CreateRef<Scene>();
+
 		m_VertexArray = VertexArray::Create();
 		m_QuadVA = VertexArray::Create();
 
@@ -152,11 +154,13 @@ namespace Syndra {
 
 		auto& app = Application::Get();
 		m_Camera->SetViewportSize((float)app.GetWindow().GetWidth(), (float)app.GetWindow().GetHeight());
+		//Example
+		auto cubeEntity = m_ActiveScene->CreateEntity("cube1");
 	}
 
 	void EditorLayer::OnDetach()
 	{
-
+		
 	}
 
 	void EditorLayer::OnUpdate(Timestep ts)
@@ -173,6 +177,8 @@ namespace Syndra {
 		if (Input::IsKeyPressed(Key::Escape)) {
 			Application::Get().Close();
 		}
+
+		m_ActiveScene->OnUpdateEditor(ts,*m_Camera);
 
 		m_OffScreenFB->Bind();
 		//SN_INFO("Delta time : {0}ms", ts.GetMilliseconds());

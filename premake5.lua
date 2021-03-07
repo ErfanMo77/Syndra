@@ -16,6 +16,7 @@ IncludeDir["Glad"] =  "%{wks.location}/Syndra/vendor/Glad/include"
 IncludeDir["imgui"] = "%{wks.location}/Syndra/vendor/imgui"
 IncludeDir["glm"] = "%{wks.location}/Syndra/vendor/glm"
 IncludeDir["stb_image"] = "%{wks.location}/Syndra/vendor/stb_image"
+IncludeDir["entt"] = "%{wks.location}/Syndra/vendor/entt/Include"
 
 group "Dependencies"
 	include "Syndra/vendor/GLFW"
@@ -61,7 +62,8 @@ project "Syndra"
 		"%{IncludeDir.Glad}",
 		"%{IncludeDir.imgui}",
 		"%{IncludeDir.glm}",
-		"%{IncludeDir.stb_image}"
+		"%{IncludeDir.stb_image}",
+		"%{IncludeDir.entt}"
 	}
 
 	links

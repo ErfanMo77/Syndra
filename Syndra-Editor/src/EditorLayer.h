@@ -17,6 +17,9 @@ namespace Syndra {
 
 	private:
 		ShaderLibrary m_Shaders;
+
+		Ref<Scene> m_ActiveScene;
+
 		Ref<VertexArray> m_VertexArray,m_QuadVA;
 		Ref<VertexBuffer> m_VertexBuffer,m_QuadVB;
 		Ref<FrameBuffer> m_OffScreenFB,m_PostprocFB;
