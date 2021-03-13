@@ -118,7 +118,9 @@ namespace Syndra{
 		m_Distance -= delta * ZoomSpeed();
 		if (m_Distance < 1.0f)
 		{
-			m_FocalPoint += GetForwardDirection();
+			if (m_FocalPoint.z > 0.0) {
+				m_FocalPoint += GetForwardDirection();
+			}
 			m_Distance = 1.0f;
 		}
 	}

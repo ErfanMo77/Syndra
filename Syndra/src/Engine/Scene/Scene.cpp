@@ -36,16 +36,17 @@ namespace Syndra {
 	void Scene::OnUpdateEditor(Timestep ts, PerspectiveCamera& camera)
 	{
 		//TODO
-		auto group = m_Registry.group<TransformComponent>(entt::get<TagComponent>);
-		for (auto ent : group)
+		auto view = m_Registry.view<TransformComponent,TagComponent>();
+		for (auto ent : view)
 		{
-			auto tag = m_Registry.get<TagComponent>(ent);
+			auto tag = view.get<TagComponent>(ent);
 			//SN_CORE_TRACE("Entity with ID :{0} and tag name : {1}", ent, tag.Tag);
 		}
 	}
 
 	void Scene::OnViewportResize(uint32_t width, uint32_t height)
 	{
+
 	}
 
 }
