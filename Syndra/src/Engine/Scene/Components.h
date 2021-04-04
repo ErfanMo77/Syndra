@@ -6,6 +6,7 @@
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/quaternion.hpp>
 
+#include "Engine/Scene/SceneCamera.h"
 
 namespace Syndra {
 
@@ -38,6 +39,16 @@ namespace Syndra {
 				* rotation
 				* glm::scale(glm::mat4(1.0f), Scale);
 		}
+	};
+
+	struct CameraComponent
+	{
+		SceneCamera Camera;
+		bool Primary = true;
+		bool FixedAspectRatio = false;
+
+		CameraComponent() = default;
+		CameraComponent(const CameraComponent&) = default;
 	};
 
 }
