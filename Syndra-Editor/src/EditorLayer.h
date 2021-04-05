@@ -1,5 +1,6 @@
 #pragma once
 #include <Engine.h>
+#include "UI/ScenePanel.h"
 
 namespace Syndra {
 
@@ -25,6 +26,7 @@ namespace Syndra {
 		Ref<FrameBuffer> m_OffScreenFB,m_PostprocFB;
 		Ref<IndexBuffer> m_IndexBuffer,m_QuadIB;
 		Ref<Texture2D> m_Texture,m_ScreenTex;
+		Ref<ScenePanel> m_ScenePanel;
 		PerspectiveCamera* m_Camera;
 
 		bool m_ViewportFocused = false;

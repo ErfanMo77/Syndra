@@ -22,6 +22,7 @@ namespace Syndra {
 	void EditorLayer::OnAttach()
 	{
 		m_ActiveScene = CreateRef<Scene>();
+		m_ScenePanel = CreateRef<ScenePanel>(m_ActiveScene);
 
 		m_VertexArray = VertexArray::Create();
 		m_QuadVA = VertexArray::Create();
@@ -156,6 +157,7 @@ namespace Syndra {
 		m_Camera->SetViewportSize((float)app.GetWindow().GetWidth(), (float)app.GetWindow().GetHeight());
 		//Example
 		auto cubeEntity = m_ActiveScene->CreateEntity("cube1");
+		auto cubeEntity2 = m_ActiveScene->CreateEntity("cube2");
 	}
 
 	void EditorLayer::OnDetach()
@@ -179,42 +181,43 @@ namespace Syndra {
 		}
 
 		m_ActiveScene->OnUpdateEditor(ts,*m_Camera);
-
-		m_OffScreenFB->Bind();
-		//SN_INFO("Delta time : {0}ms", ts.GetMilliseconds());
-		RenderCommand::SetClearColor(glm::vec4(m_ClearColor,1.0f));
-		RenderCommand::Clear();
-
 		if (m_ViewportFocused) {
+			m_OffScreenFB->Bind();
+		//SN_INFO("Delta time : {0}ms", ts.GetMilliseconds());
+			RenderCommand::SetClearColor(glm::vec4(m_ClearColor,1.0f));
+			RenderCommand::Clear();
+
+		
 			m_Camera->OnUpdate(ts);
+
+			Renderer::BeginScene(*m_Camera);
+
+			auto difShader = m_Shaders.Get("diffuse");
+			glm::mat4 trans;
+			trans = glm::scale(glm::mat4(1), m_Scale);
+			difShader->Bind();
+			m_Texture->Bind(0);
+			difShader->SetMat4("u_trans", trans);
+			difShader->SetFloat3("cameraPos", m_Camera->GetPosition());
+			difShader->SetFloat3("lightPos", m_Camera->GetPosition());
+			difShader->SetFloat3("cubeCol", m_CubeColor);
+
+			Renderer::Submit(difShader, m_VertexArray);
+
+			Renderer::EndScene();
+			m_OffScreenFB->Unbind();
+
+			auto postProcShader = m_Shaders.Get("aa");
+			m_PostprocFB->Bind();
+			glDisable(GL_DEPTH_TEST);
+			//glDisable(GL_CULL_FACE);
+			postProcShader->Bind();
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, m_OffScreenFB->GetColorAttachmentRendererID());
+			m_QuadVA->Bind();
+			glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+			m_PostprocFB->Unbind();
 		}
-		Renderer::BeginScene(*m_Camera);
-
-		auto difShader = m_Shaders.Get("diffuse");
-		glm::mat4 trans;
-		trans = glm::scale(glm::mat4(1), m_Scale);
-		difShader->Bind();
-		m_Texture->Bind(0);
-		difShader->SetMat4("u_trans", trans);
-		difShader->SetFloat3("cameraPos", m_Camera->GetPosition());
-		difShader->SetFloat3("lightPos", m_Camera->GetPosition());
-		difShader->SetFloat3("cubeCol", m_CubeColor);
-
-		Renderer::Submit(difShader, m_VertexArray);
-
-		Renderer::EndScene();
-		m_OffScreenFB->Unbind();
-
-		auto postProcShader = m_Shaders.Get("aa");
-		m_PostprocFB->Bind();
-		glDisable(GL_DEPTH_TEST);
-		//glDisable(GL_CULL_FACE);
-		postProcShader->Bind();
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D_MULTISAMPLE,m_OffScreenFB->GetColorAttachmentRendererID());
-		m_QuadVA->Bind();
-		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
-		m_PostprocFB->Unbind();
 	}
 
 	void EditorLayer::OnImGuiRender()
@@ -274,18 +277,24 @@ namespace Syndra {
 		{
 			if (ImGui::BeginMenu("File"))
 			{
+				if (ImGui::MenuItem("Save")) {
+					//TODO
+				}
 				if (ImGui::MenuItem("Exit"))
 				{
 					Application::Get().Close();
 				}
+
 				ImGui::EndMenu();
 			}
 			ImGui::EndMenuBar();
 		}
 
+		m_ScenePanel->OnImGuiRender();
 
 		ImGui::Begin("Scene");
 		
+
 		ImGui::ColorEdit3("cube color", glm::value_ptr(m_CubeColor));
 		ImGui::ColorEdit3("clear color", glm::value_ptr(m_ClearColor));
 		ImGui::End();
