@@ -287,6 +287,10 @@ namespace Syndra {
 
 				ImGui::EndMenu();
 			}
+
+			if (ImGui::BeginMenu("View")) {
+				//TODO : showing different tabs
+			}
 			ImGui::EndMenuBar();
 		}
 
@@ -307,6 +311,7 @@ namespace Syndra {
 		ImGui::Text("%d active windows (%d visible)", io.MetricsActiveWindows, io.MetricsRenderWindows);
 		ImGui::Text("%d active allocations", io.MetricsActiveAllocations);
 		ImGui::End();
+
 		//----------------------------------------------Viewport----------------------------------------//
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{ 0, 0 });
 		ImGui::Begin("Viewport");
@@ -327,6 +332,30 @@ namespace Syndra {
 		ImGui::PopStyleVar();
 
 		ImGui::End();
+
+
+		//-----------------------------------------------Editor camera settings-------------------------------------//
+		static bool camerSettings = true;
+		if (camerSettings) {
+			ImGui::Begin("Camera settings", &camerSettings);
+			//Fov
+			float fov = m_Camera->GetFOV();
+			if (ImGui::SliderFloat("Fov", &fov, 10, 180)) {
+				m_Camera->SetFov(fov);
+			}
+			ImGui::Separator();
+			//near-far clip
+			float nearClip = m_Camera->GetNear();
+			float farClip = m_Camera->GetFar();
+			if (ImGui::SliderFloat("Far clip", &farClip , 10, 10000)) {
+				m_Camera->SetFarClip(farClip);
+			}
+			ImGui::Separator();
+			if (ImGui::SliderFloat("Near clip", &nearClip, 0.0001, 1)) {
+				m_Camera->SetNearClip(nearClip);
+			}
+			ImGui::End();
+		}
 	}
 
 	void EditorLayer::OnEvent(Event& event)

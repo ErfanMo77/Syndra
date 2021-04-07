@@ -34,6 +34,15 @@ namespace Syndra {
 
 		float GetPitch() const { return m_Pitch; }
 		float GetYaw() const { return m_Yaw; }
+
+		float GetFOV() { return m_FOV; }
+		void SetFov(float fov) { m_FOV = fov; UpdateProjection(); }
+
+		float GetNear() { return m_NearClip; }
+		void SetNearClip(float nearClip) { m_NearClip = nearClip; UpdateProjection(); }
+
+		float GetFar() { return m_FarClip; }
+		void SetFarClip(float farClip) { m_FarClip = farClip; UpdateProjection(); }
 	private:
 		void UpdateProjection();
 		void UpdateView();

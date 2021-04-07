@@ -115,12 +115,12 @@ namespace  Syndra {
 		//colors[ImGuiCol_Tab] = ImVec4{ 0.15f, 0.1505f, 0.151f, 1.0f };
 		//colors[ImGuiCol_TabHovered] = ImVec4{ 0.38f, 0.3805f, 0.381f, 1.0f };
 		//colors[ImGuiCol_TabActive] = ImVec4{ 0.28f, 0.2805f, 0.281f, 1.0f };
-		//colors[ImGuiCol_TabUnfocused] = ImVec4{ 0.15f, 0.1505f, 0.151f, 1.0f };
-		//colors[ImGuiCol_TabUnfocusedActive] = ImVec4{ 0.2f, 0.205f, 0.21f, 1.0f };
+		colors[ImGuiCol_TabUnfocused] = ImVec4{ 0.282f, 0.077f, 0.389f, 0.972f };
+		colors[ImGuiCol_TabUnfocusedActive] = ImVec4{ 0.480f, 0.000f, 0.791f, 1.000f };
 
 		//// Title
-		//colors[ImGuiCol_TitleBg] = ImVec4{ 0.15f, 0.1505f, 0.151f, 1.0f };
-		//colors[ImGuiCol_TitleBgActive] = ImVec4{ 0.15f, 0.1505f, 0.151f, 1.0f };
+		colors[ImGuiCol_TitleBg] = ImVec4{ 0.550f, 0.550f, 0.550f, 1.000f };
+		colors[ImGuiCol_TitleBgActive] = ImVec4{ 0.663f, 0.000f, 1.000f, 1.000f };
 		//colors[ImGuiCol_TitleBgCollapsed] = ImVec4{ 0.15f, 0.1505f, 0.151f, 1.0f };
 	}
 
