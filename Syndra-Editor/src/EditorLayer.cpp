@@ -299,7 +299,14 @@ namespace Syndra {
 		ImGui::ColorEdit3("clear color", glm::value_ptr(m_ClearColor));
 		ImGui::End();
 
-
+		//----------------------------------------------Renderer info-----------------------------------//
+		ImGui::Begin("Renderer info");
+		ImGui::Text(RenderCommand::GetInfo().c_str());
+		ImGui::Text("\nApplication average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
+		ImGui::Text("%d vertices, %d indices (%d triangles)", io.MetricsRenderVertices, io.MetricsRenderIndices, io.MetricsRenderIndices / 3);
+		ImGui::Text("%d active windows (%d visible)", io.MetricsActiveWindows, io.MetricsRenderWindows);
+		ImGui::Text("%d active allocations", io.MetricsActiveAllocations);
+		ImGui::End();
 		//----------------------------------------------Viewport----------------------------------------//
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{ 0, 0 });
 		ImGui::Begin("Viewport");

@@ -21,7 +21,7 @@ namespace Syndra {
 		//---------------------------------------------Scene hierarchy-------------------------------//
 		ImGui::Begin("Scene hierarchy");
 
-		for (auto ent:m_Context->m_Entities)
+		for (auto& ent:m_Context->m_Entities)
 		{
 			DrawEntity(*ent);
 		}
@@ -63,20 +63,20 @@ namespace Syndra {
 			m_SelectionContext = entity;
 		}
 
-		for (int n = 0; n < m_Context->m_Entities.size(); n++)
-		{
-			auto item = m_Context->m_Entities[n];
-			if (ImGui::IsItemActive() && !ImGui::IsItemHovered())
-			{
-				int n_next = n + (ImGui::GetMouseDragDelta(0).y < 0.f ? -1 : 1);
-				if (n_next >= 0 && n_next < m_Context->m_Entities.size())
-				{
-					m_Context->m_Entities[n] = m_Context->m_Entities[n_next];
-					m_Context->m_Entities[n_next] = item;
-					ImGui::ResetMouseDragDelta();
-				}
-			}
-		}
+		//for (int n = 0; n < m_Context->m_Entities.size(); n++)
+		//{
+		//	auto& item = m_Context->m_Entities[n];
+		//	if (ImGui::IsItemActive() && !ImGui::IsItemHovered())
+		//	{
+		//		int n_next = n + (ImGui::GetMouseDragDelta(0).y < 0.f ? -1 : 1);
+		//		if (n_next >= 0 && n_next < m_Context->m_Entities.size())
+		//		{
+		//			m_Context->m_Entities[n] = m_Context->m_Entities[n_next];
+		//			m_Context->m_Entities[n_next] = item;
+		//			ImGui::ResetMouseDragDelta();
+		//		}
+		//	}
+		//}
 
 		if (opened) {
 			ImGui::TreePop();
@@ -94,8 +94,7 @@ namespace Syndra {
 				char buffer[256];
 				memset(buffer, 0, sizeof(buffer));
 				strcpy_s(buffer, tag.c_str());
-
-				if (ImGui::InputText("", buffer, sizeof(buffer))) {
+				if (ImGui::InputText("tag", buffer, sizeof(buffer))) {
 					tag = std::string(buffer);
 				}
 

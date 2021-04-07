@@ -30,6 +30,11 @@ namespace Syndra {
 		{
 			s_RendererAPI->DrawIndexed(vertexArray);
 		}
+
+		static std::string GetInfo() 
+		{
+			return s_RendererAPI->GetRendererInfo();
+		}
 	private:
 		static RendererAPI* s_RendererAPI;
 
