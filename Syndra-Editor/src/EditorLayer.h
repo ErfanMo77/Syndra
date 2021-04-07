@@ -20,6 +20,7 @@ namespace Syndra {
 		ShaderLibrary m_Shaders;
 
 		Ref<Scene> m_ActiveScene;
+		Entity m_CubeEntity;
 
 		Ref<VertexArray> m_VertexArray,m_QuadVA;
 		Ref<VertexBuffer> m_VertexBuffer,m_QuadVB;

@@ -18,6 +18,7 @@ namespace Syndra {
 
 	private:
 		void DrawEntity(Entity entity);
+		void DrawComponents(Entity entity);
 
 	private:
 		Ref<Scene> m_Context;

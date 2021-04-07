@@ -20,6 +20,7 @@ namespace Syndra {
 		auto& tag = entity.AddComponent<TagComponent>();
 		tag.Tag = name.empty() ? "Entity" : name;
 		entity.AddComponent<TransformComponent>();
+		m_Entities.push_back(CreateRef<Entity>(entity));
 		return entity;
 	}
 
