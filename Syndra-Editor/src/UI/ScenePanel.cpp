@@ -16,8 +16,9 @@ namespace Syndra {
 
 	void ScenePanel::OnImGuiRender()
 	{
-		ImGui::ShowDemoWindow();
-
+		ImGui::Begin("Style editor");
+		ImGui::ShowStyleEditor();
+		ImGui::End();
 		//---------------------------------------------Scene hierarchy-------------------------------//
 		ImGui::Begin("Scene hierarchy");
 
@@ -105,6 +106,8 @@ namespace Syndra {
 			}
 		}
 	
+		ImGui::Separator();
+
 		if (entity.HasComponent<TransformComponent>()) {
 
 			if (ImGui::TreeNodeEx((void*)typeid(TransformComponent).hash_code(), ImGuiTreeNodeFlags_DefaultOpen, "Transform")){
@@ -112,12 +115,13 @@ namespace Syndra {
 				auto& scale = entity.GetComponent<TransformComponent>().Scale;
 				auto& rot = entity.GetComponent<TransformComponent>().Rotation;
 
+				
 
 				ImGui::TextColored(ImVec4(.8f, .1f, .5f, 1.0f), "Position");
 				ImGui::DragFloat3("", glm::value_ptr(translate), 0.1f);
 
 				ImGui::TextColored(ImVec4(.8f, .1f, .5f, 1.0f), "Rotation");
-				ImGui::DragFloat3("1", glm::value_ptr(rot), 0.5f, 0, 180);
+				ImGui::DragFloat3("1", glm::value_ptr(rot), 0.1f);
 
 				ImGui::TextColored(ImVec4(.8f, .1f, .5f, 1.0f), "Scale");
 				ImGui::DragFloat3("2", glm::value_ptr(scale), 0.1f);

@@ -12,6 +12,7 @@ namespace Syndra {
 		:Layer("Editor Layer")
 	{
 		m_Camera = new PerspectiveCamera(45.0f, 1.66f, 0.1f, 1000.0f);
+		m_Info = RenderCommand::GetInfo();
 	}
 
 	EditorLayer::~EditorLayer()
@@ -290,22 +291,24 @@ namespace Syndra {
 
 			if (ImGui::BeginMenu("View")) {
 				//TODO : showing different tabs
+				if (ImGui::MenuItem("Scene hierarchy")) {
+					//TODO
+				}
+				ImGui::EndMenu();
 			}
 			ImGui::EndMenuBar();
 		}
 
 		m_ScenePanel->OnImGuiRender();
 
-		ImGui::Begin("Scene");
-		
-
+		ImGui::Begin("Scene settings");
 		ImGui::ColorEdit3("cube color", glm::value_ptr(m_CubeColor));
 		ImGui::ColorEdit3("clear color", glm::value_ptr(m_ClearColor));
 		ImGui::End();
 
 		//----------------------------------------------Renderer info-----------------------------------//
 		ImGui::Begin("Renderer info");
-		ImGui::Text(RenderCommand::GetInfo().c_str());
+		ImGui::Text(m_Info.c_str());
 		ImGui::Text("\nApplication average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
 		ImGui::Text("%d vertices, %d indices (%d triangles)", io.MetricsRenderVertices, io.MetricsRenderIndices, io.MetricsRenderIndices / 3);
 		ImGui::Text("%d active windows (%d visible)", io.MetricsActiveWindows, io.MetricsRenderWindows);
@@ -351,7 +354,7 @@ namespace Syndra {
 				m_Camera->SetFarClip(farClip);
 			}
 			ImGui::Separator();
-			if (ImGui::SliderFloat("Near clip", &nearClip, 0.0001, 1)) {
+			if (ImGui::SliderFloat("Near clip", &nearClip, 0.0001f, 1)) {
 				m_Camera->SetNearClip(nearClip);
 			}
 			ImGui::End();
