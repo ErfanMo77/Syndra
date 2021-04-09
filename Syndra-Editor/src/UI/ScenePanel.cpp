@@ -2,6 +2,7 @@
 #include "ScenePanel.h"
 
 #include <imgui/imgui.h>
+#include <imgui/imgui_internal.h>
 
 #include <glm/gtc/type_ptr.hpp>
 
@@ -51,6 +52,74 @@ namespace Syndra {
 			
 		}
 		ImGui::End();
+	}
+
+	void DrawVec3Control(const std::string& label, glm::vec3& values, float resetValue = 0.0f, float columnWidth = 100.0f)
+	{
+		ImGuiIO& io = ImGui::GetIO();
+		auto boldFont = io.Fonts->Fonts[0];
+
+		ImGui::PushID(label.c_str());
+
+		ImGui::Columns(2);
+		ImGui::SetColumnWidth(0, columnWidth);
+		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{ 0, 5 });
+		ImGui::Text(label.c_str());
+		ImGui::PopStyleVar();
+		ImGui::NextColumn();
+
+		ImGui::PushMultiItemsWidths(3, ImGui::CalcItemWidth());
+		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{ 0, 5 });
+
+		float lineHeight = GImGui->Font->FontSize + GImGui->Style.FramePadding.y * 2.0f;
+		ImVec2 buttonSize = { lineHeight + 3.0f, lineHeight };
+
+		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.8f, 0.1f, 0.15f, 1.0f });
+		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{ 0.9f, 0.2f, 0.2f, 1.0f });
+		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{ 0.8f, 0.1f, 0.15f, 1.0f });
+		ImGui::PushFont(boldFont);
+		if (ImGui::Button("X", buttonSize))
+			values.x = resetValue;
+		ImGui::PopFont();
+		ImGui::PopStyleColor(3);
+
+		ImGui::SameLine();
+		ImGui::DragFloat("##X", &values.x, 0.1f, 0.0f, 0.0f, "%.2f");
+		ImGui::PopItemWidth();
+		ImGui::SameLine();
+
+		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.2f, 0.7f, 0.2f, 1.0f });
+		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{ 0.3f, 0.8f, 0.3f, 1.0f });
+		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{ 0.2f, 0.7f, 0.2f, 1.0f });
+		ImGui::PushFont(boldFont);
+		if (ImGui::Button("Y", buttonSize))
+			values.y = resetValue;
+		ImGui::PopFont();
+		ImGui::PopStyleColor(3);
+
+		ImGui::SameLine();
+		ImGui::DragFloat("##Y", &values.y, 0.1f, 0.0f, 0.0f, "%.2f");
+		ImGui::PopItemWidth();
+		ImGui::SameLine();
+
+		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.1f, 0.25f, 0.8f, 1.0f });
+		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{ 0.2f, 0.35f, 0.9f, 1.0f });
+		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{ 0.1f, 0.25f, 0.8f, 1.0f });
+		ImGui::PushFont(boldFont);
+		if (ImGui::Button("Z", buttonSize))
+			values.z = resetValue;
+		ImGui::PopFont();
+		ImGui::PopStyleColor(3);
+
+		ImGui::SameLine();
+		ImGui::DragFloat("##Z", &values.z, 0.1f, 0.0f, 0.0f, "%.2f");
+		ImGui::PopItemWidth();
+
+		ImGui::PopStyleVar();
+
+		ImGui::Columns(1);
+
+		ImGui::PopID();
 	}
 
 	void ScenePanel::DrawEntity(Entity entity)
@@ -109,27 +178,26 @@ namespace Syndra {
 		ImGui::Separator();
 
 		if (entity.HasComponent<TransformComponent>()) {
-
+			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2{ 5,5 });
 			if (ImGui::TreeNodeEx((void*)typeid(TransformComponent).hash_code(), ImGuiTreeNodeFlags_DefaultOpen, "Transform")){
+				ImGui::PopStyleVar();
 				auto& translate = entity.GetComponent<TransformComponent>().Translation;
 				auto& scale = entity.GetComponent<TransformComponent>().Scale;
 				auto& rot = entity.GetComponent<TransformComponent>().Rotation;
 
-				
-
-				ImGui::TextColored(ImVec4(.8f, .1f, .5f, 1.0f), "Position");
-				ImGui::DragFloat3("", glm::value_ptr(translate), 0.1f);
-
-				ImGui::TextColored(ImVec4(.8f, .1f, .5f, 1.0f), "Rotation");
-				ImGui::DragFloat3("1", glm::value_ptr(rot), 0.1f);
-
-				ImGui::TextColored(ImVec4(.8f, .1f, .5f, 1.0f), "Scale");
-				ImGui::DragFloat3("2", glm::value_ptr(scale), 0.1f);
+				DrawVec3Control("Translation", translate);
+				ImGui::Separator();
+				DrawVec3Control("Rotation", rot);
+				ImGui::Separator();
+				DrawVec3Control("Scale", scale,1);
 
 				ImGui::TreePop();
+				
 			}
 
 		}
 	}
+
+	
 
 }
