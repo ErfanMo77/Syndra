@@ -1,5 +1,6 @@
 #pragma once
 #include <Engine.h>
+#include "UI/ScenePanel.h"
 
 namespace Syndra {
 
@@ -17,12 +18,19 @@ namespace Syndra {
 
 	private:
 		ShaderLibrary m_Shaders;
+
+		Ref<Scene> m_ActiveScene;
+		Entity m_CubeEntity;
+
 		Ref<VertexArray> m_VertexArray,m_QuadVA;
 		Ref<VertexBuffer> m_VertexBuffer,m_QuadVB;
 		Ref<FrameBuffer> m_OffScreenFB,m_PostprocFB;
 		Ref<IndexBuffer> m_IndexBuffer,m_QuadIB;
 		Ref<Texture2D> m_Texture,m_ScreenTex;
+		Ref<ScenePanel> m_ScenePanel;
 		PerspectiveCamera* m_Camera;
+
+		std::string m_Info;
 
 		bool m_ViewportFocused = false;
 		bool m_ViewportHovered = false;
@@ -30,6 +38,6 @@ namespace Syndra {
 		glm::vec2 m_ViewportSize = { 200.0f,200.0f};
 		glm::vec3 m_CubeColor = { 1.0f,1.0f,1.0f };
 		glm::vec3 m_Scale = { 1.0f,1.0f,1.0f };
-		glm::vec3 m_ClearColor = { 0.1f, 0.1f, 0.1f };
+		glm::vec3 m_ClearColor = { 0.196f, 0.196f, 0.196f };
 	};
 }

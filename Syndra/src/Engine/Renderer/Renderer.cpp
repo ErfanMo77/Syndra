@@ -28,4 +28,9 @@ namespace Syndra {
 		RenderCommand::SetViewport(0, 0, width, height);
 	}
 
+	std::string Renderer::RendererInfo()
+	{
+		return RenderCommand::GetInfo();
+	}
+
 }

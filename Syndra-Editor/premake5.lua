@@ -20,7 +20,8 @@ project "Syndra-Editor"
 		"%{wks.location}/Syndra/vendor",
 		"%{IncludeDir.glm}",
 		"%{IncludeDir.imgui}",
-		"%{IncludeDir.Glad}"
+		"%{IncludeDir.Glad}",
+		"%{IncludeDir.entt}"
 	}
 
 	links

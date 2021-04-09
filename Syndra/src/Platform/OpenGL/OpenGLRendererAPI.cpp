@@ -64,4 +64,13 @@ namespace Syndra {
 		glViewport(x, y, width, height);
 	}
 
+	std::string OpenGLRendererAPI::GetRendererInfo()
+	{
+		std::string info{};
+		info += "Driver: " + std::string((char*)glGetString(GL_VENDOR)) + "\n";
+		info += "Renderer: " + std::string((char*)glGetString(GL_RENDERER))+ "\n";
+		info += "Version: " + std::string((char*)glGetString(GL_VERSION));
+		return info;
+	}
+
 }

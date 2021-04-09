@@ -12,6 +12,7 @@ namespace Syndra {
 		:Layer("Editor Layer")
 	{
 		m_Camera = new PerspectiveCamera(45.0f, 1.66f, 0.1f, 1000.0f);
+		m_Info = RenderCommand::GetInfo();
 	}
 
 	EditorLayer::~EditorLayer()
@@ -21,6 +22,9 @@ namespace Syndra {
 
 	void EditorLayer::OnAttach()
 	{
+		m_ActiveScene = CreateRef<Scene>();
+		m_ScenePanel = CreateRef<ScenePanel>(m_ActiveScene);
+
 		m_VertexArray = VertexArray::Create();
 		m_QuadVA = VertexArray::Create();
 
@@ -152,11 +156,14 @@ namespace Syndra {
 
 		auto& app = Application::Get();
 		m_Camera->SetViewportSize((float)app.GetWindow().GetWidth(), (float)app.GetWindow().GetHeight());
+		//Example
+		m_CubeEntity = m_ActiveScene->CreateEntity("cube1");
+		auto cubeEntity2 = m_ActiveScene->CreateEntity("cube2");
 	}
 
 	void EditorLayer::OnDetach()
 	{
-
+		
 	}
 
 	void EditorLayer::OnUpdate(Timestep ts)
@@ -168,15 +175,17 @@ namespace Syndra {
 			m_OffScreenFB->Resize((uint32_t)m_ViewportSize.x, (uint32_t)m_ViewportSize.y);
 			m_PostprocFB->Resize((uint32_t)m_ViewportSize.x, (uint32_t)m_ViewportSize.y);
 			m_Camera->SetViewportSize(m_ViewportSize.x, m_ViewportSize.y);
-			//m_ActiveScene->OnViewportResize((uint32_t)m_ViewportSize.x, (uint32_t)m_ViewportSize.y);
+			m_ActiveScene->OnViewportResize((uint32_t)m_ViewportSize.x, (uint32_t)m_ViewportSize.y);
 		}
 		if (Input::IsKeyPressed(Key::Escape)) {
 			Application::Get().Close();
 		}
 
+		m_ActiveScene->OnUpdateEditor(ts, *m_Camera);
+
 		m_OffScreenFB->Bind();
 		//SN_INFO("Delta time : {0}ms", ts.GetMilliseconds());
-		RenderCommand::SetClearColor(glm::vec4(m_ClearColor,1.0f));
+		RenderCommand::SetClearColor(glm::vec4(m_ClearColor, 1.0f));
 		RenderCommand::Clear();
 
 		if (m_ViewportFocused) {
@@ -189,7 +198,7 @@ namespace Syndra {
 		trans = glm::scale(glm::mat4(1), m_Scale);
 		difShader->Bind();
 		m_Texture->Bind(0);
-		difShader->SetMat4("u_trans", trans);
+		difShader->SetMat4("u_trans", m_CubeEntity.GetComponent<TransformComponent>().GetTransform());
 		difShader->SetFloat3("cameraPos", m_Camera->GetPosition());
 		difShader->SetFloat3("lightPos", m_Camera->GetPosition());
 		difShader->SetFloat3("cubeCol", m_CubeColor);
@@ -205,10 +214,11 @@ namespace Syndra {
 		//glDisable(GL_CULL_FACE);
 		postProcShader->Bind();
 		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D_MULTISAMPLE,m_OffScreenFB->GetColorAttachmentRendererID());
+		glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, m_OffScreenFB->GetColorAttachmentRendererID());
 		m_QuadVA->Bind();
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
 		m_PostprocFB->Unbind();
+		
 	}
 
 	void EditorLayer::OnImGuiRender()
@@ -268,24 +278,41 @@ namespace Syndra {
 		{
 			if (ImGui::BeginMenu("File"))
 			{
+				if (ImGui::MenuItem("Save")) {
+					//TODO
+				}
 				if (ImGui::MenuItem("Exit"))
 				{
 					Application::Get().Close();
+				}
+
+				ImGui::EndMenu();
+			}
+
+			if (ImGui::BeginMenu("View")) {
+				//TODO : showing different tabs
+				if (ImGui::MenuItem("Scene hierarchy")) {
+					//TODO
 				}
 				ImGui::EndMenu();
 			}
 			ImGui::EndMenuBar();
 		}
 
+		m_ScenePanel->OnImGuiRender();
 
-		ImGui::Begin("Scene");
-		
+		ImGui::Begin("Scene settings");
 		ImGui::ColorEdit3("cube color", glm::value_ptr(m_CubeColor));
 		ImGui::ColorEdit3("clear color", glm::value_ptr(m_ClearColor));
 		ImGui::End();
 
-		ImGui::Begin("Properties");
-		ImGui::DragFloat3("scale", glm::value_ptr(m_Scale),0.1f,0.1f,10.0f);
+		//----------------------------------------------Renderer info-----------------------------------//
+		ImGui::Begin("Renderer info");
+		ImGui::Text(m_Info.c_str());
+		ImGui::Text("\nApplication average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
+		ImGui::Text("%d vertices, %d indices (%d triangles)", io.MetricsRenderVertices, io.MetricsRenderIndices, io.MetricsRenderIndices / 3);
+		ImGui::Text("%d active windows (%d visible)", io.MetricsActiveWindows, io.MetricsRenderWindows);
+		ImGui::Text("%d active allocations", io.MetricsActiveAllocations);
 		ImGui::End();
 
 		//----------------------------------------------Viewport----------------------------------------//
@@ -308,6 +335,30 @@ namespace Syndra {
 		ImGui::PopStyleVar();
 
 		ImGui::End();
+
+
+		//-----------------------------------------------Editor camera settings-------------------------------------//
+		static bool camerSettings = true;
+		if (camerSettings) {
+			ImGui::Begin("Camera settings", &camerSettings);
+			//Fov
+			float fov = m_Camera->GetFOV();
+			if (ImGui::SliderFloat("Fov", &fov, 10, 180)) {
+				m_Camera->SetFov(fov);
+			}
+			ImGui::Separator();
+			//near-far clip
+			float nearClip = m_Camera->GetNear();
+			float farClip = m_Camera->GetFar();
+			if (ImGui::SliderFloat("Far clip", &farClip , 10, 10000)) {
+				m_Camera->SetFarClip(farClip);
+			}
+			ImGui::Separator();
+			if (ImGui::SliderFloat("Near clip", &nearClip, 0.0001f, 1)) {
+				m_Camera->SetNearClip(nearClip);
+			}
+			ImGui::End();
+		}
 	}
 
 	void EditorLayer::OnEvent(Event& event)
