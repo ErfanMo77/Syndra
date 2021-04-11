@@ -17,6 +17,8 @@ namespace Syndra {
 
 	void ScenePanel::OnImGuiRender()
 	{
+
+		ImGui::ShowDemoWindow();
 		ImGui::Begin("Style editor");
 		ImGui::ShowStyleEditor();
 		ImGui::End();
@@ -33,7 +35,7 @@ namespace Syndra {
 
 		if (ImGui::BeginPopupContextWindow(0, 1, false))
 		{
-			if (ImGui::Selectable("Create empty entity")) {
+			if (ImGui::MenuItem("Create empty entity")) {
 				m_Context->CreateEntity();
 			}
 			ImGui::EndPopup();
@@ -45,11 +47,6 @@ namespace Syndra {
 		if (m_SelectionContext)
 		{
 			DrawComponents(m_SelectionContext);
-			ImGui::SetNextItemWidth(-1);
-			if (ImGui::Button("Add component")) {
-
-			}
-			
 		}
 		ImGui::End();
 	}
@@ -122,15 +119,66 @@ namespace Syndra {
 		ImGui::PopID();
 	}
 
+	template<typename T, typename UIFunction>
+	static void DrawComponent(const std::string& name, Entity entity, UIFunction uiFunction)
+	{
+		const ImGuiTreeNodeFlags treeNodeFlags = ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_AllowItemOverlap | ImGuiTreeNodeFlags_FramePadding;
+		if (entity.HasComponent<T>())
+		{
+			auto& component = entity.GetComponent<T>();
+			ImVec2 contentRegionAvailable = ImGui::GetContentRegionAvail();
+
+			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2{ 4, 4 });
+			float lineHeight = GImGui->Font->FontSize + GImGui->Style.FramePadding.y * 2.0f;
+			ImGui::Separator();
+			bool open = ImGui::TreeNodeEx((void*)typeid(T).hash_code(), treeNodeFlags, name.c_str());
+			ImGui::PopStyleVar(
+			);
+			ImGui::SameLine(contentRegionAvailable.x - lineHeight * 0.5f);
+			if (ImGui::Button("...", ImVec2{ lineHeight, lineHeight }))
+			{
+				ImGui::OpenPopup("ComponentSettings");
+			}
+
+			bool removeComponent = false;
+			if (ImGui::BeginPopup("ComponentSettings"))
+			{
+				if (ImGui::MenuItem("Remove component"))
+					removeComponent = true;
+
+				ImGui::EndPopup();
+			}
+
+			if (open)
+			{
+				uiFunction(component);
+				ImGui::TreePop();
+			}
+
+			if (removeComponent)
+				entity.RemoveComponent<T>();
+		}
+	}
+
+
 	void ScenePanel::DrawEntity(Entity entity)
 	{
 		auto& tag = entity.GetComponent<TagComponent>();
 		ImGuiTreeNodeFlags flags = ((m_SelectionContext == entity) ? ImGuiTreeNodeFlags_Selected : 0) | ImGuiTreeNodeFlags_OpenOnArrow;
-
+		flags |= ImGuiTreeNodeFlags_SpanAvailWidth;
 		bool opened = ImGui::TreeNodeEx((void*)(uint64_t)(uint32_t)entity, flags, tag.Tag.c_str());
 
 		if (ImGui::IsItemClicked()) {
 			m_SelectionContext = entity;
+		}
+
+		bool entityDeleted = false;
+		if (ImGui::BeginPopupContextItem())
+		{
+			if (ImGui::MenuItem("Delete entity")) {
+				entityDeleted = true;
+			}
+			ImGui::EndPopup();
 		}
 
 		//for (int n = 0; n < m_Context->m_Entities.size(); n++)
@@ -150,6 +198,13 @@ namespace Syndra {
 
 		if (opened) {
 			ImGui::TreePop();
+		}
+
+		if (entityDeleted)
+		{
+			m_Context->DestroyEntity(entity);
+			if (m_SelectionContext == entity)
+				m_SelectionContext = {};
 		}
 	}
 
@@ -175,12 +230,10 @@ namespace Syndra {
 			}
 		}
 	
-		ImGui::Separator();
-
 		if (entity.HasComponent<TransformComponent>()) {
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2{ 5,5 });
 			if (ImGui::TreeNodeEx((void*)typeid(TransformComponent).hash_code(), ImGuiTreeNodeFlags_DefaultOpen, "Transform")){
-				ImGui::PopStyleVar();
+				
 				auto& translate = entity.GetComponent<TransformComponent>().Translation;
 				auto& scale = entity.GetComponent<TransformComponent>().Scale;
 				auto& rot = entity.GetComponent<TransformComponent>().Rotation;
@@ -192,10 +245,46 @@ namespace Syndra {
 				DrawVec3Control("Scale", scale,1);
 
 				ImGui::TreePop();
-				
+			}
+			ImGui::PopStyleVar();
+		}
+
+		ImGui::Separator();
+		float buttonSz = 100;
+		ImGui::PushItemWidth(buttonSz);
+		
+		float lineHeight = GImGui->Font->FontSize + GImGui->Style.FramePadding.y * 2.0f;
+		ImGui::Dummy({0,10});
+		ImGui::NewLine();
+		ImGui::SameLine(ImGui::GetContentRegionAvail().x/2.0f - buttonSz/2.0f );
+
+		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, { 0,100 });
+		if (ImGui::Button("Add Component"))
+			ImGui::OpenPopup("AddComponent");
+		ImGui::PopStyleVar();
+
+		if (ImGui::BeginPopup("AddComponent"))
+		{
+			if (ImGui::MenuItem("Camera"))
+			{
+				if (!m_SelectionContext.HasComponent<CameraComponent>())
+					m_SelectionContext.AddComponent<CameraComponent>();
+				else
+					SN_CORE_WARN("This entity already has the Camera Component!");
+				ImGui::CloseCurrentPopup();
 			}
 
+			if (ImGui::MenuItem("Mesh Renderer"))
+			{
+				//TODO
+				ImGui::CloseCurrentPopup();
+			}
+
+			ImGui::EndPopup();
 		}
+
+		ImGui::PopItemWidth();
+
 	}
 
 	

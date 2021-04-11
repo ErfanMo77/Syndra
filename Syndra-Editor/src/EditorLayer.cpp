@@ -296,6 +296,17 @@ namespace Syndra {
 				}
 				ImGui::EndMenu();
 			}
+
+			if (ImGui::BeginMenu("Entity")) {
+				//TODO : showing different tabs
+				if (ImGui::MenuItem("Add Entity")) {
+					m_ActiveScene->CreateEntity();
+				}
+				ImGui::EndMenu();
+			}
+
+
+
 			ImGui::EndMenuBar();
 		}
 

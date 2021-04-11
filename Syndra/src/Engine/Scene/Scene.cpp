@@ -27,6 +27,15 @@ namespace Syndra {
 	void Scene::DestroyEntity(Entity entity)
 	{
 		m_Registry.destroy(entity);
+
+		for (auto& e : m_Entities) {
+			if (*e == entity) {
+				auto it = std::find(m_Entities.begin(), m_Entities.end(), e);
+				if (it != m_Entities.end()) {
+					m_Entities.erase(it);
+				}
+			}
+		}
 	}
 
 	void Scene::OnUpdateRuntime(Timestep ts)
