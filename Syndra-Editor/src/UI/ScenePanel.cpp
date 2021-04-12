@@ -221,10 +221,12 @@ namespace Syndra {
 			memset(buffer, 0, sizeof(buffer));
 			strcpy_s(buffer, tag.c_str());
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 2,5 });
+			ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, { 10,0 });
+			ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x - 2);
 			if (ImGui::InputText("##Tag", buffer, sizeof(buffer))) {
 				tag = std::string(buffer);
 			}
-			ImGui::PopStyleVar();
+			ImGui::PopStyleVar(2);
 		}
 
 		//DrawComponent<TagComponent>("Tag", entity, false ,[](auto& component) {
