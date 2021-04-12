@@ -19,6 +19,7 @@ namespace Syndra {
 	{
 
 		ImGui::ShowDemoWindow();
+		
 		ImGui::Begin("Style editor");
 		ImGui::ShowStyleEditor();
 		ImGui::End();
@@ -54,7 +55,7 @@ namespace Syndra {
 	void DrawVec3Control(const std::string& label, glm::vec3& values, float resetValue = 0.0f, float columnWidth = 100.0f)
 	{
 		ImGuiIO& io = ImGui::GetIO();
-		auto boldFont = io.Fonts->Fonts[0];
+		auto boldFont =io.Fonts->Fonts[1];
 
 		ImGui::PushID(label.c_str());
 

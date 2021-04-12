@@ -34,10 +34,11 @@ namespace  Syndra {
 		io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;         // Enable Multi-Viewport / Platform Windows
 		//io.ConfigViewportsNoAutoMerge = true;
 		//io.ConfigViewportsNoTaskBarIcon = true;
-		io.Fonts->AddFontFromFileTTF("assets/fonts/bfont.ttf", 16.0f);
-		io.FontDefault = io.Fonts->AddFontFromFileTTF("assets/fonts/bfont.ttf", 16.0f);
+		io.Fonts->AddFontFromFileTTF("assets/fonts/Montserrat-Black.ttf", 16.0f);
+		io.Fonts->AddFontFromFileTTF("assets/fonts/Montserrat-Bold.ttf", 16.0f);
+		io.FontDefault = io.Fonts->AddFontFromFileTTF("assets/fonts/Montserrat-Medium.ttf", 16.0f);
 		// Setup Dear ImGui style
-		ImGui::StyleColorsDark();
+		ImGui::StyleColorsDark(); 
 		SetDarkThemeColors();
 		//ImGui::StyleColorsClassic();
 

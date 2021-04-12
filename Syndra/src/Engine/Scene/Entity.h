@@ -1,7 +1,7 @@
 #pragma once
 
 #include "entt.hpp"
-#include "scene.h"
+#include "Engine/Scene/scene.h"
 
 namespace Syndra {
 
