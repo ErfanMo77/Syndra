@@ -268,11 +268,15 @@ namespace Syndra {
 
 		// DockSpace
 		ImGuiIO& io = ImGui::GetIO();
+		ImGuiStyle& style = ImGui::GetStyle();
+		float minWinSizeX = style.WindowMinSize.x;
+		style.WindowMinSize.x = 370.0f;
 		if (io.ConfigFlags & ImGuiConfigFlags_DockingEnable)
 		{
 			ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
 			ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
 		}
+		style.WindowMinSize.x = minWinSizeX;
 
 		if (ImGui::BeginMenuBar())
 		{
@@ -296,6 +300,17 @@ namespace Syndra {
 				}
 				ImGui::EndMenu();
 			}
+
+			if (ImGui::BeginMenu("Entity")) {
+				//TODO : showing different tabs
+				if (ImGui::MenuItem("Add Entity")) {
+					m_ActiveScene->CreateEntity();
+				}
+				ImGui::EndMenu();
+			}
+
+
+
 			ImGui::EndMenuBar();
 		}
 

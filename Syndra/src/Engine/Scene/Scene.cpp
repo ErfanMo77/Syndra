@@ -27,6 +27,15 @@ namespace Syndra {
 	void Scene::DestroyEntity(Entity entity)
 	{
 		m_Registry.destroy(entity);
+
+		for (auto& e : m_Entities) {
+			if (*e == entity) {
+				auto it = std::find(m_Entities.begin(), m_Entities.end(), e);
+				if (it != m_Entities.end()) {
+					m_Entities.erase(it);
+				}
+			}
+		}
 	}
 
 	void Scene::OnUpdateRuntime(Timestep ts)
@@ -59,5 +68,28 @@ namespace Syndra {
 				cameraComponent.Camera.SetViewportSize(width, height);
 		}
 	}
+
+	template<typename T>
+	void Scene::OnComponentAdded(Entity entity, T& component)
+	{
+		static_assert(false);
+	}
+
+	template<>
+	void Scene::OnComponentAdded<TransformComponent>(Entity entity, TransformComponent& component)
+	{
+	}
+
+	template<>
+	void Scene::OnComponentAdded<CameraComponent>(Entity entity, CameraComponent& component)
+	{
+		component.Camera.SetViewportSize(m_ViewportWidth, m_ViewportHeight);
+	}
+
+	template<>
+	void Scene::OnComponentAdded<TagComponent>(Entity entity, TagComponent& component)
+	{
+	}
+
 
 }
