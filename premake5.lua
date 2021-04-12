@@ -26,9 +26,6 @@ group "Dependencies"
 	include "Syndra/vendor/yaml-cpp"
 group ""
 
-include "Syndra/vendor/GLFW"
-include "Syndra/vendor/Glad"
-include "Syndra/vendor/imgui"
 include "Syndra-Editor"
 
 project "Syndra"
