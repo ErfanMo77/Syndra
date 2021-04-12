@@ -17,11 +17,13 @@ IncludeDir["imgui"] = "%{wks.location}/Syndra/vendor/imgui"
 IncludeDir["glm"] = "%{wks.location}/Syndra/vendor/glm"
 IncludeDir["stb_image"] = "%{wks.location}/Syndra/vendor/stb_image"
 IncludeDir["entt"] = "%{wks.location}/Syndra/vendor/entt/Include"
+IncludeDir["yaml_cpp"] = "%{wks.location}/Syndra/vendor/yaml-cpp/include"
 
 group "Dependencies"
 	include "Syndra/vendor/GLFW"
 	include "Syndra/vendor/Glad"
 	include "Syndra/vendor/imgui"
+	include "Syndra/vendor/yaml-cpp"
 group ""
 
 include "Syndra/vendor/GLFW"
@@ -63,7 +65,8 @@ project "Syndra"
 		"%{IncludeDir.imgui}",
 		"%{IncludeDir.glm}",
 		"%{IncludeDir.stb_image}",
-		"%{IncludeDir.entt}"
+		"%{IncludeDir.entt}",
+		"%{IncludeDir.yaml_cpp}"
 	}
 
 	links
@@ -71,7 +74,8 @@ project "Syndra"
 		"GLFW",
 		"Glad",
 		"imgui",
-		"opengl32.lib"
+		"yaml-cpp",
+		"opengl32.lib",
 	}
 	
 
