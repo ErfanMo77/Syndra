@@ -11,7 +11,7 @@ namespace Syndra {
 	public:
 		ScenePanel() = default;
 		ScenePanel(const Ref<Scene>& scene);
-
+		void SetContext(const Ref<Scene>& scene);
 		void OnImGuiRender();
 
 		Entity GetSelectedEntity() const { return m_SelectionContext; }
