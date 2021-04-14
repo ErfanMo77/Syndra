@@ -1,13 +1,13 @@
 Scene: Untitled
 Entities:
-  - Entity: 12837192831273
+  - Entity: 0
     TagComponent:
       Tag: cube1
     TransformComponent:
       Translation: [0, 0, 0]
       Rotation: [0, 0, 0]
       Scale: [1, 1, 1]
-  - Entity: 12837192831273
+  - Entity: 1
     TagComponent:
       Tag: cube2
     TransformComponent:

@@ -87,7 +87,7 @@ namespace Syndra {
 	static void SerializeEntity(YAML::Emitter& out, Entity entity)
 	{
 		out << YAML::BeginMap; // Entity
-		out << YAML::Key << "Entity" << YAML::Value << "12837192831273"; // TODO: Entity ID goes here
+		out << YAML::Key << "Entity" << YAML::Value << (uint32_t)entity; // TODO: Entity ID goes here
 
 		if (entity.HasComponent<TagComponent>())
 		{

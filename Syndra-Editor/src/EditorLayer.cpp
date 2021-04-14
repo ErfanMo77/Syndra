@@ -4,10 +4,11 @@
 #include <glm/gtc/type_ptr.hpp>
 #include "imgui.h"
 #include <glad/glad.h>
-
+#include "Engine/Utils/Math.h"
 #include "Engine/Scene/SceneSerializer.h"
 
 #include "Engine/Utils/PlatformUtils.h"
+#include "ImGuizmo.h"
 
 
 namespace Syndra {
@@ -28,7 +29,6 @@ namespace Syndra {
 	{
 		m_ActiveScene = CreateRef<Scene>();
 		m_ScenePanel = CreateRef<ScenePanel>(m_ActiveScene);
-
 		m_VertexArray = VertexArray::Create();
 		m_QuadVA = VertexArray::Create();
 
@@ -196,7 +196,6 @@ namespace Syndra {
 			m_Camera->OnUpdate(ts);
 		}
 		Renderer::BeginScene(*m_Camera);
-
 		auto difShader = m_Shaders.Get("diffuse");
 		glm::mat4 trans;
 		trans = glm::scale(glm::mat4(1), m_Scale);
@@ -206,9 +205,11 @@ namespace Syndra {
 		difShader->SetFloat3("cameraPos", m_Camera->GetPosition());
 		difShader->SetFloat3("lightPos", m_Camera->GetPosition());
 		difShader->SetFloat3("cubeCol", m_CubeColor);
-
+		
 		Renderer::Submit(difShader, m_VertexArray);
-
+		const glm::mat4& cameraProjection = m_Camera->GetProjection();
+		glm::mat4 cameraView = m_Camera->GetViewMatrix();
+		
 		Renderer::EndScene();
 		m_OffScreenFB->Unbind();
 
@@ -221,6 +222,7 @@ namespace Syndra {
 		glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, m_OffScreenFB->GetColorAttachmentRendererID());
 		m_QuadVA->Bind();
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+		glEnable(GL_DEPTH_TEST);
 		m_PostprocFB->Unbind();
 		
 	}
@@ -332,6 +334,7 @@ namespace Syndra {
 		ImGui::Begin("Scene settings");
 		ImGui::ColorEdit3("cube color", glm::value_ptr(m_CubeColor));
 		ImGui::ColorEdit3("clear color", glm::value_ptr(m_ClearColor));
+
 		ImGui::End();
 
 		//----------------------------------------------Renderer info-----------------------------------//
@@ -346,18 +349,81 @@ namespace Syndra {
 		//----------------------------------------------Viewport----------------------------------------//
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{ 0, 0 });
 		ImGui::Begin("Viewport");
+		auto viewportMinRegion = ImGui::GetWindowContentRegionMin();
+		auto viewportMaxRegion = ImGui::GetWindowContentRegionMax();
+		auto viewportOffset = ImGui::GetWindowPos();
+		m_ViewportBounds[0] = { viewportMinRegion.x + viewportOffset.x, viewportMinRegion.y + viewportOffset.y };
+		m_ViewportBounds[1] = { viewportMaxRegion.x + viewportOffset.x, viewportMaxRegion.y + viewportOffset.y };
 
 		m_ViewportFocused = ImGui::IsWindowFocused();
 		m_ViewportHovered = ImGui::IsWindowHovered();
-		Application::Get().GetImGuiLayer()->SetBlockEvents(!m_ViewportFocused || !m_ViewportHovered);
+		Application::Get().GetImGuiLayer()->SetBlockEvents(!m_ViewportFocused && !m_ViewportHovered);
 
 		ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
 
 		m_ViewportSize = { viewportPanelSize.x, viewportPanelSize.y };
 		//m_Camera->SetViewportSize(viewportPanelSize.x, viewportPanelSize.y);
 		//m_CameraController.OnResize(viewportPanelSize.x, viewportPanelSize.y);
+		
 		uint64_t textureID = m_PostprocFB->GetColorAttachmentRendererID();
+
 		ImGui::Image(reinterpret_cast<void*>(textureID), ImVec2{ m_ViewportSize.x, m_ViewportSize.y }, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
+
+		
+		ImGuizmo::SetOrthographic(false);
+		ImGuizmo::SetDrawlist();
+
+		ImGuizmo::SetRect(m_ViewportBounds[0].x, m_ViewportBounds[0].y, m_ViewportBounds[1].x - m_ViewportBounds[0].x, m_ViewportBounds[1].y - m_ViewportBounds[0].y);
+		const glm::mat4& cameraProjection = m_Camera->GetProjection();
+		glm::mat4 cameraView = m_Camera->GetViewMatrix();
+		ImGuizmo::DrawGrid(glm::value_ptr(cameraView), glm::value_ptr(cameraProjection), glm::value_ptr(glm::mat4(1.0f)), 3);
+
+		// Gizmos
+		Entity selectedEntity = m_ScenePanel->GetSelectedEntity();
+		if (selectedEntity && m_GizmoType != -1)
+		{
+
+			// Camera
+
+			// Runtime camera from entity
+			// auto cameraEntity = m_ActiveScene->GetPrimaryCameraEntity();
+			// const auto& camera = cameraEntity.GetComponent<CameraComponent>().Camera;
+			// const glm::mat4& cameraProjection = camera.GetProjection();
+			// glm::mat4 cameraView = glm::inverse(cameraEntity.GetComponent<TransformComponent>().GetTransform());
+
+			// Editor camera
+			//const glm::mat4& cameraProjection = m_Camera->GetProjection();
+			//glm::mat4 cameraView = m_Camera->GetViewMatrix();
+			
+			// Entity transform
+			auto& tc = selectedEntity.GetComponent<TransformComponent>();
+			glm::mat4 transform = tc.GetTransform();
+
+			// Snapping
+			bool snap = Input::IsKeyPressed(Key::LeftControl);
+			float snapValue = 0.5f; // Snap to 0.5m for translation/scale
+			// Snap to 45 degrees for rotation
+			if (m_GizmoType == ImGuizmo::OPERATION::ROTATE)
+				snapValue = 45.0f;
+
+			float snapValues[3] = { snapValue, snapValue, snapValue };
+
+			ImGuizmo::Manipulate(glm::value_ptr(cameraView), glm::value_ptr(cameraProjection),
+				(ImGuizmo::OPERATION)m_GizmoType, ImGuizmo::LOCAL, glm::value_ptr(transform),
+				nullptr, snap ? snapValues : nullptr);
+
+			if (ImGuizmo::IsUsing())
+			{
+				glm::vec3 translation, rotation, scale;
+				Math::DecomposeTransform(transform, translation,rotation, scale);
+
+				glm::vec3 deltaRotation = rotation - tc.Rotation;
+				tc.Translation = translation;
+				tc.Rotation += deltaRotation;
+				tc.Scale = scale;
+			}
+		}
+
 
 		ImGui::End();
 		ImGui::PopStyleVar();
@@ -428,7 +494,35 @@ namespace Syndra {
 
 			break;
 		}
+
+		// Gizmos
+		case Key::Q:
+		{
+			if (!ImGuizmo::IsUsing())
+				m_GizmoType = -1;
+			break;
 		}
+		case Key::W:
+		{
+			if (!ImGuizmo::IsUsing())
+				m_GizmoType = ImGuizmo::OPERATION::TRANSLATE;
+			break;
+		}
+		case Key::E:
+		{
+			if (!ImGuizmo::IsUsing())
+				m_GizmoType = ImGuizmo::OPERATION::ROTATE;
+			break;
+		}
+		case Key::R:
+		{
+			if (!ImGuizmo::IsUsing())
+				m_GizmoType = ImGuizmo::OPERATION::SCALE;
+			break;
+		}
+		default: break;
+		}
+		return false;
 	}
 
 	bool EditorLayer::OnMouseButtonPressed(MouseButtonPressedEvent& e)
