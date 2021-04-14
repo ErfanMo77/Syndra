@@ -1,5 +1,5 @@
 # Syndra Engine
-![image](https://github.com/ErfanMo77/Syndra/blob/master/Syndra-Editor/assets/Logo/LOGO1200.png)
+![image](https://github.com/ErfanMo77/Syndra/blob/master/Syndra-Editor/assets/Logo/GITLOGO.png)
 Syndra is an early-stage 3D real-time rendering engine being developed for windows platform.
 
 ## Motivation
