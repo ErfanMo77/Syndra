@@ -1,6 +1,6 @@
 # Syndra Engine
 <p align="center">
-  <img src="https://github.com/ErfanMo77/Syndra/blob/master/Syndra-Editor/assets/Logo/GITLOGO.png" width="300" height="300" align="center">
+  <img src="https://github.com/ErfanMo77/Syndra/blob/master/Syndra-Editor/assets/Logo/GITLOGO.png" width="400" height="400" align="center">
 </p>
 Syndra is an early-stage 3D real-time rendering engine being developed for windows platform.
 
@@ -24,4 +24,4 @@ Then, you can execute GenerateProjects.bat to generate visual studio solution fi
 ## Acknowledgments
 [The Cherno](https://www.youtube.com/channel/UCQ-W1KE9EYfdxhL6S4twUNw) game engine series
 
-Logo design : [Amir Abedini](https://gitlab.com/musashi1997)
+Logo design : [AmirMohammad Abedini](https://gitlab.com/musashi1997)
