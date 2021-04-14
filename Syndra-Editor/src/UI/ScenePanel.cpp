@@ -12,7 +12,13 @@ namespace Syndra {
 
 	ScenePanel::ScenePanel(const Ref<Scene>& scene)
 	{
+		SetContext(scene);
+	}
+
+	void ScenePanel::SetContext(const Ref<Scene>& scene)
+	{
 		m_Context = scene;
+		m_SelectionContext = {};
 	}
 
 	void ScenePanel::OnImGuiRender()
