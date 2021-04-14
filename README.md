@@ -21,3 +21,4 @@ Then, you can execute GenerateProjects.bat to generate visual studio solution fi
 
 ## Acknowledgments
 [The Cherno](https://www.youtube.com/channel/UCQ-W1KE9EYfdxhL6S4twUNw) game engine series
+Logo design : [Amir](https://gitlab.com/musashi1997)
