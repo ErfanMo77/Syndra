@@ -33,6 +33,7 @@ namespace Syndra {
 		m_QuadVA = VertexArray::Create();
 
 		FramebufferSpecification fbSpec;
+		fbSpec.Attachments = {FramebufferTextureFormat::RGBA8 , FramebufferTextureFormat::RED_INTEGER,FramebufferTextureFormat::DEPTH24STENCIL8};
 		fbSpec.Width = 1280;
 		fbSpec.Height = 720;
 		fbSpec.Samples = 4;
@@ -43,49 +44,56 @@ namespace Syndra {
 
 		m_ViewportSize = { fbSpec.Width,fbSpec.Height };
 
+		BufferLayout layout = {
+			{ShaderDataType::Float3,"a_pos"},
+			{ShaderDataType::Float2,"a_uv"},
+			{ShaderDataType::Float3,"a_normal"},
+			{ShaderDataType::Int,"a_ID"}
+		};
+
 		float vertices[] = {
 			// back face
-			-0.5f, -0.5f, -0.5f,  0.0f, 0.0f,  0.0f, 0.0f,-1.0f,  // bottom-left
-			 0.5f, -0.5f, -0.5f,  1.0f, 0.0f,  0.0f, 0.0f,-1.0f,// bottom-right    
-			 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,  0.0f, 0.0f,-1.0f, // top-right              
-			 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,  0.0f, 0.0f,-1.0f, // top-right
-			-0.5f,  0.5f, -0.5f,  0.0f, 1.0f,  0.0f, 0.0f,-1.0f, // top-left
-			-0.5f, -0.5f, -0.5f,  0.0f, 0.0f,  0.0f, 0.0f,-1.0f, // bottom-left                
+			-0.5f, -0.5f, -0.5f,  0.0f, 0.0f,  0.0f, 0.0f,-1.0f, 1, // bottom-left
+			 0.5f, -0.5f, -0.5f,  1.0f, 0.0f,  0.0f, 0.0f,-1.0f, 1,// bottom-right    
+			 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,  0.0f, 0.0f,-1.0f, 1,// top-right              
+			 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,  0.0f, 0.0f,-1.0f, 1,// top-right
+			-0.5f,  0.5f, -0.5f,  0.0f, 1.0f,  0.0f, 0.0f,-1.0f, 1,// top-left
+			-0.5f, -0.5f, -0.5f,  0.0f, 0.0f,  0.0f, 0.0f,-1.0f, 1,// bottom-left                
 			// front face
-			-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,  0.0f, 0.0f,1.0f, // bottom-left
-			 0.5f,  0.5f,  0.5f,  1.0f, 1.0f,  0.0f, 0.0f,1.0f, // top-right
-			 0.5f, -0.5f,  0.5f,  1.0f, 0.0f,  0.0f, 0.0f,1.0f, // bottom-right        
-			 0.5f,  0.5f,  0.5f,  1.0f, 1.0f,  0.0f, 0.0f,1.0f, // top-right
-			-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,  0.0f, 0.0f,1.0f, // bottom-left
-			-0.5f,  0.5f,  0.5f,  0.0f, 1.0f,  0.0f, 0.0f,1.0f, // top-left        
+			-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,  0.0f, 0.0f,1.0f, 1,// bottom-left
+			 0.5f,  0.5f,  0.5f,  1.0f, 1.0f,  0.0f, 0.0f,1.0f, 1,// top-right
+			 0.5f, -0.5f,  0.5f,  1.0f, 0.0f,  0.0f, 0.0f,1.0f, 1,// bottom-right        
+			 0.5f,  0.5f,  0.5f,  1.0f, 1.0f,  0.0f, 0.0f,1.0f, 1,// top-right
+			-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,  0.0f, 0.0f,1.0f, 1,// bottom-left
+			-0.5f,  0.5f,  0.5f,  0.0f, 1.0f,  0.0f, 0.0f,1.0f, 1,// top-left        
 			// left face
-			-0.5f,  0.5f,  0.5f,  1.0f, 0.0f,  -1.0f, 0.0f,0.0f, // top-right
-			-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,  -1.0f, 0.0f,0.0f, // bottom-left
-			-0.5f,  0.5f, -0.5f,  1.0f, 1.0f,  -1.0f, 0.0f,0.0f, // top-left       
-			-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,  -1.0f, 0.0f,0.0f, // bottom-left
-			-0.5f,  0.5f,  0.5f,  1.0f, 0.0f,  -1.0f, 0.0f,0.0f, // top-right
-			-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,  -1.0f, 0.0f,0.0f, // bottom-right
+			-0.5f,  0.5f,  0.5f,  1.0f, 0.0f,  -1.0f, 0.0f,0.0f, 1,// top-right
+			-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,  -1.0f, 0.0f,0.0f, 1,// bottom-left
+			-0.5f,  0.5f, -0.5f,  1.0f, 1.0f,  -1.0f, 0.0f,0.0f, 1,// top-left       
+			-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,  -1.0f, 0.0f,0.0f, 1,// bottom-left
+			-0.5f,  0.5f,  0.5f,  1.0f, 0.0f,  -1.0f, 0.0f,0.0f, 1,// top-right
+			-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,  -1.0f, 0.0f,0.0f, 1,// bottom-right
 			// right face
-			 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,  1.0f, 0.0f,0.0f, // top-left
-			 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,  1.0f, 0.0f,0.0f, // top-right      
-			 0.5f, -0.5f, -0.5f,  0.0f, 1.0f,  1.0f, 0.0f,0.0f, // bottom-right          
-			 0.5f, -0.5f, -0.5f,  0.0f, 1.0f,  1.0f, 0.0f,0.0f, // bottom-right
-			 0.5f, -0.5f,  0.5f,  0.0f, 0.0f,  1.0f, 0.0f,0.0f, // bottom-left
-			 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,  1.0f, 0.0f,0.0f, // top-left
+			 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,  1.0f, 0.0f,0.0f, 1,// top-left
+			 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,  1.0f, 0.0f,0.0f, 1,// top-right      
+			 0.5f, -0.5f, -0.5f,  0.0f, 1.0f,  1.0f, 0.0f,0.0f, 1,// bottom-right          
+			 0.5f, -0.5f, -0.5f,  0.0f, 1.0f,  1.0f, 0.0f,0.0f, 1,// bottom-right
+			 0.5f, -0.5f,  0.5f,  0.0f, 0.0f,  1.0f, 0.0f,0.0f, 1,// bottom-left
+			 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,  1.0f, 0.0f,0.0f, 1,// top-left
 			// bottom face          
-			-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,  0.0f, -1.0f,0.0f, // top-right
-			 0.5f, -0.5f,  0.5f,  1.0f, 0.0f,  0.0f, -1.0f,0.0f, // bottom-left
-			 0.5f, -0.5f, -0.5f,  1.0f, 1.0f,  0.0f, -1.0f,0.0f, // top-left        
-			 0.5f, -0.5f,  0.5f,  1.0f, 0.0f,  0.0f, -1.0f,0.0f, // bottom-left
-			-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,  0.0f, -1.0f,0.0f, // top-right
-			-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,  0.0f, -1.0f,0.0f, // bottom-right
+			-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,  0.0f, -1.0f,0.0f, 1,// top-right
+			 0.5f, -0.5f,  0.5f,  1.0f, 0.0f,  0.0f, -1.0f,0.0f, 1,// bottom-left
+			 0.5f, -0.5f, -0.5f,  1.0f, 1.0f,  0.0f, -1.0f,0.0f, 1,// top-left        
+			 0.5f, -0.5f,  0.5f,  1.0f, 0.0f,  0.0f, -1.0f,0.0f, 1,// bottom-left
+			-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,  0.0f, -1.0f,0.0f, 1,// top-right
+			-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,  0.0f, -1.0f,0.0f, 1,// bottom-right
 			// top face
-			-0.5f,  0.5f, -0.5f,  0.0f, 1.0f,  0.0f, 1.0f,0.0f, // top-left
-			 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,  0.0f, 1.0f,0.0f, // top-right
-			 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,  0.0f, 1.0f,0.0f, // bottom-right                 
-			 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,  0.0f, 1.0f,0.0f, // bottom-right
-			-0.5f,  0.5f,  0.5f,  0.0f, 0.0f,  0.0f, 1.0f,0.0f, // bottom-left  
-			-0.5f,  0.5f, -0.5f,  0.0f, 1.0f,  0.0f, 1.0f,0.0f  // top-left              
+			-0.5f,  0.5f, -0.5f,  0.0f, 1.0f,  0.0f, 1.0f,0.0f, 1,// top-left
+			 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,  0.0f, 1.0f,0.0f, 1,// top-right
+			 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,  0.0f, 1.0f,0.0f, 1,// bottom-right                 
+			 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,  0.0f, 1.0f,0.0f, 1,// bottom-right
+			-0.5f,  0.5f,  0.5f,  0.0f, 0.0f,  0.0f, 1.0f,0.0f, 1,// bottom-left  
+			-0.5f,  0.5f, -0.5f,  0.0f, 1.0f,  0.0f, 1.0f,0.0f,  1// top-left              
 		};
 
 		float quad[] = {
@@ -100,11 +108,7 @@ namespace Syndra {
 		m_VertexBuffer = VertexBuffer::Create(vertices, sizeof(vertices));
 		m_QuadVB = VertexBuffer::Create(quad, sizeof(quad));
 
-		BufferLayout layout = {
-			{ShaderDataType::Float3,"a_pos"},
-			{ShaderDataType::Float2,"a_uv"},
-			{ShaderDataType::Float3,"a_normal"},
-		};
+
 		m_VertexBuffer->SetLayout(layout);
 		m_VertexArray->AddVertexBuffer(m_VertexBuffer);
 
@@ -145,14 +149,13 @@ namespace Syndra {
 
 		m_Shaders.Load("assets/shaders/aa.glsl");
 		auto postProcShader = m_Shaders.Get("aa");
-
+		
 
 		m_Shaders.Load("assets/shaders/diffuse.glsl");
 		auto difShader = m_Shaders.Get("diffuse");
 		difShader->Bind();
 
 		m_Texture = Texture2D::Create("assets/Textures/tiles.jpg");
-		m_Texture->Bind(0);
 
 		
 		difShader->SetInt("u_Texture", 0);
@@ -187,18 +190,21 @@ namespace Syndra {
 
 		m_ActiveScene->OnUpdateEditor(ts, *m_Camera);
 
-		m_OffScreenFB->Bind();
-		//SN_INFO("Delta time : {0}ms", ts.GetMilliseconds());
-		RenderCommand::SetClearColor(glm::vec4(m_ClearColor, 1.0f));
-		RenderCommand::Clear();
-
 		if (m_ViewportFocused) {
 			m_Camera->OnUpdate(ts);
 		}
+
+		m_OffScreenFB->Bind();
+		//m_OffScreenFB->ClearAttachment(1, -1);
+		RenderCommand::SetClearColor(glm::vec4(m_ClearColor, 1.0f));
+		//RenderCommand::Clear();
+		glClear(GL_COLOR_BUFFER_BIT);
 		Renderer::BeginScene(*m_Camera);
 		auto difShader = m_Shaders.Get("diffuse");
 		glm::mat4 trans;
 		trans = glm::scale(glm::mat4(1), m_Scale);
+		//glEnable(GL_DEPTH_TEST);
+		glClear(GL_DEPTH_BUFFER_BIT);
 		difShader->Bind();
 		m_Texture->Bind(0);
 		difShader->SetMat4("u_trans", m_CubeEntity.GetComponent<TransformComponent>().GetTransform());
@@ -207,22 +213,22 @@ namespace Syndra {
 		difShader->SetFloat3("cubeCol", m_CubeColor);
 		
 		Renderer::Submit(difShader, m_VertexArray);
-		const glm::mat4& cameraProjection = m_Camera->GetProjection();
-		glm::mat4 cameraView = m_Camera->GetViewMatrix();
+		m_OffScreenFB->Unbind();
 		
 		Renderer::EndScene();
-		m_OffScreenFB->Unbind();
+
+
 
 		auto postProcShader = m_Shaders.Get("aa");
+
 		m_PostprocFB->Bind();
 		glDisable(GL_DEPTH_TEST);
-		//glDisable(GL_CULL_FACE);
 		postProcShader->Bind();
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, m_OffScreenFB->GetColorAttachmentRendererID());
+
 		m_QuadVA->Bind();
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
-		glEnable(GL_DEPTH_TEST);
 		m_PostprocFB->Unbind();
 		
 	}
@@ -362,9 +368,6 @@ namespace Syndra {
 		ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
 
 		m_ViewportSize = { viewportPanelSize.x, viewportPanelSize.y };
-		//m_Camera->SetViewportSize(viewportPanelSize.x, viewportPanelSize.y);
-		//m_CameraController.OnResize(viewportPanelSize.x, viewportPanelSize.y);
-		
 		uint64_t textureID = m_PostprocFB->GetColorAttachmentRendererID();
 
 		ImGui::Image(reinterpret_cast<void*>(textureID), ImVec2{ m_ViewportSize.x, m_ViewportSize.y }, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
@@ -376,25 +379,13 @@ namespace Syndra {
 		ImGuizmo::SetRect(m_ViewportBounds[0].x, m_ViewportBounds[0].y, m_ViewportBounds[1].x - m_ViewportBounds[0].x, m_ViewportBounds[1].y - m_ViewportBounds[0].y);
 		const glm::mat4& cameraProjection = m_Camera->GetProjection();
 		glm::mat4 cameraView = m_Camera->GetViewMatrix();
-		ImGuizmo::DrawGrid(glm::value_ptr(cameraView), glm::value_ptr(cameraProjection), glm::value_ptr(glm::mat4(1.0f)), 3);
 
+		ImGuizmo::DrawGrid(glm::value_ptr(cameraView), glm::value_ptr(cameraProjection), glm::value_ptr(glm::mat4(1.0f)), 10);
+		
 		// Gizmos
 		Entity selectedEntity = m_ScenePanel->GetSelectedEntity();
 		if (selectedEntity && m_GizmoType != -1)
 		{
-
-			// Camera
-
-			// Runtime camera from entity
-			// auto cameraEntity = m_ActiveScene->GetPrimaryCameraEntity();
-			// const auto& camera = cameraEntity.GetComponent<CameraComponent>().Camera;
-			// const glm::mat4& cameraProjection = camera.GetProjection();
-			// glm::mat4 cameraView = glm::inverse(cameraEntity.GetComponent<TransformComponent>().GetTransform());
-
-			// Editor camera
-			//const glm::mat4& cameraProjection = m_Camera->GetProjection();
-			//glm::mat4 cameraView = m_Camera->GetViewMatrix();
-			
 			// Entity transform
 			auto& tc = selectedEntity.GetComponent<TransformComponent>();
 			glm::mat4 transform = tc.GetTransform();
