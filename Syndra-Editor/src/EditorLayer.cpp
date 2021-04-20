@@ -33,7 +33,7 @@ namespace Syndra {
 		m_QuadVA = VertexArray::Create();
 
 		FramebufferSpecification fbSpec;
-		fbSpec.Attachments = { FramebufferTextureFormat::RGBA8 , FramebufferTextureFormat::RED_INTEGER, FramebufferTextureFormat::DEPTH24STENCIL8 };
+		fbSpec.Attachments = { FramebufferTextureFormat::RGBA8 , FramebufferTextureFormat::DEPTH24STENCIL8 };
 		fbSpec.Width = 1280;
 		fbSpec.Height = 720;
 		fbSpec.Samples = 4;
@@ -150,19 +150,12 @@ namespace Syndra {
 		m_QuadVA->SetIndexBuffer(m_QuadIB);
 
 		m_Shaders.Load("assets/shaders/aa.glsl");
-		auto postProcShader = m_Shaders.Get("aa");
-		
-
 		m_Shaders.Load("assets/shaders/diffuse.glsl");
-		auto difShader = m_Shaders.Get("diffuse");
-
 		m_Shaders.Load("assets/shaders/mouse.glsl");
-		auto mouseShader = m_Shaders.Get("mouse");
+		m_Shaders.Load("assets/shaders/outline.glsl");
+
 
 		m_Texture = Texture2D::Create("assets/Textures/tiles.jpg");
-
-		
-		difShader->SetInt("u_Texture", 0);
 		RenderCommand::Init();
 
 		auto& app = Application::Get();
@@ -203,7 +196,6 @@ namespace Syndra {
 
 		RenderCommand::SetClearColor(glm::vec4(m_ClearColor, 1.0f));
 		RenderCommand::Clear();
-		m_OffScreenFB->ClearAttachment(1, -1);
 		glEnable(GL_DEPTH_TEST);
 		Renderer::BeginScene(*m_Camera);
 		glm::mat4 trans;
@@ -216,8 +208,16 @@ namespace Syndra {
 		difShader->SetFloat3("cameraPos", m_Camera->GetPosition());
 		difShader->SetFloat3("lightPos", m_Camera->GetPosition());
 		difShader->SetFloat3("cubeCol", m_CubeColor);
-		difShader->SetInt("u_ID", (uint32_t)m_CubeEntity2);
-		
+
+		if (m_ScenePanel->GetSelectedEntity()) {
+			auto outline = m_Shaders.Get("outline");
+			outline->Bind();
+			auto transform = m_ScenePanel->GetSelectedEntity().GetComponent<TransformComponent>();
+			transform.Scale += glm::vec3(.05f);
+			outline->SetMat4("u_trans", transform.GetTransform());
+			Renderer::Submit(outline, m_VertexArray);
+		}
+		glDisable(GL_DEPTH_TEST);
 		Renderer::Submit(difShader, m_VertexArray);
 		Renderer::EndScene();
 
@@ -237,15 +237,12 @@ namespace Syndra {
 
 		m_PostprocFB->Bind();
 		RenderCommand::Clear();
-		m_PostprocFB->ClearAttachment(1, -1);
 		m_QuadVA->Bind();
 		
 		glDisable(GL_DEPTH_TEST);
 		postProcShader->Bind();
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, m_OffScreenFB->GetColorAttachmentRendererID());
-		glActiveTexture(GL_TEXTURE1);
-		glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, m_OffScreenFB->GetColorAttachmentRendererID(1));
 
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
 		m_PostprocFB->Unbind();
@@ -480,6 +477,7 @@ namespace Syndra {
 
 		bool control = Input::IsKeyPressed(Key::LeftControl) || Input::IsKeyPressed(Key::RightControl);
 		bool shift = Input::IsKeyPressed(Key::LeftShift) || Input::IsKeyPressed(Key::RightShift);
+		
 		switch (e.GetKeyCode())
 		{
 		case Key::N:
@@ -543,8 +541,8 @@ namespace Syndra {
 		my = viewportSize.y - my;
 		int mouseX = (int)mx;
 		int mouseY = (int)my;
-
-		if (mouseX >= 0 && mouseY >= 0 && mouseX < (int)viewportSize.x && mouseY < (int)viewportSize.y)
+		altIsDown = Input::IsKeyPressed(Key::LeftAlt);
+		if (mouseX >= 0 && mouseY >= 0 && mouseX < (int)viewportSize.x && mouseY < (int)viewportSize.y && !altIsDown)
 		{
 			m_MousePickFB->Bind();
 			int pixelData = m_MousePickFB->ReadPixel(0, mouseX, mouseY);
@@ -553,7 +551,9 @@ namespace Syndra {
 			}
 			else
 			{
-				m_ScenePanel->SetSelectedEntity({});
+				if (!ImGuizmo::IsOver()) {
+					m_ScenePanel->SetSelectedEntity({});
+				}
 			}
 			SN_CORE_WARN("pixel data: {0}", pixelData);
 			m_MousePickFB->Unbind();

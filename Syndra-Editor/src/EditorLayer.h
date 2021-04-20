@@ -41,7 +41,7 @@ namespace Syndra {
 		PerspectiveCamera* m_Camera;
 
 		int m_GizmoType = -1;
-
+		bool altIsDown=false;
 		std::string m_Info;
 
 		bool m_ViewportFocused = false;

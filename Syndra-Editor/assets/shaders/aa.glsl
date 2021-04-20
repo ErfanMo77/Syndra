@@ -17,10 +17,8 @@ void main(){
 
 #version 460 core
 layout(location = 0) out vec4 fragColor;	
-layout(location = 1) out int id;	
 
 uniform sampler2DMS u_Texture;
-uniform isampler2DMS u_IDs;
 
 in vec2 v_uv;
 
@@ -32,9 +30,7 @@ void main()
 	vec4 colorSample2 = texelFetch(u_Texture, texturePosition, 2);
 	vec4 colorSample3 = texelFetch(u_Texture, texturePosition, 3);
 
-	int textureID = texelFetch(u_IDs, texturePosition, 3).r;
 	vec4 antialiased = (colorSample0 + colorSample1 + colorSample2 + colorSample3) / 4.0f;
 	
-	id = int(textureID);
 	fragColor = antialiased;
 }
