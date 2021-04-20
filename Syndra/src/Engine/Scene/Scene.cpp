@@ -38,6 +38,16 @@ namespace Syndra {
 		}
 	}
 
+	Entity Scene::FindEntity(uint32_t id)
+	{
+		for (auto& e : m_Entities) {
+			if (*e == (entt::entity)id) {
+				return *e;
+			}
+		}
+		return {};
+	}
+
 	void Scene::OnUpdateRuntime(Timestep ts)
 	{
 

@@ -251,7 +251,9 @@ namespace Syndra {
 		{
 				ImGui::Separator();
 				DrawVec3Control("Translation", component.Translation);
-				DrawVec3Control("Rotation", component.Rotation);
+				glm::vec3 Rot = glm::degrees(component.Rotation);
+				DrawVec3Control("Rotation", Rot);
+				component.Rotation = glm::radians(Rot);
 				DrawVec3Control("Scale", component.Scale, 1.0f);
 		});
 

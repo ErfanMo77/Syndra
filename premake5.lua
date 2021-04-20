@@ -18,6 +18,7 @@ IncludeDir["glm"] = "%{wks.location}/Syndra/vendor/glm"
 IncludeDir["stb_image"] = "%{wks.location}/Syndra/vendor/stb_image"
 IncludeDir["entt"] = "%{wks.location}/Syndra/vendor/entt/Include"
 IncludeDir["yaml_cpp"] = "%{wks.location}/Syndra/vendor/yaml-cpp/include"
+IncludeDir["ImGuizmo"] = "%{wks.location}/Syndra/vendor/ImGuizmo"
 
 group "Dependencies"
 	include "Syndra/vendor/GLFW"
@@ -40,8 +41,6 @@ project "Syndra"
 
 	pchheader "lpch.h"
 	pchsource "Syndra/src/lpch.cpp"
-	
-
 
 	files
 	{
@@ -50,7 +49,9 @@ project "Syndra"
 		"%{prj.name}/vendor/glm/glm/**.hpp",
 		"%{prj.name}/vendor/glm/glm/**.inl",
 		"%{prj.name}/vendor/stb_image/**.h",
-		"%{prj.name}/vendor/stb_image/**.cpp"
+		"%{prj.name}/vendor/stb_image/**.cpp",
+		"%{prj.name}/vendor/ImGuizmo/ImGuizmo.h",
+		"%{prj.name}/vendor/ImGuizmo/ImGuizmo.cpp"
 	}
 
 	includedirs
@@ -63,7 +64,8 @@ project "Syndra"
 		"%{IncludeDir.glm}",
 		"%{IncludeDir.stb_image}",
 		"%{IncludeDir.entt}",
-		"%{IncludeDir.yaml_cpp}"
+		"%{IncludeDir.yaml_cpp}",
+		"%{IncludeDir.ImGuizmo}"
 	}
 
 	links
@@ -75,7 +77,8 @@ project "Syndra"
 		"opengl32.lib",
 	}
 	
-
+	filter "files:Syndra/vendor/ImGuizmo/**.cpp"
+	flags { "NoPCH" }
 
 	filter "system:windows"
 		cppdialect "C++latest"
