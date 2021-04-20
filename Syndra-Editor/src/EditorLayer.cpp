@@ -33,7 +33,7 @@ namespace Syndra {
 		m_QuadVA = VertexArray::Create();
 
 		FramebufferSpecification fbSpec;
-		fbSpec.Attachments = {FramebufferTextureFormat::RGBA8 , FramebufferTextureFormat::RED_INTEGER,FramebufferTextureFormat::DEPTH24STENCIL8};
+		fbSpec.Attachments = { FramebufferTextureFormat::RGBA8 , FramebufferTextureFormat::RED_INTEGER, FramebufferTextureFormat::DEPTH24STENCIL8 };
 		fbSpec.Width = 1280;
 		fbSpec.Height = 720;
 		fbSpec.Samples = 4;
@@ -42,58 +42,60 @@ namespace Syndra {
 		m_PostprocFB = FrameBuffer::Create(fbSpec);
 
 
+		fbSpec.Attachments = { FramebufferTextureFormat::RED_INTEGER , FramebufferTextureFormat::DEPTH24STENCIL8 };
+		m_MousePickFB = FrameBuffer::Create(fbSpec);
+
 		m_ViewportSize = { fbSpec.Width,fbSpec.Height };
 
 		BufferLayout layout = {
 			{ShaderDataType::Float3,"a_pos"},
 			{ShaderDataType::Float2,"a_uv"},
 			{ShaderDataType::Float3,"a_normal"},
-			{ShaderDataType::Int,"a_ID"}
 		};
 
 		float vertices[] = {
 			// back face
-			-0.5f, -0.5f, -0.5f,  0.0f, 0.0f,  0.0f, 0.0f,-1.0f, 1, // bottom-left
-			 0.5f, -0.5f, -0.5f,  1.0f, 0.0f,  0.0f, 0.0f,-1.0f, 1,// bottom-right    
-			 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,  0.0f, 0.0f,-1.0f, 1,// top-right              
-			 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,  0.0f, 0.0f,-1.0f, 1,// top-right
-			-0.5f,  0.5f, -0.5f,  0.0f, 1.0f,  0.0f, 0.0f,-1.0f, 1,// top-left
-			-0.5f, -0.5f, -0.5f,  0.0f, 0.0f,  0.0f, 0.0f,-1.0f, 1,// bottom-left                
+			-0.5f, -0.5f, -0.5f,  0.0f, 0.0f,  0.0f, 0.0f,-1.0f, // bottom-left
+			 0.5f, -0.5f, -0.5f,  1.0f, 0.0f,  0.0f, 0.0f,-1.0f,// bottom-right    
+			 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,  0.0f, 0.0f,-1.0f,// top-right              
+			 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,  0.0f, 0.0f,-1.0f,// top-right
+			-0.5f,  0.5f, -0.5f,  0.0f, 1.0f,  0.0f, 0.0f,-1.0f,// top-left
+			-0.5f, -0.5f, -0.5f,  0.0f, 0.0f,  0.0f, 0.0f,-1.0f,// bottom-left                
 			// front face
-			-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,  0.0f, 0.0f,1.0f, 1,// bottom-left
-			 0.5f,  0.5f,  0.5f,  1.0f, 1.0f,  0.0f, 0.0f,1.0f, 1,// top-right
-			 0.5f, -0.5f,  0.5f,  1.0f, 0.0f,  0.0f, 0.0f,1.0f, 1,// bottom-right        
-			 0.5f,  0.5f,  0.5f,  1.0f, 1.0f,  0.0f, 0.0f,1.0f, 1,// top-right
-			-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,  0.0f, 0.0f,1.0f, 1,// bottom-left
-			-0.5f,  0.5f,  0.5f,  0.0f, 1.0f,  0.0f, 0.0f,1.0f, 1,// top-left        
+			-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,  0.0f, 0.0f,1.0f,  // bottom-left
+			 0.5f,  0.5f,  0.5f,  1.0f, 1.0f,  0.0f, 0.0f,1.0f,  // top-right
+			 0.5f, -0.5f,  0.5f,  1.0f, 0.0f,  0.0f, 0.0f,1.0f,  // bottom-right        
+			 0.5f,  0.5f,  0.5f,  1.0f, 1.0f,  0.0f, 0.0f,1.0f,  // top-right
+			-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,  0.0f, 0.0f,1.0f,  // bottom-left
+			-0.5f,  0.5f,  0.5f,  0.0f, 1.0f,  0.0f, 0.0f,1.0f,  // top-left        
 			// left face
-			-0.5f,  0.5f,  0.5f,  1.0f, 0.0f,  -1.0f, 0.0f,0.0f, 1,// top-right
-			-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,  -1.0f, 0.0f,0.0f, 1,// bottom-left
-			-0.5f,  0.5f, -0.5f,  1.0f, 1.0f,  -1.0f, 0.0f,0.0f, 1,// top-left       
-			-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,  -1.0f, 0.0f,0.0f, 1,// bottom-left
-			-0.5f,  0.5f,  0.5f,  1.0f, 0.0f,  -1.0f, 0.0f,0.0f, 1,// top-right
-			-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,  -1.0f, 0.0f,0.0f, 1,// bottom-right
+			-0.5f,  0.5f,  0.5f,  1.0f, 0.0f,  -1.0f, 0.0f,0.0f, // top-right
+			-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,  -1.0f, 0.0f,0.0f, // bottom-left
+			-0.5f,  0.5f, -0.5f,  1.0f, 1.0f,  -1.0f, 0.0f,0.0f, // top-left       
+			-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,  -1.0f, 0.0f,0.0f, // bottom-left
+			-0.5f,  0.5f,  0.5f,  1.0f, 0.0f,  -1.0f, 0.0f,0.0f, // top-right
+			-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,  -1.0f, 0.0f,0.0f, // bottom-right
 			// right face
-			 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,  1.0f, 0.0f,0.0f, 1,// top-left
-			 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,  1.0f, 0.0f,0.0f, 1,// top-right      
-			 0.5f, -0.5f, -0.5f,  0.0f, 1.0f,  1.0f, 0.0f,0.0f, 1,// bottom-right          
-			 0.5f, -0.5f, -0.5f,  0.0f, 1.0f,  1.0f, 0.0f,0.0f, 1,// bottom-right
-			 0.5f, -0.5f,  0.5f,  0.0f, 0.0f,  1.0f, 0.0f,0.0f, 1,// bottom-left
-			 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,  1.0f, 0.0f,0.0f, 1,// top-left
+			 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,  1.0f, 0.0f,0.0f,  // top-left
+			 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,  1.0f, 0.0f,0.0f,  // top-right      
+			 0.5f, -0.5f, -0.5f,  0.0f, 1.0f,  1.0f, 0.0f,0.0f,  // bottom-right          
+			 0.5f, -0.5f, -0.5f,  0.0f, 1.0f,  1.0f, 0.0f,0.0f,  // bottom-right
+			 0.5f, -0.5f,  0.5f,  0.0f, 0.0f,  1.0f, 0.0f,0.0f,  // bottom-left
+			 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,  1.0f, 0.0f,0.0f,  // top-left
 			// bottom face          
-			-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,  0.0f, -1.0f,0.0f, 1,// top-right
-			 0.5f, -0.5f,  0.5f,  1.0f, 0.0f,  0.0f, -1.0f,0.0f, 1,// bottom-left
-			 0.5f, -0.5f, -0.5f,  1.0f, 1.0f,  0.0f, -1.0f,0.0f, 1,// top-left        
-			 0.5f, -0.5f,  0.5f,  1.0f, 0.0f,  0.0f, -1.0f,0.0f, 1,// bottom-left
-			-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,  0.0f, -1.0f,0.0f, 1,// top-right
-			-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,  0.0f, -1.0f,0.0f, 1,// bottom-right
-			// top face
-			-0.5f,  0.5f, -0.5f,  0.0f, 1.0f,  0.0f, 1.0f,0.0f, 1,// top-left
-			 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,  0.0f, 1.0f,0.0f, 1,// top-right
-			 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,  0.0f, 1.0f,0.0f, 1,// bottom-right                 
-			 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,  0.0f, 1.0f,0.0f, 1,// bottom-right
-			-0.5f,  0.5f,  0.5f,  0.0f, 0.0f,  0.0f, 1.0f,0.0f, 1,// bottom-left  
-			-0.5f,  0.5f, -0.5f,  0.0f, 1.0f,  0.0f, 1.0f,0.0f,  1// top-left              
+			-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,  0.0f, -1.0f,0.0f, // top-right
+			 0.5f, -0.5f,  0.5f,  1.0f, 0.0f,  0.0f, -1.0f,0.0f, // bottom-left
+			 0.5f, -0.5f, -0.5f,  1.0f, 1.0f,  0.0f, -1.0f,0.0f, // top-left        
+			 0.5f, -0.5f,  0.5f,  1.0f, 0.0f,  0.0f, -1.0f,0.0f, // bottom-left
+			-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,  0.0f, -1.0f,0.0f, // top-right
+			-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,  0.0f, -1.0f,0.0f, // bottom-right
+			// top face										     
+			-0.5f,  0.5f, -0.5f,  0.0f, 1.0f,  0.0f, 1.0f,0.0f,  // top-left
+			 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,  0.0f, 1.0f,0.0f,  // top-right
+			 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,  0.0f, 1.0f,0.0f,  // bottom-right                 
+			 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,  0.0f, 1.0f,0.0f,  // bottom-right
+			-0.5f,  0.5f,  0.5f,  0.0f, 0.0f,  0.0f, 1.0f,0.0f,  // bottom-left  
+			-0.5f,  0.5f, -0.5f,  0.0f, 1.0f,  0.0f, 1.0f,0.0f  // top-left              
 		};
 
 		float quad[] = {
@@ -153,7 +155,9 @@ namespace Syndra {
 
 		m_Shaders.Load("assets/shaders/diffuse.glsl");
 		auto difShader = m_Shaders.Get("diffuse");
-		difShader->Bind();
+
+		m_Shaders.Load("assets/shaders/mouse.glsl");
+		auto mouseShader = m_Shaders.Get("mouse");
 
 		m_Texture = Texture2D::Create("assets/Textures/tiles.jpg");
 
@@ -165,7 +169,7 @@ namespace Syndra {
 		m_Camera->SetViewportSize((float)app.GetWindow().GetWidth(), (float)app.GetWindow().GetHeight());
 		//Example
 		m_CubeEntity = m_ActiveScene->CreateEntity("cube1");
-		auto cubeEntity2 = m_ActiveScene->CreateEntity("cube2");
+		m_CubeEntity2 = m_ActiveScene->CreateEntity("cube2");
 	}
 
 	void EditorLayer::OnDetach()
@@ -181,6 +185,7 @@ namespace Syndra {
 		{	
 			m_OffScreenFB->Resize((uint32_t)m_ViewportSize.x, (uint32_t)m_ViewportSize.y);
 			m_PostprocFB->Resize((uint32_t)m_ViewportSize.x, (uint32_t)m_ViewportSize.y);
+			m_MousePickFB->Resize((uint32_t)m_ViewportSize.x, (uint32_t)m_ViewportSize.y);
 			m_Camera->SetViewportSize(m_ViewportSize.x, m_ViewportSize.y);
 			m_ActiveScene->OnViewportResize((uint32_t)m_ViewportSize.x, (uint32_t)m_ViewportSize.y);
 		}
@@ -195,42 +200,56 @@ namespace Syndra {
 		}
 
 		m_OffScreenFB->Bind();
-		//m_OffScreenFB->ClearAttachment(1, -1);
+
 		RenderCommand::SetClearColor(glm::vec4(m_ClearColor, 1.0f));
-		//RenderCommand::Clear();
-		glClear(GL_COLOR_BUFFER_BIT);
+		RenderCommand::Clear();
+		m_OffScreenFB->ClearAttachment(1, -1);
+		glEnable(GL_DEPTH_TEST);
 		Renderer::BeginScene(*m_Camera);
-		auto difShader = m_Shaders.Get("diffuse");
 		glm::mat4 trans;
 		trans = glm::scale(glm::mat4(1), m_Scale);
-		//glEnable(GL_DEPTH_TEST);
-		glClear(GL_DEPTH_BUFFER_BIT);
+		
+		auto difShader = m_Shaders.Get("diffuse");
 		difShader->Bind();
 		m_Texture->Bind(0);
-		difShader->SetMat4("u_trans", m_CubeEntity.GetComponent<TransformComponent>().GetTransform());
+		difShader->SetMat4("u_trans", m_CubeEntity2.GetComponent<TransformComponent>().GetTransform());
 		difShader->SetFloat3("cameraPos", m_Camera->GetPosition());
 		difShader->SetFloat3("lightPos", m_Camera->GetPosition());
 		difShader->SetFloat3("cubeCol", m_CubeColor);
+		difShader->SetInt("u_ID", (uint32_t)m_CubeEntity2);
 		
 		Renderer::Submit(difShader, m_VertexArray);
-		m_OffScreenFB->Unbind();
-		
 		Renderer::EndScene();
 
 
+		m_MousePickFB->Bind();
+		RenderCommand::SetClearColor(glm::vec4(m_ClearColor, 1.0f));
+		RenderCommand::Clear();
+		m_MousePickFB->ClearAttachment(0, -1);
+		glEnable(GL_DEPTH_TEST);
+		auto mouseShader = m_Shaders.Get("mouse");
+		mouseShader->Bind();
+		mouseShader->SetMat4("u_trans", m_CubeEntity2.GetComponent<TransformComponent>().GetTransform());
+		mouseShader->SetInt("u_ID", (uint32_t)m_CubeEntity2);
+		Renderer::Submit(mouseShader, m_VertexArray);
 
 		auto postProcShader = m_Shaders.Get("aa");
 
 		m_PostprocFB->Bind();
+		RenderCommand::Clear();
+		m_PostprocFB->ClearAttachment(1, -1);
+		m_QuadVA->Bind();
+		
 		glDisable(GL_DEPTH_TEST);
 		postProcShader->Bind();
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, m_OffScreenFB->GetColorAttachmentRendererID());
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, m_OffScreenFB->GetColorAttachmentRendererID(1));
 
-		m_QuadVA->Bind();
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
 		m_PostprocFB->Unbind();
-		
+
 	}
 
 	void EditorLayer::OnImGuiRender()
@@ -371,7 +390,6 @@ namespace Syndra {
 		uint64_t textureID = m_PostprocFB->GetColorAttachmentRendererID();
 
 		ImGui::Image(reinterpret_cast<void*>(textureID), ImVec2{ m_ViewportSize.x, m_ViewportSize.y }, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
-
 		
 		ImGuizmo::SetOrthographic(false);
 		ImGuizmo::SetDrawlist();
@@ -518,6 +536,28 @@ namespace Syndra {
 
 	bool EditorLayer::OnMouseButtonPressed(MouseButtonPressedEvent& e)
 	{
+		auto [mx, my] = ImGui::GetMousePos();
+		mx -= m_ViewportBounds[0].x;
+		my -= m_ViewportBounds[0].y;
+		glm::vec2 viewportSize = m_ViewportBounds[1] - m_ViewportBounds[0];
+		my = viewportSize.y - my;
+		int mouseX = (int)mx;
+		int mouseY = (int)my;
+
+		if (mouseX >= 0 && mouseY >= 0 && mouseX < (int)viewportSize.x && mouseY < (int)viewportSize.y)
+		{
+			m_MousePickFB->Bind();
+			int pixelData = m_MousePickFB->ReadPixel(0, mouseX, mouseY);
+			if (pixelData != -1) {
+				m_ScenePanel->SetSelectedEntity(m_ActiveScene->FindEntity(pixelData));
+			}
+			else
+			{
+				m_ScenePanel->SetSelectedEntity({});
+			}
+			SN_CORE_WARN("pixel data: {0}", pixelData);
+			m_MousePickFB->Unbind();
+		}
 		return false;
 	}
 

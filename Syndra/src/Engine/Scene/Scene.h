@@ -16,6 +16,7 @@ namespace Syndra {
 		Entity CreateEntity(const std::string& name = std::string());
 
 		void DestroyEntity(Entity entity);
+		Entity FindEntity(uint32_t id);
 
 		void OnUpdateRuntime(Timestep ts);
 		void OnUpdateEditor(Timestep ts, PerspectiveCamera& camera);

@@ -30,10 +30,11 @@ namespace Syndra {
 
 		Ref<Scene> m_ActiveScene;
 		Entity m_CubeEntity;
+		Entity m_CubeEntity2;
 
 		Ref<VertexArray> m_VertexArray,m_QuadVA;
 		Ref<VertexBuffer> m_VertexBuffer,m_QuadVB;
-		Ref<FrameBuffer> m_OffScreenFB,m_PostprocFB;
+		Ref<FrameBuffer> m_OffScreenFB,m_PostprocFB, m_MousePickFB;
 		Ref<IndexBuffer> m_IndexBuffer,m_QuadIB;
 		Ref<Texture2D> m_Texture,m_ScreenTex;
 		Ref<ScenePanel> m_ScenePanel;
