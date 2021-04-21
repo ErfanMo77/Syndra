@@ -52,11 +52,7 @@ project "Syndra"
 		"%{prj.name}/vendor/stb_image/**.h",
 		"%{prj.name}/vendor/stb_image/**.cpp",
 		"%{prj.name}/vendor/ImGuizmo/ImGuizmo.h",
-		"%{prj.name}/vendor/ImGuizmo/ImGuizmo.cpp",
-		"%{prj.name}/vendor/assimp/build/assimp-vc142-mtd.lib",
-		"%{prj.name}/vendor/assimp/build/assimp-vc142-mtd.exp",
-		"%{prj.name}/vendor/assimp/include/**.cpp",
-		"%{prj.name}/vendor/assimp/include/**.h"
+		"%{prj.name}/vendor/ImGuizmo/ImGuizmo.cpp"
 	}
 
 	includedirs
