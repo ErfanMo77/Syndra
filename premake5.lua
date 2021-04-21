@@ -19,6 +19,7 @@ IncludeDir["stb_image"] = "%{wks.location}/Syndra/vendor/stb_image"
 IncludeDir["entt"] = "%{wks.location}/Syndra/vendor/entt/Include"
 IncludeDir["yaml_cpp"] = "%{wks.location}/Syndra/vendor/yaml-cpp/include"
 IncludeDir["ImGuizmo"] = "%{wks.location}/Syndra/vendor/ImGuizmo"
+IncludeDir["assimp"] = "%{wks.location}/Syndra/vendor/assimp/include"
 
 group "Dependencies"
 	include "Syndra/vendor/GLFW"
@@ -51,7 +52,11 @@ project "Syndra"
 		"%{prj.name}/vendor/stb_image/**.h",
 		"%{prj.name}/vendor/stb_image/**.cpp",
 		"%{prj.name}/vendor/ImGuizmo/ImGuizmo.h",
-		"%{prj.name}/vendor/ImGuizmo/ImGuizmo.cpp"
+		"%{prj.name}/vendor/ImGuizmo/ImGuizmo.cpp",
+		"%{prj.name}/vendor/assimp/build/assimp-vc142-mtd.lib",
+		"%{prj.name}/vendor/assimp/build/assimp-vc142-mtd.exp",
+		"%{prj.name}/vendor/assimp/include/**.cpp",
+		"%{prj.name}/vendor/assimp/include/**.h"
 	}
 
 	includedirs
@@ -65,7 +70,12 @@ project "Syndra"
 		"%{IncludeDir.stb_image}",
 		"%{IncludeDir.entt}",
 		"%{IncludeDir.yaml_cpp}",
-		"%{IncludeDir.ImGuizmo}"
+		"%{IncludeDir.ImGuizmo}",
+		"%{IncludeDir.assimp}"
+	}
+
+	libdirs {
+		"Syndra/vendor/assimp/build"
 	}
 
 	links
@@ -74,7 +84,8 @@ project "Syndra"
 		"Glad",
 		"imgui",
 		"yaml-cpp",
-		"opengl32.lib",
+		"assimp-vc142-mtd.lib",
+		"opengl32.lib"
 	}
 	
 	filter "files:Syndra/vendor/ImGuizmo/**.cpp"
@@ -124,7 +135,8 @@ project "Sandbox"
 		"Syndra/vendor/spdlog/include",
 		"Syndra/src",
 		"%{IncludeDir.glm}",
-		"%{IncludeDir.imgui}"
+		"%{IncludeDir.imgui}",
+		"%{IncludeDir.entt}"
 	}
 
 	links
