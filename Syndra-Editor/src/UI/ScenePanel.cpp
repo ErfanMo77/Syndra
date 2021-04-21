@@ -32,9 +32,9 @@ namespace Syndra {
 		//---------------------------------------------Scene hierarchy-------------------------------//
 		ImGui::Begin("Scene hierarchy");
 
-		for (auto& ent:m_Context->m_Entities)
+		for (auto ent:m_Context->m_Entities)
 		{
-			DrawEntity(*ent);
+			DrawEntity({ ent,m_Context.get() });
 		}
 
 		if (ImGui::IsMouseDown(0) && ImGui::IsWindowHovered())
@@ -60,7 +60,7 @@ namespace Syndra {
 		ImGui::End();
 	}
 
-	void DrawVec3Control(const std::string& label, glm::vec3& values, float resetValue = 0.0f, float columnWidth = 100.0f)
+	void ScenePanel::DrawVec3Control(const std::string& label, glm::vec3& values, float resetValue, float columnWidth)
 	{
 		ImGuiIO& io = ImGui::GetIO();
 		auto boldFont =io.Fonts->Fonts[1];
@@ -188,6 +188,9 @@ namespace Syndra {
 			}
 			ImGui::EndPopup();
 		}
+		if (m_SelectionContext == entity && Input::IsKeyPressed(Key::Delete)) {
+			entityDeleted = true;
+		}
 
 		//for (int n = 0; n < m_Context->m_Entities.size(); n++)
 		//{
@@ -210,9 +213,9 @@ namespace Syndra {
 
 		if (entityDeleted)
 		{
-			m_Context->DestroyEntity(entity);
 			if (m_SelectionContext == entity)
 				m_SelectionContext = {};
+			m_Context->DestroyEntity(entity);
 		}
 	}
 

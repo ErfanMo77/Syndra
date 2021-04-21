@@ -209,7 +209,8 @@ namespace Syndra {
 		difShader->SetFloat3("lightPos", m_Camera->GetPosition());
 		difShader->SetFloat3("cubeCol", m_CubeColor);
 
-		if (m_ScenePanel->GetSelectedEntity()) {
+		if (m_ScenePanel->GetSelectedEntity()) 
+		{
 			auto outline = m_Shaders.Get("outline");
 			outline->Bind();
 			auto transform = m_ScenePanel->GetSelectedEntity().GetComponent<TransformComponent>();
@@ -527,6 +528,11 @@ namespace Syndra {
 				m_GizmoType = ImGuizmo::OPERATION::SCALE;
 			break;
 		}
+
+		case Key::F:
+			if (m_ScenePanel->GetSelectedEntity()) {
+				m_Camera->SetFocalPoint(m_ScenePanel->GetSelectedEntity().GetComponent<TransformComponent>().Translation);
+			}
 		default: break;
 		}
 		return false;
@@ -542,12 +548,12 @@ namespace Syndra {
 		int mouseX = (int)mx;
 		int mouseY = (int)my;
 		altIsDown = Input::IsKeyPressed(Key::LeftAlt);
-		if (mouseX >= 0 && mouseY >= 0 && mouseX < (int)viewportSize.x && mouseY < (int)viewportSize.y && !altIsDown)
+		if (mouseX >= 0 && mouseY >= 0 && mouseX < (int)viewportSize.x && mouseY < (int)viewportSize.y && !altIsDown && m_ViewportHovered)
 		{
 			m_MousePickFB->Bind();
 			int pixelData = m_MousePickFB->ReadPixel(0, mouseX, mouseY);
 			if (pixelData != -1) {
-				m_ScenePanel->SetSelectedEntity(m_ActiveScene->FindEntity(pixelData));
+				m_ScenePanel->SetSelectedEntity({ m_ActiveScene->FindEntity(pixelData),m_ActiveScene.get()});
 			}
 			else
 			{

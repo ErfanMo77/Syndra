@@ -46,6 +46,10 @@ namespace Syndra {
 		bool operator ==(const Entity& other) const {
 			return m_EntityID == other.m_EntityID && m_Scene == other.m_Scene;
 		}
+		
+		bool operator ==(const entt::entity& other) const {
+			return other == m_EntityID;
+		}
 
 		bool operator !=(const Entity& other) {
 			return !(*this == other);

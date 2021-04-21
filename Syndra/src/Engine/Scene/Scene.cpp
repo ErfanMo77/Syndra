@@ -20,29 +20,29 @@ namespace Syndra {
 		auto& tag = entity.AddComponent<TagComponent>();
 		tag.Tag = name.empty() ? "Entity" : name;
 		entity.AddComponent<TransformComponent>();
-		m_Entities.push_back(CreateRef<Entity>(entity));
+		m_Entities.push_back(entity);
 		return entity;
 	}
 
 	void Scene::DestroyEntity(Entity entity)
 	{
-		m_Registry.destroy(entity);
-
 		for (auto& e : m_Entities) {
-			if (*e == entity) {
+			if (e == entity) {
 				auto it = std::find(m_Entities.begin(), m_Entities.end(), e);
 				if (it != m_Entities.end()) {
 					m_Entities.erase(it);
+					break;
 				}
 			}
 		}
+		m_Registry.destroy(entity);
 	}
 
-	Entity Scene::FindEntity(uint32_t id)
+	entt::entity Scene::FindEntity(uint32_t id)
 	{
 		for (auto& e : m_Entities) {
-			if (*e == (entt::entity)id) {
-				return *e;
+			if (e == (entt::entity)id) {
+				return e;
 			}
 		}
 		return {};

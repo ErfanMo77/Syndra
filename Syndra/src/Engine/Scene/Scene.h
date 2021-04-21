@@ -16,7 +16,7 @@ namespace Syndra {
 		Entity CreateEntity(const std::string& name = std::string());
 
 		void DestroyEntity(Entity entity);
-		Entity FindEntity(uint32_t id);
+		entt::entity FindEntity(uint32_t id);
 
 		void OnUpdateRuntime(Timestep ts);
 		void OnUpdateEditor(Timestep ts, PerspectiveCamera& camera);
@@ -29,7 +29,7 @@ namespace Syndra {
 	private:
 		entt::registry m_Registry;
 
-		std::vector<Ref<Entity>> m_Entities;
+		std::vector<entt::entity> m_Entities;
 
 		uint32_t m_ViewportWidth = 0;
 		uint32_t m_ViewportHeight = 0;
