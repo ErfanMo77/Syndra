@@ -149,7 +149,7 @@ namespace Syndra {
 		out << YAML::Key << "Entities" << YAML::Value << YAML::BeginSeq;
 		for (auto& entity : m_Scene->m_Entities)
 		{
-			SerializeEntity(out, *entity);
+			SerializeEntity(out, { entity, m_Scene.get()});
 		}
 		out << YAML::EndSeq;
 		out << YAML::EndMap;

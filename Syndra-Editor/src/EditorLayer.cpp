@@ -553,7 +553,7 @@ namespace Syndra {
 			m_MousePickFB->Bind();
 			int pixelData = m_MousePickFB->ReadPixel(0, mouseX, mouseY);
 			if (pixelData != -1) {
-				m_ScenePanel->SetSelectedEntity(m_ActiveScene->FindEntity(pixelData));
+				m_ScenePanel->SetSelectedEntity({ m_ActiveScene->FindEntity(pixelData),m_ActiveScene.get()});
 			}
 			else
 			{

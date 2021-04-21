@@ -32,9 +32,9 @@ namespace Syndra {
 		//---------------------------------------------Scene hierarchy-------------------------------//
 		ImGui::Begin("Scene hierarchy");
 
-		for (auto& ent:m_Context->m_Entities)
+		for (auto ent:m_Context->m_Entities)
 		{
-			DrawEntity(*ent);
+			DrawEntity({ ent,m_Context.get() });
 		}
 
 		if (ImGui::IsMouseDown(0) && ImGui::IsWindowHovered())
@@ -210,9 +210,9 @@ namespace Syndra {
 
 		if (entityDeleted)
 		{
-			m_Context->DestroyEntity(entity);
 			if (m_SelectionContext == entity)
 				m_SelectionContext = {};
+			m_Context->DestroyEntity(entity);
 		}
 	}
 
