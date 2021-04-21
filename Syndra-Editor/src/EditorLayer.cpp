@@ -548,7 +548,7 @@ namespace Syndra {
 		int mouseX = (int)mx;
 		int mouseY = (int)my;
 		altIsDown = Input::IsKeyPressed(Key::LeftAlt);
-		if (mouseX >= 0 && mouseY >= 0 && mouseX < (int)viewportSize.x && mouseY < (int)viewportSize.y && !altIsDown)
+		if (mouseX >= 0 && mouseY >= 0 && mouseX < (int)viewportSize.x && mouseY < (int)viewportSize.y && !altIsDown && m_ViewportHovered)
 		{
 			m_MousePickFB->Bind();
 			int pixelData = m_MousePickFB->ReadPixel(0, mouseX, mouseY);

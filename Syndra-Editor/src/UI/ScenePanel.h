@@ -3,6 +3,7 @@
 #include "Engine/Scene/Scene.h"
 #include "Engine/Scene/Entity.h"
 #include "Engine/Scene/Components.h"
+#include "Engine/Core/Input.h"
 
 namespace Syndra {
 

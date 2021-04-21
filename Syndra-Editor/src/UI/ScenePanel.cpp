@@ -188,6 +188,9 @@ namespace Syndra {
 			}
 			ImGui::EndPopup();
 		}
+		if (m_SelectionContext == entity && Input::IsKeyPressed(Key::Delete)) {
+			entityDeleted = true;
+		}
 
 		//for (int n = 0; n < m_Context->m_Entities.size(); n++)
 		//{
