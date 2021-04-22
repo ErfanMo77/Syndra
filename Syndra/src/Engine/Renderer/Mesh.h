@@ -1,6 +1,4 @@
 #pragma once
-#include <glad/glad.h> 
-
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
@@ -17,7 +15,7 @@ namespace Syndra {
 		glm::vec3 Bitangent;
 	};
 
-	struct Texture {
+	struct texture {
 		unsigned int id;
 		std::string type;
 		std::string path;
@@ -29,9 +27,9 @@ namespace Syndra {
 
 		std::vector<Vertex> vertices;
 		std::vector<unsigned int> indices;
-		std::vector<Texture> textures;
+		std::vector<texture> textures;
 		
-		Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<Texture> textures);
+		Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<texture> textures);
 
 		Ref<VertexArray> GetVertexArray() { return m_VertexArray; }
 

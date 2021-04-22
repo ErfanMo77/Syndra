@@ -22,7 +22,8 @@ project "Syndra-Editor"
 		"%{IncludeDir.imgui}",
 		"%{IncludeDir.Glad}",
 		"%{IncludeDir.entt}",
-		"%{IncludeDir.ImGuizmo}"
+		"%{IncludeDir.ImGuizmo}",
+		"%{IncludeDir.assimp}"
 	}
 
 	links

@@ -1,14 +1,16 @@
 #include "lpch.h"
-#include "EditorLayer.h"
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
-#include "imgui.h"
+
+#include "EditorLayer.h"
 #include <glad/glad.h>
+#include "imgui.h"
+#include "ImGuizmo.h"
+
 #include "Engine/Utils/Math.h"
 #include "Engine/Scene/SceneSerializer.h"
-
 #include "Engine/Utils/PlatformUtils.h"
-#include "ImGuizmo.h"
+
 
 
 namespace Syndra {
@@ -41,7 +43,7 @@ namespace Syndra {
 		fbSpec.Samples = 1;
 		m_PostprocFB = FrameBuffer::Create(fbSpec);
 
-
+		m_Model = CreateRef<Model>(("assets/Models/backpack/backpack.obj"));
 		fbSpec.Attachments = { FramebufferTextureFormat::RED_INTEGER , FramebufferTextureFormat::DEPTH24STENCIL8 };
 		m_MousePickFB = FrameBuffer::Create(fbSpec);
 
@@ -203,12 +205,13 @@ namespace Syndra {
 		
 		auto difShader = m_Shaders.Get("diffuse");
 		difShader->Bind();
+		
 		m_Texture->Bind(0);
-		difShader->SetMat4("u_trans", m_CubeEntity2.GetComponent<TransformComponent>().GetTransform());
+		difShader->SetMat4("u_trans", glm::mat4(1.0));
 		difShader->SetFloat3("cameraPos", m_Camera->GetPosition());
 		difShader->SetFloat3("lightPos", m_Camera->GetPosition());
-		difShader->SetFloat3("cubeCol", m_CubeColor);
-
+		//difShader->SetFloat3("cubeCol", m_CubeColor);
+		Renderer::Submit(difShader, *m_Model);
 		if (m_ScenePanel->GetSelectedEntity()) 
 		{
 			auto outline = m_Shaders.Get("outline");
@@ -218,8 +221,8 @@ namespace Syndra {
 			outline->SetMat4("u_trans", transform.GetTransform());
 			Renderer::Submit(outline, m_VertexArray);
 		}
-		glDisable(GL_DEPTH_TEST);
-		Renderer::Submit(difShader, m_VertexArray);
+		//glDisable(GL_DEPTH_TEST);
+		//Renderer::Submit(difShader, m_VertexArray);
 		Renderer::EndScene();
 
 

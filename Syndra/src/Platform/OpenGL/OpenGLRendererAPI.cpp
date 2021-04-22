@@ -39,8 +39,8 @@ namespace Syndra {
 
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		glEnable(GL_BLEND);
-		glCullFace(GL_FRONT);
-		glEnable(GL_CULL_FACE);
+		//glCullFace(GL_BACK);
+		//glEnable(GL_CULL_FACE);
 		glEnable(GL_DEPTH_TEST);
 	}
 
@@ -56,7 +56,7 @@ namespace Syndra {
 
 	void OpenGLRendererAPI::DrawIndexed(const Ref<VertexArray>& vertexArray)
 	{
-		glDrawArrays(GL_TRIANGLES,0,36);
+		glDrawElements(GL_TRIANGLES, vertexArray->GetIndexBuffer()->GetCount(), GL_UNSIGNED_INT, 0);
 	}
 
 	void OpenGLRendererAPI::SetViewport(uint32_t x, uint32_t y, uint32_t width, uint32_t height)

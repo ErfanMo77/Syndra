@@ -23,6 +23,18 @@ namespace Syndra {
 		RenderCommand::DrawIndexed(vertexArray);
 	}
 
+	void Renderer::Submit(const Ref<Shader>& shader, const Model& model)
+	{
+		shader->Bind();
+		shader->SetMat4("u_ViewProjection", m_SceneData->ViewProjectionMatrix);
+		auto& meshes = model.meshes;
+		for (auto mesh : meshes) {
+			auto vertexArray = mesh.GetVertexArray();
+			vertexArray->Bind();
+			RenderCommand::DrawIndexed(vertexArray);
+		}
+	}
+
 	void Renderer::OnWindowResize(uint32_t width, uint32_t height)
 	{
 		RenderCommand::SetViewport(0, 0, width, height);

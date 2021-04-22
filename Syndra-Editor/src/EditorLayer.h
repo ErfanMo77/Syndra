@@ -38,6 +38,7 @@ namespace Syndra {
 		Ref<IndexBuffer> m_IndexBuffer,m_QuadIB;
 		Ref<Texture2D> m_Texture,m_ScreenTex;
 		Ref<ScenePanel> m_ScenePanel;
+		Ref<Model> m_Model;
 		PerspectiveCamera* m_Camera;
 
 		int m_GizmoType = -1;
