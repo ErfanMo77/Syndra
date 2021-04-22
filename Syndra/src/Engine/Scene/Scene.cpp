@@ -101,5 +101,9 @@ namespace Syndra {
 	{
 	}
 
+	template<>
+	void Scene::OnComponentAdded<MeshComponent>(Entity entity, MeshComponent& component)
+	{
+	}
 
 }

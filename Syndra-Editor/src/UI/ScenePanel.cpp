@@ -262,6 +262,19 @@ namespace Syndra {
 
 		ImGui::Separator();
 
+		DrawComponent<MeshComponent>("Mesh", entity, false, [](auto& component)
+		{
+				char buffer[256];
+				memset(buffer, 0, sizeof(buffer));
+				strcpy_s(buffer, "\0");
+				ImGui::InputText("Path", buffer, sizeof(buffer));
+				ImGui::SameLine();
+				if (ImGui::Button("...")) {
+
+				}
+				ImGui::Separator();
+		});
+
 		DrawComponent<CameraComponent>("Camera", entity, true,[](auto& component)
 			{
 				auto& camera = component.Camera;
@@ -346,9 +359,10 @@ namespace Syndra {
 				ImGui::CloseCurrentPopup();
 			}
 
-			if (ImGui::MenuItem("Mesh Renderer"))
+			if (ImGui::MenuItem("Mesh"))
 			{
-				//TODO
+				if (!m_SelectionContext.HasComponent<MeshComponent>())
+					m_SelectionContext.AddComponent<MeshComponent>();
 				ImGui::CloseCurrentPopup();
 			}
 			ImGui::EndPopup();

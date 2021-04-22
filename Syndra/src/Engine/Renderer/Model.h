@@ -13,7 +13,7 @@ namespace Syndra {
 		std::vector<Mesh>    meshes;
 		std::string directory;
 		bool gammaCorrection;
-
+		Model() = default;
 		Model(std::string const& path, bool gamma = false);
 		void Draw(Shader& shader);
 
