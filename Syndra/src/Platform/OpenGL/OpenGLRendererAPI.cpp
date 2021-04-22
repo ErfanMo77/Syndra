@@ -64,6 +64,11 @@ namespace Syndra {
 		glViewport(x, y, width, height);
 	}
 
+	void OpenGLRendererAPI::SetState(int stateID, bool on)
+	{
+		on ? glEnable(stateID) : glDisable(stateID);
+	}
+
 	std::string OpenGLRendererAPI::GetRendererInfo()
 	{
 		std::string info{};

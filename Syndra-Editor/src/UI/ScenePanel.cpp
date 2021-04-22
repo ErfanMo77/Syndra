@@ -4,6 +4,8 @@
 #include <imgui/imgui.h>
 #include <imgui/imgui_internal.h>
 
+#include "Engine/Utils/PlatformUtils.h"
+#include "Engine/Renderer/Model.h"
 #include <glm/gtc/type_ptr.hpp>
 
 #include <cstring>
@@ -262,18 +264,28 @@ namespace Syndra {
 
 		ImGui::Separator();
 
-		DrawComponent<MeshComponent>("Mesh", entity, false, [](auto& component)
-		{
-				char buffer[256];
-				memset(buffer, 0, sizeof(buffer));
-				strcpy_s(buffer, "\0");
-				ImGui::InputText("Path", buffer, sizeof(buffer));
-				ImGui::SameLine();
-				if (ImGui::Button("...")) {
+		if (entity.HasComponent<MeshComponent>()) {
+			auto& tag = entity.GetComponent<MeshComponent>().path;
 
+			char buffer[256];
+			memset(buffer, 0, sizeof(buffer));
+			strcpy_s(buffer, tag.c_str());
+			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 2,5 });
+			ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, { 10,0 });
+			ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x - 40);
+			if (ImGui::InputText("##Path", buffer, sizeof(buffer))) {
+				tag = std::string(buffer);
+			}
+			ImGui::SameLine();
+			if (ImGui::Button("...")) {
+				auto path = FileDialogs::OpenFile("Syndra Model (*.*)\0*.*\0");
+				if (path) {
+					tag = path->c_str();
+					entity.GetComponent<MeshComponent>().model = Model(tag);
 				}
-				ImGui::Separator();
-		});
+			}
+			ImGui::PopStyleVar(2);
+		}
 
 		DrawComponent<CameraComponent>("Camera", entity, true,[](auto& component)
 			{

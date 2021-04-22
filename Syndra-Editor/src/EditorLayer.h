@@ -26,19 +26,19 @@ namespace Syndra {
 		void SaveSceneAs();
 
 	private:
-		ShaderLibrary m_Shaders;
+		/*ShaderLibrary m_Shaders;*/
 
 		Ref<Scene> m_ActiveScene;
-		Entity m_CubeEntity;
-		Entity m_CubeEntity2;
+		//Entity m_CubeEntity;
+		//Entity m_CubeEntity2;
 
-		Ref<VertexArray> m_VertexArray,m_QuadVA;
-		Ref<VertexBuffer> m_VertexBuffer,m_QuadVB;
-		Ref<FrameBuffer> m_OffScreenFB,m_PostprocFB, m_MousePickFB;
-		Ref<IndexBuffer> m_IndexBuffer,m_QuadIB;
-		Ref<Texture2D> m_Texture,m_ScreenTex;
+		//Ref<VertexArray> m_VertexArray,m_QuadVA;
+		//Ref<VertexBuffer> m_VertexBuffer,m_QuadVB;
+		//Ref<FrameBuffer> m_OffScreenFB,m_PostprocFB, m_MousePickFB;
+		//Ref<IndexBuffer> m_IndexBuffer,m_QuadIB;
+		//Ref<Texture2D> m_Texture,m_ScreenTex;
 		Ref<ScenePanel> m_ScenePanel;
-		Ref<Model> m_Model;
+		/*Ref<Model> m_Model;*/
 		PerspectiveCamera* m_Camera;
 
 		int m_GizmoType = -1;
