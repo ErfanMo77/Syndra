@@ -48,6 +48,6 @@ void main(){
 	vec3 color = vec3(.8,0.3,.4);
 	vec3 result = (diff+0.2)*color;
 
-	fragColor = vec4(result,1.0);
+	fragColor = vec4(vec3(diff),1.0);
 }
 

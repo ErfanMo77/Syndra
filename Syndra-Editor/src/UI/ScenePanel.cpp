@@ -240,16 +240,6 @@ namespace Syndra {
 			ImGui::PopStyleVar(2);
 		}
 
-		//DrawComponent<TagComponent>("Tag", entity, false ,[](auto& component) {
-		//	auto& tag = component.Tag;
-		//	char buffer[256];
-		//	memset(buffer, 0, sizeof(buffer));
-		//	std::strcpy(buffer, tag.c_str());
-		//	if (ImGui::InputText("##Tag", buffer, sizeof(buffer))) {
-		//		tag = std::string(buffer);
-		//	}
-		//});
-
 		ImGui::Separator();
 
 		DrawComponent<TransformComponent>("Transform", entity, false,[](auto& component)

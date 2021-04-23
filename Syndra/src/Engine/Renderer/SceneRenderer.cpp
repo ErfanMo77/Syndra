@@ -49,8 +49,8 @@ namespace Syndra {
 		quadVB->SetLayout(quadLayout);
 		s_Data->screenVao->AddVertexBuffer(quadVB);
 		unsigned int quadIndices[] = {
-			0, 1, 3, // first triangle
-			1, 2, 3  // second triangle
+			0, 3, 1, // first triangle
+			1, 3, 2  // second triangle
 		};
 		auto indexBuffer = IndexBuffer::Create(quadIndices, sizeof(quadIndices) / sizeof(uint32_t));
 		s_Data->screenVao->SetIndexBuffer(indexBuffer);
@@ -78,30 +78,32 @@ namespace Syndra {
 		s_Data->diffuse->SetFloat3("cameraPos", s_Data->camera->GetPosition());
 		s_Data->diffuse->SetFloat3("lightPos", s_Data->camera->GetPosition());
 		//difShader->SetFloat3("cubeCol", m_CubeColor);
-		glEnable(GL_DEPTH_TEST);
+		//glEnable(GL_DEPTH_TEST);
 		if (entity.IsSelected())
 		{
-			s_Data->outline->Bind();
-			auto transform = tc;
-			transform.Scale += glm::vec3(.05f);
-			s_Data->outline->SetMat4("u_trans", transform.GetTransform());
-			Renderer::Submit(s_Data->outline, mc.model);
-			RenderCommand::SetState(GL_DEPTH_TEST, false);
+			//s_Data->outline->Bind();
+			//auto transform = tc;
+			//transform.Scale += glm::vec3(.05f);
+			//s_Data->outline->SetMat4("u_trans", transform.GetTransform());
+			//glDisable(GL_DEPTH_TEST);
+			//Renderer::Submit(s_Data->outline, mc.model);
+			//RenderCommand::SetState(GL_DEPTH_TEST, false);
 		}
 		//TODO
+		glEnable(GL_DEPTH_TEST);
 		Renderer::Submit(s_Data->diffuse, mc.model);
 
 		//-------------------------------------------------entity id pass--------------------------------------------------------//
-		s_Data->mouseFB->Bind();
-		RenderCommand::SetClearColor(glm::vec4(s_Data->clearColor, 1.0f));
-		RenderCommand::Clear();
-		s_Data->mouseFB->ClearAttachment(0, -1);
-		RenderCommand::SetState(GL_DEPTH_TEST, true);
+		//s_Data->mouseFB->Bind();
+		//RenderCommand::SetClearColor(glm::vec4(s_Data->clearColor, 1.0f));
+		//RenderCommand::Clear();
+		//s_Data->mouseFB->ClearAttachment(0, -1);
+		//RenderCommand::SetState(GL_DEPTH_TEST, true);
 
-		s_Data->mouseShader->Bind();
-		s_Data->mouseShader->SetMat4("u_trans", tc.GetTransform());
-		s_Data->mouseShader->SetInt("u_ID", (uint32_t)entity);
-		Renderer::Submit(s_Data->mouseShader, mc.model);
+		//s_Data->mouseShader->Bind();
+		//s_Data->mouseShader->SetMat4("u_trans", tc.GetTransform());
+		//s_Data->mouseShader->SetInt("u_ID", (uint32_t)entity);
+		//Renderer::Submit(s_Data->mouseShader, mc.model);
 	}
 
 	void SceneRenderer::EndScene()

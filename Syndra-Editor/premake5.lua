@@ -7,6 +7,8 @@ project "Syndra-Editor"
 	targetdir ("%{wks.location}/bin/" .. outputDir .. "/%{prj.name}")
 	objdir ("%{wks.location}/bin-int/" .. outputDir .. "/%{prj.name}")
 	
+	postbuildcommands{"copy %{wks.location}Syndra\\vendor\\assimp\\build\\assimp-vc142-mtd.dll $(targetDir)"}
+
 	files
 	{
 		"src/**.h",

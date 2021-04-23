@@ -63,7 +63,9 @@ namespace Syndra {
 			auto& tc = view.get<TransformComponent>(ent);
 			auto& mc = view.get<MeshComponent>(ent);
 			//TODO material
-			SceneRenderer::RenderEntity({ent,this}, tc, mc);
+			Entity entity = { ent,this };
+			entity.SetSelected(true);
+			SceneRenderer::RenderEntity(entity, tc, mc);
 		}
 
 		SceneRenderer::EndScene();
@@ -109,6 +111,7 @@ namespace Syndra {
 	template<>
 	void Scene::OnComponentAdded<MeshComponent>(Entity entity, MeshComponent& component)
 	{
+		entity.SetSelected(true);
 	}
 
 }

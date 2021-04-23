@@ -7,3 +7,5 @@ Entities:
       Translation: [0, 0, 0]
       Rotation: [0, 0, 0]
       Scale: [1, 1, 1]
+    MeshComponent:
+      Path: C:\dev\Syndra\Syndra-Editor\assets\Models\backpack\backpack.obj
