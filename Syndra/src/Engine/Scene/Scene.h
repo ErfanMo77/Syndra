@@ -2,6 +2,8 @@
 #include "entt.hpp"
 #include "Engine/Core/Timestep.h"
 #include "Engine/Renderer/PerspectiveCamera.h"
+#include "Engine/Renderer/FrameBuffer.h"
+#include "Engine/Renderer/SceneRenderer.h"
 
 namespace Syndra {
 
@@ -21,7 +23,10 @@ namespace Syndra {
 		void OnUpdateRuntime(Timestep ts);
 		void OnUpdateEditor(Timestep ts, PerspectiveCamera& camera);
 		void OnViewportResize(uint32_t width, uint32_t height);
-	
+
+		uint32_t GetMainTextureID() { return SceneRenderer::GetTextureID(0); }
+		FramebufferSpecification GetSpec() { return SceneRenderer::GetMainFrameSpec(); }
+
 	private:
 		template<typename T>
 		void OnComponentAdded(Entity entity, T& component);

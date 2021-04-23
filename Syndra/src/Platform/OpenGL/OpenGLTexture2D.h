@@ -21,6 +21,8 @@ namespace Syndra {
 
 		virtual void Bind(uint32_t slot = 0) const override;
 
+		static void BindTexture(uint32_t rendererID, uint32_t slot);
+
 	private:
 		std::string m_Path;
 		uint32_t m_Width, m_Height;

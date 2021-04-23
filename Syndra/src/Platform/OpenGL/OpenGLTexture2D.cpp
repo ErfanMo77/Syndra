@@ -87,6 +87,12 @@ namespace Syndra {
 		glBindTextureUnit(slot, m_RendererID);
 	}
 
+	void OpenGLTexture2D::BindTexture(uint32_t rendererID, uint32_t slot)
+	{
+		glActiveTexture(GL_TEXTURE0 + slot);
+		glBindTextureUnit(slot, rendererID);
+	}
+
 	bool OpenGLTexture2D::operator==(const Texture& other) const
 	{
 		return this->m_RendererID == ((OpenGLTexture2D&)other).GetRendererID();

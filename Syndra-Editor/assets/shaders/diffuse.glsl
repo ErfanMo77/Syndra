@@ -6,6 +6,8 @@
 layout(location = 0) in vec3 a_pos;
 layout(location = 1) in vec2 a_uv;
 layout(location = 2) in vec3 a_normal;
+layout(location = 3) in vec3 a_tangent;
+layout(location = 4) in vec3 a_bitangent;
 
 
 uniform mat4 u_ViewProjection;
@@ -26,7 +28,7 @@ void main(){
 #version 460 core
 layout(location = 0) out vec4 fragColor;	
 
-uniform sampler2D u_Texture;
+uniform sampler2D texture_diffuse1;
 uniform vec3 cubeCol;
 
 uniform vec3 cameraPos;
@@ -43,9 +45,9 @@ void main(){
 	vec3 reflectDir = reflect(-lightDir,norm);
 
 	float diff = max(dot(norm,lightDir),0);
-	vec3 color = vec3(texture(u_Texture,v_uv));
+	vec3 color = texture(texture_diffuse1,v_uv).rgb;
 	vec3 result = (diff+0.2)*color;
 
-	fragColor = vec4(result * cubeCol,1.0);
+	fragColor = vec4(result,1.0);
 }
 

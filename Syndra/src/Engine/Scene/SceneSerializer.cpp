@@ -138,6 +138,17 @@ namespace Syndra {
 			out << YAML::EndMap; // CameraComponent
 		}
 
+		if (entity.HasComponent<MeshComponent>())
+		{
+			out << YAML::Key << "MeshComponent";
+			out << YAML::BeginMap; // MeshComponent
+
+			auto& mc = entity.GetComponent<MeshComponent>();
+			out << YAML::Key << "Path" << YAML::Value << mc.path;
+
+			out << YAML::EndMap; // MeshComponent
+		}
+
 		out << YAML::EndMap; // Entity
 	}
 
@@ -211,6 +222,15 @@ namespace Syndra {
 
 					cc.Primary = cameraComponent["Primary"].as<bool>();
 					cc.FixedAspectRatio = cameraComponent["FixedAspectRatio"].as<bool>();
+				}
+
+				auto meshComponent = entity["MeshComponent"];
+				if (meshComponent)
+				{
+					// Entities always have transforms
+					auto& mc = deserializedEntity.GetComponent<MeshComponent>();
+					mc.path = meshComponent["path"].as<std::string>();
+					mc.model = Model(mc.path);
 				}
 			}
 		}

@@ -1,5 +1,5 @@
 #include "lpch.h"
-#include "Scene.h"
+#include "Engine/Scene/Scene.h"
 
 #include "Engine/Scene/Entity.h"
 #include "Engine/Scene/Components.h"
@@ -8,6 +8,7 @@ namespace Syndra {
 
 	Scene::Scene()
 	{
+		SceneRenderer::Initialize();
 	}
 
 	Scene::~Scene()
@@ -55,20 +56,26 @@ namespace Syndra {
 
 	void Scene::OnUpdateEditor(Timestep ts, PerspectiveCamera& camera)
 	{
-		//TODO
-		auto view = m_Registry.view<TransformComponent,TagComponent>();
+		SceneRenderer::BeginScene(camera);
+		auto view = m_Registry.view<TransformComponent,MeshComponent>();
 		for (auto ent : view)
 		{
-			auto& tag = view.get<TagComponent>(ent);
-			//SN_CORE_TRACE("Entity with ID :{0} and tag name : {1}", ent, tag.Tag);
+			auto& tc = view.get<TransformComponent>(ent);
+			auto& mc = view.get<MeshComponent>(ent);
+			//TODO material
+			Entity entity = { ent,this };
+			entity.SetSelected(true);
+			SceneRenderer::RenderEntity(entity, tc, mc);
 		}
+
+		SceneRenderer::EndScene();
 	}
 
 	void Scene::OnViewportResize(uint32_t width, uint32_t height)
 	{
 		m_ViewportWidth = width;
 		m_ViewportHeight = height;
-
+		SceneRenderer::OnViewPortResize(width, height);
 		// Resize our non-FixedAspectRatio cameras
 		auto view = m_Registry.view<CameraComponent>();
 		for (auto entity : view)
@@ -101,5 +108,10 @@ namespace Syndra {
 	{
 	}
 
+	template<>
+	void Scene::OnComponentAdded<MeshComponent>(Entity entity, MeshComponent& component)
+	{
+		entity.SetSelected(true);
+	}
 
 }

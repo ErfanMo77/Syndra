@@ -43,6 +43,10 @@ namespace Syndra {
 			m_Scene->m_Registry.remove<T>(m_EntityID);
 		}
 
+		bool IsSelected() const { return m_Selected; }
+
+		void SetSelected(bool selected) { m_Selected = selected; }
+
 		bool operator ==(const Entity& other) const {
 			return m_EntityID == other.m_EntityID && m_Scene == other.m_Scene;
 		}
@@ -70,7 +74,7 @@ namespace Syndra {
 	private:
 		entt::entity m_EntityID{ entt::null };
 		Scene* m_Scene = nullptr;
-
+		bool m_Selected = false;
 	};
 
 }
