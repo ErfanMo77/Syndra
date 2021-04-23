@@ -31,4 +31,13 @@ namespace Syndra {
 		return nullptr;
 	}
 
+	void Texture::BindTexture(uint32_t rendererID, uint32_t slot)
+	{
+		switch (Renderer::GetAPI())
+		{
+		case RendererAPI::API::NONE:    SN_CORE_ASSERT(false, "RendererAPI::None is currently not supported!");
+		case RendererAPI::API::OpenGL:	OpenGLTexture2D::BindTexture(rendererID,slot);
+		}
+	}
+
 }

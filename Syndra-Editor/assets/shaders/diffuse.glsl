@@ -28,7 +28,7 @@ void main(){
 #version 460 core
 layout(location = 0) out vec4 fragColor;	
 
-uniform sampler2D u_Texture;
+uniform sampler2D texture_diffuse1;
 uniform vec3 cubeCol;
 
 uniform vec3 cameraPos;
@@ -45,9 +45,9 @@ void main(){
 	vec3 reflectDir = reflect(-lightDir,norm);
 
 	float diff = max(dot(norm,lightDir),0);
-	vec3 color = vec3(.8,0.3,.4);
+	vec3 color = texture(texture_diffuse1,v_uv).rgb;
 	vec3 result = (diff+0.2)*color;
 
-	fragColor = vec4(vec3(diff),1.0);
+	fragColor = vec4(result,1.0);
 }
 

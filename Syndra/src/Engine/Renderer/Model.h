@@ -1,21 +1,24 @@
 #pragma once
 #include "Engine/Renderer/Mesh.h"
+#include "Engine/Renderer/Texture.h"
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 
 namespace Syndra {
 
+	unsigned int TextureFromFile(const char* path, const std::string& directory, bool gamma = false);
+
 	class Model
 	{
 	public:
 		std::vector<texture> textures_loaded;
-		std::vector<Mesh>    meshes;
+		std::vector<Ref<Texture2D>> syndraTextures;
+		std::vector<Mesh>  meshes;
 		std::string directory;
 		bool gammaCorrection;
 		Model() = default;
 		Model(std::string const& path, bool gamma = false);
-		void Draw(Shader& shader);
 
 	private:
 		void loadModel(std::string const& path);
