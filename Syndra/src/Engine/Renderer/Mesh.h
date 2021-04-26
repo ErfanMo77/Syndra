@@ -30,8 +30,9 @@ namespace Syndra {
 		std::vector<texture> textures;
 		
 		Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<texture> textures);
+		~Mesh() = default;
 
-		Ref<VertexArray> GetVertexArray() { return m_VertexArray; }
+		Ref<VertexArray> GetVertexArray() const  { return m_VertexArray; }
 
 	private:
 		Ref<VertexArray> m_VertexArray;

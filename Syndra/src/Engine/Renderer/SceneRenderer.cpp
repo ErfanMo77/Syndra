@@ -1,6 +1,5 @@
 #include "lpch.h"
 #include "Engine/Renderer/SceneRenderer.h"
-#include <glad/glad.h>
 #include "Engine/Scene/Entity.h"
 
 namespace Syndra {
@@ -13,12 +12,12 @@ namespace Syndra {
 		fbSpec.Attachments = { FramebufferTextureFormat::RGBA8 , FramebufferTextureFormat::DEPTH24STENCIL8 };
 		fbSpec.Width = 1280;
 		fbSpec.Height = 720;
-		fbSpec.Samples = 4;
+		fbSpec.Samples = 1;
 		s_Data->mainFB = FrameBuffer::Create(fbSpec);
 		fbSpec.Samples = 1;
-		s_Data->postProcFB = FrameBuffer::Create(fbSpec);
+		//s_Data->postProcFB = FrameBuffer::Create(fbSpec);
 		fbSpec.Attachments = { FramebufferTextureFormat::RED_INTEGER , FramebufferTextureFormat::DEPTH24STENCIL8 };
-		s_Data->mouseFB = FrameBuffer::Create(fbSpec);
+		//s_Data->mouseFB = FrameBuffer::Create(fbSpec);
 
 		if (!s_Data->aa) {
 			s_Data->shaders.Load("assets/shaders/aa.glsl");
@@ -58,7 +57,7 @@ namespace Syndra {
 
 	void SceneRenderer::BeginScene(const PerspectiveCamera& camera)
 	{
-		s_Data->camera = CreateRef<PerspectiveCamera>(camera);
+		s_Data->camera = camera;
 		s_Data->mainFB->Bind();
 
 		RenderCommand::SetClearColor(glm::vec4(s_Data->clearColor, 1.0f));
@@ -68,19 +67,20 @@ namespace Syndra {
 
 	}
 
-	void SceneRenderer::RenderEntity(const Entity& entity, TransformComponent& tc, MeshComponent& mc)
+	void SceneRenderer::RenderEntity(const entt::entity& entity, TransformComponent& tc, MeshComponent& mc)
 	{
 		//--------------------------------------------------color and outline pass------------------------------------------------//
 		s_Data->diffuse->Bind();
 		//TODO material system
 		//m_Texture->Bind(0);
 		s_Data->diffuse->SetMat4("u_trans", tc.GetTransform());
-		s_Data->diffuse->SetFloat3("cameraPos", s_Data->camera->GetPosition());
-		s_Data->diffuse->SetFloat3("lightPos", s_Data->camera->GetPosition());
+		s_Data->diffuse->SetFloat3("cameraPos", s_Data->camera.GetPosition());
+		s_Data->diffuse->SetFloat3("lightPos", s_Data->camera.GetPosition());
 		//difShader->SetFloat3("cubeCol", m_CubeColor);
 		//glEnable(GL_DEPTH_TEST);
-		if (entity.IsSelected())
-		{
+		//TODO add selected entities
+		//if (entity.IsSelected())
+		//{
 			//s_Data->outline->Bind();
 			//auto transform = tc;
 			//transform.Scale += glm::vec3(.05f);
@@ -88,9 +88,9 @@ namespace Syndra {
 			//glDisable(GL_DEPTH_TEST);
 			//Renderer::Submit(s_Data->outline, mc.model);
 			//RenderCommand::SetState(GL_DEPTH_TEST, false);
-		}
+		//}
 		//TODO
-		glEnable(GL_DEPTH_TEST);
+		//glEnable(GL_DEPTH_TEST);
 		Renderer::Submit(s_Data->diffuse, mc.model);
 
 		//-------------------------------------------------entity id pass--------------------------------------------------------//
@@ -110,24 +110,25 @@ namespace Syndra {
 	{
 		//-------------------------------------------------post-processing pass---------------------------------------------------//
 
-		s_Data->postProcFB->Bind();
-		RenderCommand::Clear();
-		s_Data->screenVao->Bind();
-		RenderCommand::SetState(GL_DEPTH_TEST, false);
-		s_Data->aa->Bind();
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, s_Data->mainFB->GetColorAttachmentRendererID());
-		Renderer::Submit(s_Data->aa, s_Data->screenVao);
-
-		s_Data->postProcFB->Unbind();
-		Renderer::EndScene();
+// 		s_Data->postProcFB->Bind();
+// 		RenderCommand::Clear();
+// 		s_Data->screenVao->Bind();
+// 		RenderCommand::SetState(GL_DEPTH_TEST, false);
+// 		s_Data->aa->Bind();
+// 		glActiveTexture(GL_TEXTURE0);
+// 		glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, s_Data->mainFB->GetColorAttachmentRendererID());
+// 		Renderer::Submit(s_Data->aa, s_Data->screenVao);
+// 
+// 		s_Data->postProcFB->Unbind();
+// 		Renderer::EndScene();
+		s_Data->mainFB->Unbind();
 	}
 
 	void SceneRenderer::OnViewPortResize(uint32_t width, uint32_t height)
 	{
 		s_Data->mainFB->Resize(width, height);
-		s_Data->postProcFB->Resize(width, height);
-		s_Data->mouseFB->Resize(width, height);
+		//s_Data->postProcFB->Resize(width, height);
+		//s_Data->mouseFB->Resize(width, height);
 	}
 
 }

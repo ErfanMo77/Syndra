@@ -8,9 +8,11 @@ namespace Syndra {
 	class Entity {
 
 	public:
+		static Scene* s_Scene;
+
 		Entity() = default;
 
-		Entity(entt::entity handle, Scene* scene);
+		Entity(entt::entity handle);
 
 		Entity(const Entity& other) = default;
 
@@ -18,8 +20,8 @@ namespace Syndra {
 		T& AddComponent(Args&&... args)
 		{
 			SN_CORE_ASSERT(!HasComponent<T>(), "Entity already has component!");
-			T& component = m_Scene->m_Registry.emplace<T>(m_EntityID, std::forward<Args>(args)...);
-			m_Scene->OnComponentAdded<T>(*this, component);
+			T& component = s_Scene->m_Registry.emplace<T>(m_EntityID, std::forward<Args>(args)...);
+			s_Scene->OnComponentAdded<T>(*this, component);
 			return component;
 		}
 
@@ -27,20 +29,20 @@ namespace Syndra {
 		T& GetComponent()
 		{
 			SN_CORE_ASSERT(HasComponent<T>(), "Entity does not have component!");
-			return m_Scene->m_Registry.get<T>(m_EntityID);
+			return s_Scene->m_Registry.get<T>(m_EntityID);
 		}
 
 		template<typename T>
 		bool HasComponent()
 		{
-			return m_Scene->m_Registry.has<T>(m_EntityID);
+			return s_Scene->m_Registry.has<T>(m_EntityID);
 		}
 
 		template<typename T>
 		void RemoveComponent()
 		{
 			SN_CORE_ASSERT(HasComponent<T>(), "Entity does not have component!");
-			m_Scene->m_Registry.remove<T>(m_EntityID);
+			s_Scene->m_Registry.remove<T>(m_EntityID);
 		}
 
 		bool IsSelected() const { return m_Selected; }
@@ -48,7 +50,7 @@ namespace Syndra {
 		void SetSelected(bool selected) { m_Selected = selected; }
 
 		bool operator ==(const Entity& other) const {
-			return m_EntityID == other.m_EntityID && m_Scene == other.m_Scene;
+			return m_EntityID == other.m_EntityID;
 		}
 		
 		bool operator ==(const entt::entity& other) const {
@@ -73,7 +75,6 @@ namespace Syndra {
 
 	private:
 		entt::entity m_EntityID{ entt::null };
-		Scene* m_Scene = nullptr;
 		bool m_Selected = false;
 	};
 

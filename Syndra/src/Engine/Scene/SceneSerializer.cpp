@@ -87,7 +87,7 @@ namespace Syndra {
 	static void SerializeEntity(YAML::Emitter& out, Entity entity)
 	{
 		out << YAML::BeginMap; // Entity
-		out << YAML::Key << "Entity" << YAML::Value << (uint32_t)entity; // TODO: Entity ID goes here
+		out << YAML::Key << "Entity" << YAML::Value << (uint32_t)entity;
 
 		if (entity.HasComponent<TagComponent>())
 		{
@@ -143,8 +143,8 @@ namespace Syndra {
 			out << YAML::Key << "MeshComponent";
 			out << YAML::BeginMap; // MeshComponent
 
-			auto& mc = entity.GetComponent<MeshComponent>();
-			out << YAML::Key << "Path" << YAML::Value << mc.path;
+			auto& path = entity.GetComponent<MeshComponent>().path;
+			out << YAML::Key << "Path" << YAML::Value << path;
 
 			out << YAML::EndMap; // MeshComponent
 		}
@@ -160,7 +160,7 @@ namespace Syndra {
 		out << YAML::Key << "Entities" << YAML::Value << YAML::BeginSeq;
 		for (auto& entity : m_Scene->m_Entities)
 		{
-			SerializeEntity(out, { entity, m_Scene.get()});
+			SerializeEntity(out, *entity);
 		}
 		out << YAML::EndSeq;
 		out << YAML::EndMap;
@@ -228,8 +228,8 @@ namespace Syndra {
 				if (meshComponent)
 				{
 					// Entities always have transforms
-					auto& mc = deserializedEntity.GetComponent<MeshComponent>();
-					mc.path = meshComponent["path"].as<std::string>();
+					auto& mc = deserializedEntity.AddComponent<MeshComponent>();
+					mc.path = meshComponent["Path"].as<std::string>();
 					mc.model = Model(mc.path);
 				}
 			}

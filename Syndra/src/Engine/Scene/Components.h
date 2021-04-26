@@ -49,7 +49,7 @@ namespace Syndra {
 
 		MeshComponent() = default;
 		MeshComponent(const MeshComponent&) = default;
-		MeshComponent(const std::string& path)
+		MeshComponent(std::string& path)
 			:path(path), model(path){}
 	};
 
