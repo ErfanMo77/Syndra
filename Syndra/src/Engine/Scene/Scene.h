@@ -13,18 +13,20 @@ namespace Syndra {
 	{
 	public:
 		Scene();
+		Scene(const Scene& other) = default;
 		~Scene();
 
 		Entity CreateEntity(const std::string& name = std::string());
 
-		void DestroyEntity(Entity entity);
-		entt::entity FindEntity(uint32_t id);
+		void DestroyEntity(const Entity& entity);
+		Entity FindEntity(uint32_t id);
 
 		void OnUpdateRuntime(Timestep ts);
 		void OnUpdateEditor(Timestep ts, PerspectiveCamera& camera);
 		void OnViewportResize(uint32_t width, uint32_t height);
 
 		uint32_t GetMainTextureID() { return SceneRenderer::GetTextureID(0); }
+		Ref<FrameBuffer> GetMouseFrameBuffer() { return SceneRenderer::GetMouseFrameBuffer(); }
 		FramebufferSpecification GetSpec() { return SceneRenderer::GetMainFrameSpec(); }
 
 	private:
@@ -34,7 +36,7 @@ namespace Syndra {
 	private:
 		entt::registry m_Registry;
 
-		std::vector<entt::entity> m_Entities;
+		std::vector<Ref<Entity>> m_Entities;
 
 		uint32_t m_ViewportWidth = 0;
 		uint32_t m_ViewportHeight = 0;

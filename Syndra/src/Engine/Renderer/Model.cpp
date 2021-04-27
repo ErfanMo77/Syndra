@@ -1,10 +1,9 @@
 #include "lpch.h"
 #include "Engine/Renderer/Model.h"
 
-
 namespace Syndra {
 
-	Model::Model(std::string const& path, bool gamma) :gammaCorrection(gamma)
+	Model::Model(std::string& path, bool gamma) :gammaCorrection(gamma)
 	{
 		loadModel(path);
 	}
@@ -155,15 +154,6 @@ namespace Syndra {
 			}
 		}
 		return textures;
-	}
-
-	unsigned int TextureFromFile(const char* path, const std::string& directory, bool gamma)
-	{
-		std::string filename = std::string(path);
-		filename = directory + '/' + filename;
-
-		auto texture = Texture2D::Create(filename);
-		return texture->GetRendererID();
 	}
 
 }

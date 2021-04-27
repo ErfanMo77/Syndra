@@ -31,7 +31,7 @@ namespace Syndra {
 			//SN_PROFILE_SCOPE("stbi_load - OpenGLTexture2D::OpenGLTexture2D(const std::string&)");
 			data = stbi_load(path.c_str(), &width, &height, &channels, 0);
 		}
-		SN_CORE_ASSERT(data, "Failed to load image!");
+		//SN_CORE_ASSERT(data, "Failed to load image!");
 		m_Width = width;
 		m_Height = height;
 
@@ -51,7 +51,7 @@ namespace Syndra {
 		m_InternalFormat = internalFormat;
 		m_DataFormat = dataFormat;
 		mipmapLevels = (GLsizei)floor(log2(std::max(width, height)));
-		SN_CORE_ASSERT(internalFormat & dataFormat, "Format not supported!");
+		//SN_CORE_ASSERT(internalFormat & dataFormat, "Format not supported!");
 
 		glCreateTextures(GL_TEXTURE_2D, 1, &m_RendererID);
 		glBindTexture(GL_TEXTURE_2D, m_RendererID);

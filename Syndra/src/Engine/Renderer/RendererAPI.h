@@ -4,6 +4,13 @@
 
 namespace Syndra {
 
+	enum class RenderState
+	{
+		DEPTH_TEST,
+		BLEND,
+		CULL
+	};
+
 	class RendererAPI {
 
 	public:
@@ -20,7 +27,7 @@ namespace Syndra {
 		virtual void SetClearColor(const glm::vec4 & color) = 0;
 		virtual void Clear() = 0;
 		virtual void DrawIndexed(const Ref<VertexArray>&vertexArray) = 0;
-		virtual void SetState(int stateID, bool on) = 0;
+		virtual void SetState(RenderState stateID, bool on) = 0;
 
 		virtual std::string GetRendererInfo() = 0;
 

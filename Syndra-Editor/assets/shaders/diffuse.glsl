@@ -47,6 +47,9 @@ void main(){
 	float diff = max(dot(norm,lightDir),0);
 	vec3 color = texture(texture_diffuse1,v_uv).rgb;
 	vec3 result = (diff+0.2)*color;
+	if(color == vec3(0)){
+		result = vec3(diff);
+	}
 
 	fragColor = vec4(result,1.0);
 }

@@ -1,6 +1,6 @@
 #include "lpch.h"
 #include "ScenePanel.h"
-
+#include <filesystem>
 #include <imgui/imgui.h>
 #include <imgui/imgui_internal.h>
 
@@ -34,9 +34,9 @@ namespace Syndra {
 		//---------------------------------------------Scene hierarchy-------------------------------//
 		ImGui::Begin("Scene hierarchy");
 
-		for (auto ent:m_Context->m_Entities)
+		for (auto& ent:m_Context->m_Entities)
 		{
-			DrawEntity({ ent,m_Context.get() });
+			DrawEntity(ent);
 		}
 
 		if (ImGui::IsMouseDown(0) && ImGui::IsWindowHovered())
@@ -171,15 +171,15 @@ namespace Syndra {
 	}
 
 
-	void ScenePanel::DrawEntity(Entity entity)
+	void ScenePanel::DrawEntity(Ref<Entity>& entity)
 	{
-		auto& tag = entity.GetComponent<TagComponent>();
-		ImGuiTreeNodeFlags flags = ((m_SelectionContext == entity) ? ImGuiTreeNodeFlags_Selected : 0) | ImGuiTreeNodeFlags_OpenOnArrow;
+		auto& tag = entity->GetComponent<TagComponent>();
+		ImGuiTreeNodeFlags flags = ((m_SelectionContext == *entity) ? ImGuiTreeNodeFlags_Selected : 0) | ImGuiTreeNodeFlags_OpenOnArrow;
 		flags |= ImGuiTreeNodeFlags_SpanAvailWidth;
-		bool opened = ImGui::TreeNodeEx((void*)(uint64_t)(uint32_t)entity, flags, tag.Tag.c_str());
+		bool opened = ImGui::TreeNodeEx((void*)(uint64_t)(uint32_t)*entity, flags, tag.Tag.c_str());
 
 		if (ImGui::IsItemClicked()) {
-			m_SelectionContext = entity;
+			m_SelectionContext = *entity;
 		}
 
 		bool entityDeleted = false;
@@ -190,7 +190,7 @@ namespace Syndra {
 			}
 			ImGui::EndPopup();
 		}
-		if (m_SelectionContext == entity && Input::IsKeyPressed(Key::Delete)) {
+		if (m_SelectionContext == *entity && Input::IsKeyPressed(Key::Delete)) {
 			entityDeleted = true;
 		}
 
@@ -215,9 +215,9 @@ namespace Syndra {
 
 		if (entityDeleted)
 		{
-			if (m_SelectionContext == entity)
+			if (m_SelectionContext == *entity)
 				m_SelectionContext = {};
-			m_Context->DestroyEntity(entity);
+			m_Context->DestroyEntity(*entity);
 		}
 	}
 
@@ -269,9 +269,17 @@ namespace Syndra {
 			ImGui::SameLine();
 			if (ImGui::Button("...")) {
 				auto path = FileDialogs::OpenFile("Syndra Model (*.*)\0*.*\0");
+				auto dir = std::filesystem::current_path();
 				if (path) {
-					tag = path->c_str();
-					entity.GetComponent<MeshComponent>().model = Model(tag);
+					std::string filePath;
+					if (path->find(dir.string()) != std::string::npos) {
+						filePath = path->substr(dir.string().size());
+					}
+					else {
+						filePath = *path;
+					}
+					tag = filePath;
+					entity.GetComponent<MeshComponent>().model = Model(*path);
 				}
 			}
 			ImGui::PopStyleVar(2);

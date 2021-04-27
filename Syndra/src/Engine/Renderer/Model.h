@@ -7,8 +7,6 @@
 
 namespace Syndra {
 
-	unsigned int TextureFromFile(const char* path, const std::string& directory, bool gamma = false);
-
 	class Model
 	{
 	public:
@@ -18,7 +16,8 @@ namespace Syndra {
 		std::string directory;
 		bool gammaCorrection;
 		Model() = default;
-		Model(std::string const& path, bool gamma = false);
+		~Model() = default;
+		Model(std::string& path, bool gamma = false);
 
 	private:
 		void loadModel(std::string const& path);

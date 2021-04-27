@@ -551,22 +551,21 @@ namespace Syndra {
 		int mouseX = (int)mx;
 		int mouseY = (int)my;
 		altIsDown = Input::IsKeyPressed(Key::LeftAlt);
-		//if (mouseX >= 0 && mouseY >= 0 && mouseX < (int)viewportSize.x && mouseY < (int)viewportSize.y && !altIsDown && m_ViewportHovered)
-		//{
-		//	m_MousePickFB->Bind();
-		//	int pixelData = m_MousePickFB->ReadPixel(0, mouseX, mouseY);
-		//	if (pixelData != -1) {
-		//		m_ScenePanel->SetSelectedEntity({ m_ActiveScene->FindEntity(pixelData),m_ActiveScene.get()});
-		//	}
-		//	else
-		//	{
-		//		if (!ImGuizmo::IsOver()) {
-		//			m_ScenePanel->SetSelectedEntity({});
-		//		}
-		//	}
-		//	SN_CORE_WARN("pixel data: {0}", pixelData);
-		//	m_MousePickFB->Unbind();
-		//}
+		if (mouseX >= 0 && mouseY >= 0 && mouseX < (int)viewportSize.x && mouseY < (int)viewportSize.y && !altIsDown && m_ViewportHovered && !ImGuizmo::IsOver())
+		{
+			auto& mousePickFB = m_ActiveScene->GetMouseFrameBuffer();
+			mousePickFB->Bind();
+			int pixelData = mousePickFB->ReadPixel(0, mouseX, mouseY);
+			if (pixelData != -1) {
+				m_ScenePanel->SetSelectedEntity(m_ActiveScene->FindEntity(pixelData));
+			}
+			else
+			{
+				m_ScenePanel->SetSelectedEntity({});
+			}
+			//SN_CORE_WARN("pixel data: {0}", pixelData);
+			mousePickFB->Unbind();
+		}
 		return false;
 	}
 

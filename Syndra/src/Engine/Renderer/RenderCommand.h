@@ -31,7 +31,7 @@ namespace Syndra {
 			s_RendererAPI->DrawIndexed(vertexArray);
 		}
 
-		static void SetState(int stateID, bool on) 
+		static void SetState(RenderState stateID, bool on) 
 		{
 			s_RendererAPI->SetState(stateID, on);
 		}

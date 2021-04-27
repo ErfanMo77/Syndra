@@ -8,6 +8,7 @@ namespace Syndra {
 
 	Scene::Scene()
 	{
+		Entity::s_Scene = this;
 		SceneRenderer::Initialize();
 	}
 
@@ -17,18 +18,18 @@ namespace Syndra {
 
 	Entity Scene::CreateEntity(const std::string& name)
 	{
-		Entity entity = { m_Registry.create(), this };
+		Entity entity = { m_Registry.create() };
 		auto& tag = entity.AddComponent<TagComponent>();
 		tag.Tag = name.empty() ? "Entity" : name;
 		entity.AddComponent<TransformComponent>();
-		m_Entities.push_back(entity);
+		m_Entities.push_back(CreateRef<Entity>(entity));
 		return entity;
 	}
 
-	void Scene::DestroyEntity(Entity entity)
+	void Scene::DestroyEntity(const Entity& entity)
 	{
 		for (auto& e : m_Entities) {
-			if (e == entity) {
+			if (*e == entity) {
 				auto it = std::find(m_Entities.begin(), m_Entities.end(), e);
 				if (it != m_Entities.end()) {
 					m_Entities.erase(it);
@@ -39,11 +40,11 @@ namespace Syndra {
 		m_Registry.destroy(entity);
 	}
 
-	entt::entity Scene::FindEntity(uint32_t id)
+	Entity Scene::FindEntity(uint32_t id)
 	{
 		for (auto& e : m_Entities) {
-			if (e == (entt::entity)id) {
-				return e;
+			if (*e == (entt::entity)id) {
+				return *e;
 			}
 		}
 		return {};
@@ -63,9 +64,10 @@ namespace Syndra {
 			auto& tc = view.get<TransformComponent>(ent);
 			auto& mc = view.get<MeshComponent>(ent);
 			//TODO material
-			Entity entity = { ent,this };
-			entity.SetSelected(true);
-			SceneRenderer::RenderEntity(entity, tc, mc);
+			//Entity entity = { ent };
+			//entity.SetSelected(true);
+			//auto entity = this->FindEntity((uint32_t)ent);
+			SceneRenderer::RenderEntity(ent, tc, mc);
 		}
 
 		SceneRenderer::EndScene();
@@ -111,7 +113,6 @@ namespace Syndra {
 	template<>
 	void Scene::OnComponentAdded<MeshComponent>(Entity entity, MeshComponent& component)
 	{
-		entity.SetSelected(true);
 	}
 
 }
