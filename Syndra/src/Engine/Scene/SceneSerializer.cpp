@@ -3,9 +3,10 @@
 
 #include "Engine/Scene/Entity.h"
 #include "Engine/Scene/Components.h"
+#include "Engine/Utils/PlatformUtils.h"
 
 #include <fstream>
-
+#include <filesystem>
 #include <yaml-cpp/yaml.h>
 
 namespace YAML {
@@ -227,9 +228,12 @@ namespace Syndra {
 				auto meshComponent = entity["MeshComponent"];
 				if (meshComponent)
 				{
-					// Entities always have transforms
+					auto dir = std::filesystem::current_path();
 					auto& mc = deserializedEntity.AddComponent<MeshComponent>();
 					mc.path = meshComponent["Path"].as<std::string>();
+					if (mc.path.find("\\") == 0) {
+						mc.path = dir.string() + mc.path;
+					}
 					mc.model = Model(mc.path);
 				}
 			}

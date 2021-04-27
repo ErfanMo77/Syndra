@@ -19,13 +19,14 @@ namespace Syndra {
 		Entity CreateEntity(const std::string& name = std::string());
 
 		void DestroyEntity(const Entity& entity);
-		//entt::entity FindEntity(uint32_t id);
+		Entity FindEntity(uint32_t id);
 
 		void OnUpdateRuntime(Timestep ts);
 		void OnUpdateEditor(Timestep ts, PerspectiveCamera& camera);
 		void OnViewportResize(uint32_t width, uint32_t height);
 
 		uint32_t GetMainTextureID() { return SceneRenderer::GetTextureID(0); }
+		Ref<FrameBuffer> GetMouseFrameBuffer() { return SceneRenderer::GetMouseFrameBuffer(); }
 		FramebufferSpecification GetSpec() { return SceneRenderer::GetMainFrameSpec(); }
 
 	private:

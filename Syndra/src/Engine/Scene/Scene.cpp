@@ -14,7 +14,6 @@ namespace Syndra {
 
 	Scene::~Scene()
 	{
-		//delete Entity::s_Scene;
 	}
 
 	Entity Scene::CreateEntity(const std::string& name)
@@ -41,15 +40,15 @@ namespace Syndra {
 		m_Registry.destroy(entity);
 	}
 
-	//entt::entity Scene::FindEntity(uint32_t id)
-	//{
-	//	for (auto& e : m_Entities) {
-	//		if (*e == (entt::entity)id) {
-	//			return e;
-	//		}
-	//	}
-	//	return {};
-	//}
+	Entity Scene::FindEntity(uint32_t id)
+	{
+		for (auto& e : m_Entities) {
+			if (*e == (entt::entity)id) {
+				return *e;
+			}
+		}
+		return {};
+	}
 
 	void Scene::OnUpdateRuntime(Timestep ts)
 	{
@@ -114,7 +113,6 @@ namespace Syndra {
 	template<>
 	void Scene::OnComponentAdded<MeshComponent>(Entity entity, MeshComponent& component)
 	{
-		entity.SetSelected(true);
 	}
 
 }

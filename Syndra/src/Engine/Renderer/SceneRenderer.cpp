@@ -1,6 +1,7 @@
 #include "lpch.h"
 #include "Engine/Renderer/SceneRenderer.h"
 #include "Engine/Scene/Entity.h"
+#include "glad/glad.h"
 
 namespace Syndra {
 
@@ -8,16 +9,17 @@ namespace Syndra {
 
 	void SceneRenderer::Initialize()
 	{
+		s_Data = new SceneRenderer::SceneData;
 		FramebufferSpecification fbSpec;
 		fbSpec.Attachments = { FramebufferTextureFormat::RGBA8 , FramebufferTextureFormat::DEPTH24STENCIL8 };
 		fbSpec.Width = 1280;
 		fbSpec.Height = 720;
-		fbSpec.Samples = 1;
+		fbSpec.Samples = 4;
 		s_Data->mainFB = FrameBuffer::Create(fbSpec);
 		fbSpec.Samples = 1;
-		//s_Data->postProcFB = FrameBuffer::Create(fbSpec);
+		s_Data->postProcFB = FrameBuffer::Create(fbSpec);
 		fbSpec.Attachments = { FramebufferTextureFormat::RED_INTEGER , FramebufferTextureFormat::DEPTH24STENCIL8 };
-		//s_Data->mouseFB = FrameBuffer::Create(fbSpec);
+		s_Data->mouseFB = FrameBuffer::Create(fbSpec);
 
 		if (!s_Data->aa) {
 			s_Data->shaders.Load("assets/shaders/aa.glsl");
@@ -59,9 +61,12 @@ namespace Syndra {
 	{
 		s_Data->camera = camera;
 		s_Data->mainFB->Bind();
-
+		RenderCommand::SetState(RenderState::DEPTH_TEST, true);
 		RenderCommand::SetClearColor(glm::vec4(s_Data->clearColor, 1.0f));
 		RenderCommand::Clear();
+		s_Data->mouseFB->Bind();
+		RenderCommand::Clear();
+		s_Data->mouseFB->ClearAttachment(0, -1);
 		//glEnable(GL_DEPTH_TEST);
 		Renderer::BeginScene(camera);
 
@@ -70,6 +75,7 @@ namespace Syndra {
 	void SceneRenderer::RenderEntity(const entt::entity& entity, TransformComponent& tc, MeshComponent& mc)
 	{
 		//--------------------------------------------------color and outline pass------------------------------------------------//
+		s_Data->mainFB->Bind();
 		s_Data->diffuse->Bind();
 		//TODO material system
 		//m_Texture->Bind(0);
@@ -89,46 +95,44 @@ namespace Syndra {
 			//Renderer::Submit(s_Data->outline, mc.model);
 			//RenderCommand::SetState(GL_DEPTH_TEST, false);
 		//}
-		//TODO
 		//glEnable(GL_DEPTH_TEST);
+
 		Renderer::Submit(s_Data->diffuse, mc.model);
 
 		//-------------------------------------------------entity id pass--------------------------------------------------------//
-		//s_Data->mouseFB->Bind();
-		//RenderCommand::SetClearColor(glm::vec4(s_Data->clearColor, 1.0f));
-		//RenderCommand::Clear();
-		//s_Data->mouseFB->ClearAttachment(0, -1);
-		//RenderCommand::SetState(GL_DEPTH_TEST, true);
+		s_Data->mouseFB->Bind();
+		RenderCommand::SetState(RenderState::DEPTH_TEST, true);
 
-		//s_Data->mouseShader->Bind();
-		//s_Data->mouseShader->SetMat4("u_trans", tc.GetTransform());
-		//s_Data->mouseShader->SetInt("u_ID", (uint32_t)entity);
-		//Renderer::Submit(s_Data->mouseShader, mc.model);
+		s_Data->mouseShader->Bind();
+		s_Data->mouseShader->SetMat4("u_trans", tc.GetTransform());
+		s_Data->mouseShader->SetInt("u_ID", (uint32_t)entity);
+		Renderer::Submit(s_Data->mouseShader, mc.model);
+		s_Data->mouseShader->Unbind();
+		s_Data->mouseFB->Unbind();
 	}
 
 	void SceneRenderer::EndScene()
 	{
 		//-------------------------------------------------post-processing pass---------------------------------------------------//
 
-// 		s_Data->postProcFB->Bind();
-// 		RenderCommand::Clear();
-// 		s_Data->screenVao->Bind();
-// 		RenderCommand::SetState(GL_DEPTH_TEST, false);
-// 		s_Data->aa->Bind();
-// 		glActiveTexture(GL_TEXTURE0);
-// 		glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, s_Data->mainFB->GetColorAttachmentRendererID());
-// 		Renderer::Submit(s_Data->aa, s_Data->screenVao);
-// 
-// 		s_Data->postProcFB->Unbind();
-// 		Renderer::EndScene();
-		s_Data->mainFB->Unbind();
+		s_Data->postProcFB->Bind();
+		RenderCommand::Clear();
+		s_Data->screenVao->Bind();
+		RenderCommand::SetState(RenderState::DEPTH_TEST, false);
+		s_Data->aa->Bind();
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, s_Data->mainFB->GetColorAttachmentRendererID());
+		Renderer::Submit(s_Data->aa, s_Data->screenVao);
+		s_Data->aa->Unbind();
+		s_Data->postProcFB->Unbind();
+		Renderer::EndScene();
 	}
 
 	void SceneRenderer::OnViewPortResize(uint32_t width, uint32_t height)
 	{
 		s_Data->mainFB->Resize(width, height);
-		//s_Data->postProcFB->Resize(width, height);
-		//s_Data->mouseFB->Resize(width, height);
+		s_Data->postProcFB->Resize(width, height);
+		s_Data->mouseFB->Resize(width, height);
 	}
 
 }

@@ -45,6 +45,19 @@ namespace Syndra {
 		glEnable(GL_DEPTH_TEST);
 	}
 
+	static GLenum RenderStateToGLState(RenderState state)
+	{
+		switch (state)
+		{
+		case RenderState::DEPTH_TEST:       return GL_DEPTH_TEST;
+		case RenderState::CULL:				return GL_CULL_FACE;
+		case RenderState::BLEND:			return GL_BLEND;
+		}
+
+		SN_CORE_ASSERT(false, "Renderstate should be defined!");
+		return 0;
+	}
+
 	void OpenGLRendererAPI::SetClearColor(const glm::vec4& color)
 	{
 		glClearColor(color.r, color.g, color.b, color.a);
@@ -65,9 +78,9 @@ namespace Syndra {
 		glViewport(x, y, width, height);
 	}
 
-	void OpenGLRendererAPI::SetState(int stateID, bool on)
+	void OpenGLRendererAPI::SetState(RenderState stateID, bool on)
 	{
-		on ? glEnable(stateID) : glDisable(stateID);
+		on ? glEnable(RenderStateToGLState(stateID)) : glDisable(RenderStateToGLState(stateID));
 	}
 
 	std::string OpenGLRendererAPI::GetRendererInfo()

@@ -34,7 +34,7 @@ namespace Syndra {
 		//---------------------------------------------Scene hierarchy-------------------------------//
 		ImGui::Begin("Scene hierarchy");
 
-		for (auto ent:m_Context->m_Entities)
+		for (auto& ent:m_Context->m_Entities)
 		{
 			DrawEntity(ent);
 		}
@@ -271,9 +271,15 @@ namespace Syndra {
 				auto path = FileDialogs::OpenFile("Syndra Model (*.*)\0*.*\0");
 				auto dir = std::filesystem::current_path();
 				if (path) {
-					auto filepath = path->substr(dir.string().size());
-					tag = filepath;
-					entity.GetComponent<MeshComponent>().model = Model(filepath);
+					std::string filePath;
+					if (path->find(dir.string()) != std::string::npos) {
+						filePath = path->substr(dir.string().size());
+					}
+					else {
+						filePath = *path;
+					}
+					tag = filePath;
+					entity.GetComponent<MeshComponent>().model = Model(*path);
 				}
 			}
 			ImGui::PopStyleVar(2);

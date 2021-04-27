@@ -31,7 +31,9 @@ namespace Syndra {
 
 		auto& meshes = model.meshes;
 		for (auto& mesh : meshes) {
-
+			if (mesh.textures.size() == 0) {
+				Texture2D::BindTexture(0, 0);
+			}
 			// bind appropriate textures
 			unsigned int diffuseNr = 1;
 			unsigned int specularNr = 1;

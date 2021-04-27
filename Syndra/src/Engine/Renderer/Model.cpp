@@ -1,14 +1,11 @@
 #include "lpch.h"
 #include "Engine/Renderer/Model.h"
-#include <filesystem>
 
 namespace Syndra {
 
 	Model::Model(std::string& path, bool gamma) :gammaCorrection(gamma)
 	{
-		auto dir = std::filesystem::current_path();
-		auto filepath = dir.string() + path;
-		loadModel(filepath);
+		loadModel(path);
 	}
 
 	void Model::loadModel(std::string const& path)
