@@ -70,9 +70,34 @@ namespace Syndra{
 				MouseRotate(delta);
 			else if (Input::IsMouseButtonPressed(Mouse::ButtonRight))
 				MouseZoom(delta.y);
+			UpdateView();
 		}
 
-		UpdateView();
+		else if (Input::IsMouseButtonPressed(Mouse::ButtonRight)) {
+
+			const glm::vec2& mouse{ Input::GetMouseX(), Input::GetMouseY() };
+			glm::vec2 delta = (mouse - m_InitialMousePosition) * 0.003f;
+			m_InitialMousePosition = mouse;
+
+			MouseRotate(delta);
+
+			if (Input::IsKeyPressed(Key::W))
+				m_Position += GetForwardDirection() * PanSpeed().first;
+			if (Input::IsKeyPressed(Key::S))
+				m_Position -= GetForwardDirection() * PanSpeed().first;
+			if (Input::IsKeyPressed(Key::A))
+				m_Position -= GetRightDirection() * PanSpeed().second;
+			if (Input::IsKeyPressed(Key::D))
+				m_Position += GetRightDirection() * PanSpeed().second;
+
+			glm::quat orientation = GetOrientation();
+			m_ViewMatrix = glm::translate(glm::mat4(1.0f), m_Position) * glm::toMat4(orientation);
+			m_ViewMatrix = glm::inverse(m_ViewMatrix);
+		}
+
+		else {
+			UpdateView();
+		}
 	}
 
 	void PerspectiveCamera::OnEvent(Event& e)
