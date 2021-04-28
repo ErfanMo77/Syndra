@@ -28,6 +28,7 @@ namespace Syndra {
 
 	void Scene::DestroyEntity(const Entity& entity)
 	{
+		m_Registry.destroy(entity);
 		for (auto& e : m_Entities) {
 			if (*e == entity) {
 				auto it = std::find(m_Entities.begin(), m_Entities.end(), e);
@@ -37,7 +38,7 @@ namespace Syndra {
 				}
 			}
 		}
-		m_Registry.destroy(entity);
+
 	}
 
 	Entity Scene::FindEntity(uint32_t id)
@@ -58,18 +59,7 @@ namespace Syndra {
 	void Scene::OnUpdateEditor(Timestep ts, PerspectiveCamera& camera)
 	{
 		SceneRenderer::BeginScene(camera);
-		auto view = m_Registry.view<TransformComponent,MeshComponent>();
-		for (auto ent : view)
-		{
-			auto& tc = view.get<TransformComponent>(ent);
-			auto& mc = view.get<MeshComponent>(ent);
-			//TODO material
-			//Entity entity = { ent };
-			//entity.SetSelected(true);
-			//auto entity = this->FindEntity((uint32_t)ent);
-			SceneRenderer::RenderEntity(ent, tc, mc);
-		}
-
+		SceneRenderer::RenderScene(*this);
 		SceneRenderer::EndScene();
 	}
 

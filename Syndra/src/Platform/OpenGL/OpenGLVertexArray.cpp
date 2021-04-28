@@ -32,7 +32,7 @@ namespace Syndra {
 
 	OpenGLVertexArray::~OpenGLVertexArray()
 	{
-		glDeleteBuffers(1, &m_RendererID);
+		glDeleteVertexArrays(1, &m_RendererID);
 	}
 
 	void OpenGLVertexArray::Bind() const

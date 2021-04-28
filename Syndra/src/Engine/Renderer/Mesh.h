@@ -36,6 +36,8 @@ namespace Syndra {
 
 	private:
 		Ref<VertexArray> m_VertexArray;
+		Ref<VertexBuffer> m_VertexBuffer;
+		Ref<IndexBuffer> m_IndexBuffer;
 		void setupMesh();
 	};
 

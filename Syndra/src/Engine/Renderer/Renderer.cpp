@@ -2,6 +2,7 @@
 #include "Engine/Renderer/Renderer.h"
 #include "Engine/Renderer/RenderCommand.h"
 #include "Engine/Renderer/Texture.h"
+#include <glad/glad.h>
 
 namespace Syndra {
 
@@ -41,7 +42,8 @@ namespace Syndra {
 			unsigned int heightNr = 1;
 			for (unsigned int i = 0; i < mesh.textures.size(); i++)
 			{
-				Texture2D::BindTexture(mesh.textures[i].id, i);
+				glActiveTexture(GL_TEXTURE0 + i);
+				//Texture2D::BindTexture(mesh.textures[i].id, i);
 				std::string number;
 				std::string name = mesh.textures[i].type;
 				if (name == "texture_diffuse")
@@ -52,11 +54,17 @@ namespace Syndra {
 					number = std::to_string(normalNr++); // transfer unsigned int to stream
 				else if (name == "texture_height")
 					number = std::to_string(heightNr++); // transfer unsigned int to stream
+				//glUniform1i(glGetUniformLocation(shader.ID, (name + number).c_str()), i);
+				shader->SetInt(name + number, i);
+				// and finally bind the texture
+				glBindTexture(GL_TEXTURE_2D, mesh.textures[i].id);
 			}
 
 			auto vertexArray = mesh.GetVertexArray();
 			vertexArray->Bind();
 			RenderCommand::DrawIndexed(vertexArray);
+			glBindVertexArray(0);
+			glActiveTexture(GL_TEXTURE0);
 		}
 	}
 

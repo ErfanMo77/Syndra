@@ -11,6 +11,7 @@
 namespace Syndra {
 
 	class Entity;
+	class Scene;
 
 	class SceneRenderer 
 	{
@@ -19,7 +20,11 @@ namespace Syndra {
 
 		static void BeginScene(const PerspectiveCamera& camera);
 
-		static void RenderEntity(const entt::entity& entity, TransformComponent& tc, MeshComponent& mc);
+		static void RenderScene(Scene& scene);
+
+		static void RenderEntityColor(const entt::entity& entity, TransformComponent& tc, MeshComponent& mc);
+
+		static void RenderEntityID(const entt::entity& entity, TransformComponent& tc, MeshComponent& mc);
 
 		static void EndScene();
 
@@ -39,6 +44,8 @@ namespace Syndra {
 			Ref<Shader> diffuse,outline,mouseShader,aa;
 			Ref<FrameBuffer> mainFB, mouseFB, postProcFB;
 			Ref<VertexArray> screenVao;
+			Ref<VertexBuffer> screenVbo;
+			Ref<IndexBuffer> screenEbo;
 			glm::vec3 clearColor;
 		};
 

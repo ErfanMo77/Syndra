@@ -44,6 +44,7 @@ namespace Syndra {
 		friend class Entity;
 		friend class ScenePanel;
 		friend class SceneSerializer;
+		friend class SceneRenderer;
 	};
 
 }

@@ -15,8 +15,8 @@ namespace Syndra {
 	{
 		// create buffers/arrays
 		m_VertexArray = VertexArray::Create();
-		auto vertexBuffer = VertexBuffer::Create((float*)(&vertices[0]), vertices.size()*sizeof(Vertex));
-		auto indexBuffer = IndexBuffer::Create(&indices[0], indices.size());
+		m_VertexBuffer = VertexBuffer::Create((float*)(&vertices[0]), vertices.size()*sizeof(Vertex));
+		m_IndexBuffer = IndexBuffer::Create(&indices[0], indices.size());
 
 		m_VertexArray->Bind();
 
@@ -28,9 +28,9 @@ namespace Syndra {
 			{ShaderDataType::Float3,"a_bitangent"}
 		};
 
-		vertexBuffer->SetLayout(layout);
-		m_VertexArray->AddVertexBuffer(vertexBuffer);
-		m_VertexArray->SetIndexBuffer(indexBuffer);
-		vertexBuffer->Unbind();
+		m_VertexBuffer->SetLayout(layout);
+		m_VertexArray->AddVertexBuffer(m_VertexBuffer);
+		m_VertexArray->SetIndexBuffer(m_IndexBuffer);
+		//vertexBuffer->Unbind();
 	}
 }
