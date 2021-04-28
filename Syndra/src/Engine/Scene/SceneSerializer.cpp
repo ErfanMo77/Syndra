@@ -231,10 +231,11 @@ namespace Syndra {
 					auto dir = std::filesystem::current_path();
 					auto& mc = deserializedEntity.AddComponent<MeshComponent>();
 					mc.path = meshComponent["Path"].as<std::string>();
+					auto& filepath = mc.path;
 					if (mc.path.find("\\") == 0) {
-						mc.path = dir.string() + mc.path;
+						filepath = dir.string() + mc.path;
 					}
-					mc.model = Model(mc.path);
+					mc.model = Model(filepath);
 				}
 			}
 		}

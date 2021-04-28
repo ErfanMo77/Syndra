@@ -36,7 +36,9 @@ namespace Syndra {
 
 		for (auto& ent:m_Context->m_Entities)
 		{
-			DrawEntity(ent);
+			if (ent) {
+				DrawEntity(ent);
+			}
 		}
 
 		if (ImGui::IsMouseDown(0) && ImGui::IsWindowHovered())

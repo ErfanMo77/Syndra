@@ -1,11 +1,12 @@
 #include "lpch.h"
 #include "Engine/Renderer/SceneRenderer.h"
 #include "Engine/Scene/Entity.h"
+#include "Engine/Scene/Scene.h"
 #include "glad/glad.h"
 
 namespace Syndra {
 
-	SceneRenderer::SceneData* SceneRenderer::s_Data = new SceneRenderer::SceneData;
+	SceneRenderer::SceneData* SceneRenderer::s_Data;
 
 	void SceneRenderer::Initialize()
 	{
@@ -41,20 +42,19 @@ namespace Syndra {
 			-1.0f, -1.0f, 0.0f,    0.0f, 0.0f,   // bottom left
 			-1.0f,  1.0f, 0.0f,    0.0f, 1.0f    // top left 
 		};
-		auto quadVB = VertexBuffer::Create(quad, sizeof(quad));
-		s_Data->screenVao->AddVertexBuffer(quadVB);
+		s_Data->screenVbo = VertexBuffer::Create(quad, sizeof(quad));
 		BufferLayout quadLayout = {
 			{ShaderDataType::Float3,"a_pos"},
 			{ShaderDataType::Float2,"a_uv"},
 		};
-		quadVB->SetLayout(quadLayout);
-		s_Data->screenVao->AddVertexBuffer(quadVB);
+		s_Data->screenVbo->SetLayout(quadLayout);
+		s_Data->screenVao->AddVertexBuffer(s_Data->screenVbo);
 		unsigned int quadIndices[] = {
 			0, 3, 1, // first triangle
 			1, 3, 2  // second triangle
 		};
-		auto indexBuffer = IndexBuffer::Create(quadIndices, sizeof(quadIndices) / sizeof(uint32_t));
-		s_Data->screenVao->SetIndexBuffer(indexBuffer);
+		s_Data->screenEbo = IndexBuffer::Create(quadIndices, sizeof(quadIndices) / sizeof(uint32_t));
+		s_Data->screenVao->SetIndexBuffer(s_Data->screenEbo);
 	}
 
 	void SceneRenderer::BeginScene(const PerspectiveCamera& camera)
@@ -64,18 +64,44 @@ namespace Syndra {
 		RenderCommand::SetState(RenderState::DEPTH_TEST, true);
 		RenderCommand::SetClearColor(glm::vec4(s_Data->clearColor, 1.0f));
 		RenderCommand::Clear();
-		s_Data->mouseFB->Bind();
-		RenderCommand::Clear();
-		s_Data->mouseFB->ClearAttachment(0, -1);
+
 		//glEnable(GL_DEPTH_TEST);
 		Renderer::BeginScene(camera);
 
 	}
 
-	void SceneRenderer::RenderEntity(const entt::entity& entity, TransformComponent& tc, MeshComponent& mc)
+	void SceneRenderer::RenderScene(Scene& scene)
+	{
+		auto view = scene.m_Registry.view<TransformComponent, MeshComponent>();
+		s_Data->mainFB->Bind();
+		for (auto ent : view)
+		{
+			auto& tc = view.get<TransformComponent>(ent);
+			auto& mc = view.get<MeshComponent>(ent);
+			//TODO material
+			SceneRenderer::RenderEntityColor(ent, tc, mc);
+		}
+		s_Data->mainFB->Unbind();
+
+		s_Data->mouseFB->Bind();
+		RenderCommand::Clear();
+		s_Data->mouseFB->ClearAttachment(0, -1);
+		//RenderCommand::SetState(RenderState::DEPTH_TEST, true);
+
+		for (auto ent : view)
+		{
+			auto& tc = view.get<TransformComponent>(ent);
+			auto& mc = view.get<MeshComponent>(ent);
+			//TODO material
+			s_Data->mouseShader->Bind();
+			SceneRenderer::RenderEntityID(ent, tc, mc);
+		}
+		s_Data->mouseFB->Unbind();
+	}
+
+	void SceneRenderer::RenderEntityColor(const entt::entity& entity, TransformComponent& tc, MeshComponent& mc)
 	{
 		//--------------------------------------------------color and outline pass------------------------------------------------//
-		s_Data->mainFB->Bind();
 		s_Data->diffuse->Bind();
 		//TODO material system
 		//m_Texture->Bind(0);
@@ -96,19 +122,17 @@ namespace Syndra {
 			//RenderCommand::SetState(GL_DEPTH_TEST, false);
 		//}
 		//glEnable(GL_DEPTH_TEST);
-
 		Renderer::Submit(s_Data->diffuse, mc.model);
+	}
 
+	void SceneRenderer::RenderEntityID(const entt::entity& entity, TransformComponent& tc, MeshComponent& mc)
+	{
 		//-------------------------------------------------entity id pass--------------------------------------------------------//
-		s_Data->mouseFB->Bind();
-		RenderCommand::SetState(RenderState::DEPTH_TEST, true);
 
-		s_Data->mouseShader->Bind();
 		s_Data->mouseShader->SetMat4("u_trans", tc.GetTransform());
 		s_Data->mouseShader->SetInt("u_ID", (uint32_t)entity);
 		Renderer::Submit(s_Data->mouseShader, mc.model);
 		s_Data->mouseShader->Unbind();
-		s_Data->mouseFB->Unbind();
 	}
 
 	void SceneRenderer::EndScene()

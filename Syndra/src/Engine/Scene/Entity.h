@@ -14,6 +14,8 @@ namespace Syndra {
 
 		Entity(entt::entity handle);
 
+		~Entity() = default;
+
 		Entity(const Entity& other) = default;
 
 		template<typename T, typename... Args>

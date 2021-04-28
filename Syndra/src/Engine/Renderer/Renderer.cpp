@@ -2,6 +2,7 @@
 #include "Engine/Renderer/Renderer.h"
 #include "Engine/Renderer/RenderCommand.h"
 #include "Engine/Renderer/Texture.h"
+#include <glad/glad.h>
 
 namespace Syndra {
 
@@ -52,6 +53,7 @@ namespace Syndra {
 					number = std::to_string(normalNr++); // transfer unsigned int to stream
 				else if (name == "texture_height")
 					number = std::to_string(heightNr++); // transfer unsigned int to stream
+				//glUniform1i(glGetUniformLocation(shader.ID, (name + number).c_str()), i);
 			}
 
 			auto vertexArray = mesh.GetVertexArray();
