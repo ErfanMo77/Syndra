@@ -1,0 +1,20 @@
+Scene: Untitled
+Entities:
+  - Entity: 0
+    TagComponent:
+      Tag: rock
+    TransformComponent:
+      Translation: [0, 0, -33.0958977]
+      Rotation: [0, 0, 0]
+      Scale: [1, 1, 1]
+    MeshComponent:
+      Path: D:\Bridge stuff\Downloaded\3d\rock_sandstone_sakbO\Aset_rock_sandstone_L_sakbO_LOD4.fbx
+  - Entity: 1
+    TagComponent:
+      Tag: barrel
+    TransformComponent:
+      Translation: [0, -1.90734863e-06, 169.810333]
+      Rotation: [0, 0, 0]
+      Scale: [4.90999985, 4.90999985, 4.90999985]
+    MeshComponent:
+      Path: D:\Bridge stuff\Downloaded\3d\container_barrel_udlmcdhqx\udlmcdhqx_LOD0.fbx
