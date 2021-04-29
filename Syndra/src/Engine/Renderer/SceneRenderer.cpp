@@ -86,7 +86,7 @@ namespace Syndra {
 		s_Data->mouseFB->Bind();
 		RenderCommand::Clear();
 		s_Data->mouseFB->ClearAttachment(0, -1);
-		//RenderCommand::SetState(RenderState::DEPTH_TEST, true);
+		RenderCommand::SetState(RenderState::DEPTH_TEST, true);
 
 		for (auto ent : view)
 		{

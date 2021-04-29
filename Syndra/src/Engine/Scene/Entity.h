@@ -14,8 +14,6 @@ namespace Syndra {
 
 		Entity(entt::entity handle);
 
-		~Entity() = default;
-
 		Entity(const Entity& other) = default;
 
 		template<typename T, typename... Args>
@@ -28,14 +26,14 @@ namespace Syndra {
 		}
 
 		template<typename T>
-		T& GetComponent()
+		T& GetComponent() const
 		{
 			SN_CORE_ASSERT(HasComponent<T>(), "Entity does not have component!");
 			return s_Scene->m_Registry.get<T>(m_EntityID);
 		}
 
 		template<typename T>
-		bool HasComponent()
+		bool HasComponent() const
 		{
 			return s_Scene->m_Registry.has<T>(m_EntityID);
 		}

@@ -187,7 +187,7 @@ namespace Syndra {
 
 		m_ActiveScene->OnUpdateEditor(ts, *m_Camera);
 
-		if (m_ViewportFocused) {
+		if (m_ViewportFocused && m_ViewportHovered) {
 			m_Camera->OnUpdate(ts);
 		}
 

@@ -26,7 +26,7 @@ namespace Syndra {
 	private:
 		Ref<Scene> m_Context;
 		Entity m_SelectionContext;
-		bool m_EntityDeleted = false;
+		bool m_EntityCreated = false;
 
 	};
 

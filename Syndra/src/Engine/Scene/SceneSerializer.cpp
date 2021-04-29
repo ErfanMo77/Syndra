@@ -193,13 +193,13 @@ namespace Syndra {
 
 				SN_CORE_TRACE("Deserialized entity with ID = {0}, name = {1}", uuid, name);
 
-				Entity deserializedEntity = m_Scene->CreateEntity(name);
+				auto deserializedEntity = m_Scene->CreateEntity(name);
 
 				auto transformComponent = entity["TransformComponent"];
 				if (transformComponent)
 				{
 					// Entities always have transforms
-					auto& tc = deserializedEntity.GetComponent<TransformComponent>();
+					auto& tc = deserializedEntity->GetComponent<TransformComponent>();
 					tc.Translation = transformComponent["Translation"].as<glm::vec3>();
 					tc.Rotation = transformComponent["Rotation"].as<glm::vec3>();
 					tc.Scale = transformComponent["Scale"].as<glm::vec3>();
@@ -208,7 +208,7 @@ namespace Syndra {
 				auto cameraComponent = entity["CameraComponent"];
 				if (cameraComponent)
 				{
-					auto& cc = deserializedEntity.AddComponent<CameraComponent>();
+					auto& cc = deserializedEntity->AddComponent<CameraComponent>();
 
 					auto cameraProps = cameraComponent["Camera"];
 					cc.Camera.SetProjectionType((SceneCamera::ProjectionType)cameraProps["ProjectionType"].as<int>());
@@ -229,9 +229,9 @@ namespace Syndra {
 				if (meshComponent)
 				{
 					auto dir = std::filesystem::current_path();
-					auto& mc = deserializedEntity.AddComponent<MeshComponent>();
+					auto& mc = deserializedEntity->AddComponent<MeshComponent>();
 					mc.path = meshComponent["Path"].as<std::string>();
-					auto& filepath = mc.path;
+					auto filepath = mc.path;
 					if (mc.path.find("\\") == 0) {
 						filepath = dir.string() + mc.path;
 					}

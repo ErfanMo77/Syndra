@@ -34,11 +34,16 @@ namespace Syndra {
 		//---------------------------------------------Scene hierarchy-------------------------------//
 		ImGui::Begin("Scene hierarchy");
 
-		for (auto& ent:m_Context->m_Entities)
+		for (auto ent:m_Context->m_Entities)
 		{
 			if (ent) {
 				DrawEntity(ent);
 			}
+		}
+
+		if (m_EntityCreated) {
+			m_Context->CreateEntity(m_SelectionContext);
+			m_EntityCreated = false;
 		}
 
 		if (ImGui::IsMouseDown(0) && ImGui::IsWindowHovered())
@@ -190,11 +195,21 @@ namespace Syndra {
 			if (ImGui::MenuItem("Delete entity")) {
 				entityDeleted = true;
 			}
+
+			if (ImGui::MenuItem("Duplicate entity")) {
+				m_SelectionContext = *entity;
+				m_EntityCreated = true;
+			}
+
 			ImGui::EndPopup();
 		}
 		if (m_SelectionContext == *entity && Input::IsKeyPressed(Key::Delete)) {
 			entityDeleted = true;
 		}
+
+		//if (m_SelectionContext == *entity && Input::IsKeyPressed(Key::LeftControl) && Input::IsKeyPressed(Key::D) && !m_EntityCreated) {
+		//	m_EntityCreated = true;
+		//}
 
 		//for (int n = 0; n < m_Context->m_Entities.size(); n++)
 		//{
@@ -221,6 +236,7 @@ namespace Syndra {
 				m_SelectionContext = {};
 			m_Context->DestroyEntity(*entity);
 		}
+
 	}
 
 	void ScenePanel::DrawComponents(Entity entity)

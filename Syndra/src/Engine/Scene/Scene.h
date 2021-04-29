@@ -16,7 +16,8 @@ namespace Syndra {
 		Scene(const Scene& other) = default;
 		~Scene();
 
-		Entity CreateEntity(const std::string& name = std::string());
+		Ref<Entity> CreateEntity(const std::string& name = std::string());
+		Ref<Entity> CreateEntity(const Entity& entity);
 
 		void DestroyEntity(const Entity& entity);
 		Entity FindEntity(uint32_t id);
