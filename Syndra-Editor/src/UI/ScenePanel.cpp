@@ -1,9 +1,11 @@
 #include "lpch.h"
 #include "ScenePanel.h"
-
+#include <filesystem>
 #include <imgui/imgui.h>
 #include <imgui/imgui_internal.h>
 
+#include "Engine/Utils/PlatformUtils.h"
+#include "Engine/Renderer/Model.h"
 #include <glm/gtc/type_ptr.hpp>
 
 #include <cstring>
@@ -12,7 +14,13 @@ namespace Syndra {
 
 	ScenePanel::ScenePanel(const Ref<Scene>& scene)
 	{
+		SetContext(scene);
+	}
+
+	void ScenePanel::SetContext(const Ref<Scene>& scene)
+	{
 		m_Context = scene;
+		m_SelectionContext = {};
 	}
 
 	void ScenePanel::OnImGuiRender()
@@ -28,7 +36,9 @@ namespace Syndra {
 
 		for (auto& ent:m_Context->m_Entities)
 		{
-			DrawEntity(*ent);
+			if (ent) {
+				DrawEntity(ent);
+			}
 		}
 
 		if (ImGui::IsMouseDown(0) && ImGui::IsWindowHovered())
@@ -54,7 +64,7 @@ namespace Syndra {
 		ImGui::End();
 	}
 
-	void DrawVec3Control(const std::string& label, glm::vec3& values, float resetValue = 0.0f, float columnWidth = 100.0f)
+	void ScenePanel::DrawVec3Control(const std::string& label, glm::vec3& values, float resetValue, float columnWidth)
 	{
 		ImGuiIO& io = ImGui::GetIO();
 		auto boldFont =io.Fonts->Fonts[1];
@@ -163,15 +173,15 @@ namespace Syndra {
 	}
 
 
-	void ScenePanel::DrawEntity(Entity entity)
+	void ScenePanel::DrawEntity(Ref<Entity>& entity)
 	{
-		auto& tag = entity.GetComponent<TagComponent>();
-		ImGuiTreeNodeFlags flags = ((m_SelectionContext == entity) ? ImGuiTreeNodeFlags_Selected : 0) | ImGuiTreeNodeFlags_OpenOnArrow;
+		auto& tag = entity->GetComponent<TagComponent>();
+		ImGuiTreeNodeFlags flags = ((m_SelectionContext == *entity) ? ImGuiTreeNodeFlags_Selected : 0) | ImGuiTreeNodeFlags_OpenOnArrow;
 		flags |= ImGuiTreeNodeFlags_SpanAvailWidth;
-		bool opened = ImGui::TreeNodeEx((void*)(uint64_t)(uint32_t)entity, flags, tag.Tag.c_str());
+		bool opened = ImGui::TreeNodeEx((void*)(uint64_t)(uint32_t)*entity, flags, tag.Tag.c_str());
 
 		if (ImGui::IsItemClicked()) {
-			m_SelectionContext = entity;
+			m_SelectionContext = *entity;
 		}
 
 		bool entityDeleted = false;
@@ -181,6 +191,9 @@ namespace Syndra {
 				entityDeleted = true;
 			}
 			ImGui::EndPopup();
+		}
+		if (m_SelectionContext == *entity && Input::IsKeyPressed(Key::Delete)) {
+			entityDeleted = true;
 		}
 
 		//for (int n = 0; n < m_Context->m_Entities.size(); n++)
@@ -204,9 +217,9 @@ namespace Syndra {
 
 		if (entityDeleted)
 		{
-			m_Context->DestroyEntity(entity);
-			if (m_SelectionContext == entity)
+			if (m_SelectionContext == *entity)
 				m_SelectionContext = {};
+			m_Context->DestroyEntity(*entity);
 		}
 	}
 
@@ -229,27 +242,50 @@ namespace Syndra {
 			ImGui::PopStyleVar(2);
 		}
 
-		//DrawComponent<TagComponent>("Tag", entity, false ,[](auto& component) {
-		//	auto& tag = component.Tag;
-		//	char buffer[256];
-		//	memset(buffer, 0, sizeof(buffer));
-		//	std::strcpy(buffer, tag.c_str());
-		//	if (ImGui::InputText("##Tag", buffer, sizeof(buffer))) {
-		//		tag = std::string(buffer);
-		//	}
-		//});
-
 		ImGui::Separator();
 
 		DrawComponent<TransformComponent>("Transform", entity, false,[](auto& component)
 		{
 				ImGui::Separator();
 				DrawVec3Control("Translation", component.Translation);
-				DrawVec3Control("Rotation", component.Rotation);
+				glm::vec3 Rot = glm::degrees(component.Rotation);
+				DrawVec3Control("Rotation", Rot);
+				component.Rotation = glm::radians(Rot);
 				DrawVec3Control("Scale", component.Scale, 1.0f);
 		});
 
 		ImGui::Separator();
+
+		if (entity.HasComponent<MeshComponent>()) {
+			auto& tag = entity.GetComponent<MeshComponent>().path;
+
+			char buffer[256];
+			memset(buffer, 0, sizeof(buffer));
+			strcpy_s(buffer, tag.c_str());
+			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 2,5 });
+			ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, { 10,0 });
+			ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x - 40);
+			if (ImGui::InputText("##Path", buffer, sizeof(buffer))) {
+				tag = std::string(buffer);
+			}
+			ImGui::SameLine();
+			if (ImGui::Button("...")) {
+				auto path = FileDialogs::OpenFile("Syndra Model (*.*)\0*.*\0");
+				auto dir = std::filesystem::current_path();
+				if (path) {
+					std::string filePath;
+					if (path->find(dir.string()) != std::string::npos) {
+						filePath = path->substr(dir.string().size());
+					}
+					else {
+						filePath = *path;
+					}
+					tag = filePath;
+					entity.GetComponent<MeshComponent>().model = Model(*path);
+				}
+			}
+			ImGui::PopStyleVar(2);
+		}
 
 		DrawComponent<CameraComponent>("Camera", entity, true,[](auto& component)
 			{
@@ -335,9 +371,10 @@ namespace Syndra {
 				ImGui::CloseCurrentPopup();
 			}
 
-			if (ImGui::MenuItem("Mesh Renderer"))
+			if (ImGui::MenuItem("Mesh"))
 			{
-				//TODO
+				if (!m_SelectionContext.HasComponent<MeshComponent>())
+					m_SelectionContext.AddComponent<MeshComponent>();
 				ImGui::CloseCurrentPopup();
 			}
 			ImGui::EndPopup();

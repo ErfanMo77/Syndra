@@ -31,7 +31,7 @@ namespace Syndra {
 			//SN_PROFILE_SCOPE("stbi_load - OpenGLTexture2D::OpenGLTexture2D(const std::string&)");
 			data = stbi_load(path.c_str(), &width, &height, &channels, 0);
 		}
-		SN_CORE_ASSERT(data, "Failed to load image!");
+		//SN_CORE_ASSERT(data, "Failed to load image!");
 		m_Width = width;
 		m_Height = height;
 
@@ -51,7 +51,7 @@ namespace Syndra {
 		m_InternalFormat = internalFormat;
 		m_DataFormat = dataFormat;
 		mipmapLevels = (GLsizei)floor(log2(std::max(width, height)));
-		SN_CORE_ASSERT(internalFormat & dataFormat, "Format not supported!");
+		//SN_CORE_ASSERT(internalFormat & dataFormat, "Format not supported!");
 
 		glCreateTextures(GL_TEXTURE_2D, 1, &m_RendererID);
 		glBindTexture(GL_TEXTURE_2D, m_RendererID);
@@ -85,6 +85,12 @@ namespace Syndra {
 	void OpenGLTexture2D::Bind(uint32_t slot /*= 0*/) const
 	{
 		glBindTextureUnit(slot, m_RendererID);
+	}
+
+	void OpenGLTexture2D::BindTexture(uint32_t rendererID, uint32_t slot)
+	{
+		glActiveTexture(GL_TEXTURE0 + slot);
+		glBindTextureUnit(slot, rendererID);
 	}
 
 	bool OpenGLTexture2D::operator==(const Texture& other) const

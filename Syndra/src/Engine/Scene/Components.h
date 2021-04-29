@@ -7,6 +7,7 @@
 #include <glm/gtx/quaternion.hpp>
 
 #include "Engine/Scene/SceneCamera.h"
+#include "Engine/Renderer/Model.h"
 
 namespace Syndra {
 
@@ -33,12 +34,23 @@ namespace Syndra {
 
 		glm::mat4 GetTransform() const
 		{
-			glm::mat4 rotation = glm::toMat4(glm::quat(glm::radians(Rotation)));
+			glm::mat4 rotation = glm::toMat4(glm::quat(Rotation));
 
 			return glm::translate(glm::mat4(1.0f), Translation)
 				* rotation
 				* glm::scale(glm::mat4(1.0f), Scale);
 		}
+	};
+
+	struct MeshComponent {
+
+		Model model;
+		std::string path;
+
+		MeshComponent() = default;
+		MeshComponent(const MeshComponent&) = default;
+		MeshComponent(std::string& path)
+			:path(path), model(path){}
 	};
 
 	struct CameraComponent

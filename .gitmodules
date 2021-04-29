@@ -10,3 +10,9 @@
 [submodule "Syndra/vendor/glm"]
 	path = Syndra/vendor/glm
 	url = https://github.com/g-truc/glm.git
+[submodule "Syndra/vendor/yaml-cpp"]
+	path = Syndra/vendor/yaml-cpp
+	url = https://github.com/ErfanMo77/yaml-cpp.git
+[submodule "Syndra/vendor/ImGuizmo"]
+	path = Syndra/vendor/ImGuizmo
+	url = https://github.com/ErfanMo77/ImGuizmo.git

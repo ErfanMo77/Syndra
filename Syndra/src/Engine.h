@@ -23,3 +23,4 @@
 #include "Engine/Renderer/Texture.h"
 #include "Engine/Renderer/PerspectiveCamera.h"
 #include "Engine/Renderer/OrthographicCamera.h"
+#include "Engine/Renderer/Model.h"

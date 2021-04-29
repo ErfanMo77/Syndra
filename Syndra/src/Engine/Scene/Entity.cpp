@@ -3,8 +3,10 @@
 
 namespace Syndra {
 
-	Entity::Entity(entt::entity handle, Scene* scene)
-		:m_EntityID(handle),m_Scene(scene)
+	Scene* Entity::s_Scene = nullptr;
+
+	Entity::Entity(entt::entity handle)
+		:m_EntityID(handle)
 	{
 	}
 

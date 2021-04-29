@@ -10,4 +10,5 @@ bin-int/
 **.vcxproj.user
 *.log
 imgui.ini
+*.syndra
 

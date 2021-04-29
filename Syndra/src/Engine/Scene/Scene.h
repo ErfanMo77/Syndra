@@ -2,6 +2,8 @@
 #include "entt.hpp"
 #include "Engine/Core/Timestep.h"
 #include "Engine/Renderer/PerspectiveCamera.h"
+#include "Engine/Renderer/FrameBuffer.h"
+#include "Engine/Renderer/SceneRenderer.h"
 
 namespace Syndra {
 
@@ -11,16 +13,22 @@ namespace Syndra {
 	{
 	public:
 		Scene();
+		Scene(const Scene& other) = default;
 		~Scene();
 
 		Entity CreateEntity(const std::string& name = std::string());
 
-		void DestroyEntity(Entity entity);
+		void DestroyEntity(const Entity& entity);
+		Entity FindEntity(uint32_t id);
 
 		void OnUpdateRuntime(Timestep ts);
 		void OnUpdateEditor(Timestep ts, PerspectiveCamera& camera);
 		void OnViewportResize(uint32_t width, uint32_t height);
-	
+
+		uint32_t GetMainTextureID() { return SceneRenderer::GetTextureID(0); }
+		Ref<FrameBuffer> GetMouseFrameBuffer() { return SceneRenderer::GetMouseFrameBuffer(); }
+		FramebufferSpecification GetSpec() { return SceneRenderer::GetMainFrameSpec(); }
+
 	private:
 		template<typename T>
 		void OnComponentAdded(Entity entity, T& component);
@@ -35,6 +43,8 @@ namespace Syndra {
 
 		friend class Entity;
 		friend class ScenePanel;
+		friend class SceneSerializer;
+		friend class SceneRenderer;
 	};
 
 }

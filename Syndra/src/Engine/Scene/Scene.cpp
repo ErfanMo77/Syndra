@@ -1,5 +1,5 @@
 #include "lpch.h"
-#include "Scene.h"
+#include "Engine/Scene/Scene.h"
 
 #include "Engine/Scene/Entity.h"
 #include "Engine/Scene/Components.h"
@@ -8,6 +8,8 @@ namespace Syndra {
 
 	Scene::Scene()
 	{
+		Entity::s_Scene = this;
+		SceneRenderer::Initialize();
 	}
 
 	Scene::~Scene()
@@ -16,7 +18,7 @@ namespace Syndra {
 
 	Entity Scene::CreateEntity(const std::string& name)
 	{
-		Entity entity = { m_Registry.create(), this };
+		Entity entity = { m_Registry.create() };
 		auto& tag = entity.AddComponent<TagComponent>();
 		tag.Tag = name.empty() ? "Entity" : name;
 		entity.AddComponent<TransformComponent>();
@@ -24,18 +26,29 @@ namespace Syndra {
 		return entity;
 	}
 
-	void Scene::DestroyEntity(Entity entity)
+	void Scene::DestroyEntity(const Entity& entity)
 	{
 		m_Registry.destroy(entity);
-
 		for (auto& e : m_Entities) {
 			if (*e == entity) {
 				auto it = std::find(m_Entities.begin(), m_Entities.end(), e);
 				if (it != m_Entities.end()) {
 					m_Entities.erase(it);
+					break;
 				}
 			}
 		}
+
+	}
+
+	Entity Scene::FindEntity(uint32_t id)
+	{
+		for (auto& e : m_Entities) {
+			if (*e == (entt::entity)id) {
+				return *e;
+			}
+		}
+		return {};
 	}
 
 	void Scene::OnUpdateRuntime(Timestep ts)
@@ -45,20 +58,16 @@ namespace Syndra {
 
 	void Scene::OnUpdateEditor(Timestep ts, PerspectiveCamera& camera)
 	{
-		//TODO
-		auto view = m_Registry.view<TransformComponent,TagComponent>();
-		for (auto ent : view)
-		{
-			auto& tag = view.get<TagComponent>(ent);
-			//SN_CORE_TRACE("Entity with ID :{0} and tag name : {1}", ent, tag.Tag);
-		}
+		SceneRenderer::BeginScene(camera);
+		SceneRenderer::RenderScene(*this);
+		SceneRenderer::EndScene();
 	}
 
 	void Scene::OnViewportResize(uint32_t width, uint32_t height)
 	{
 		m_ViewportWidth = width;
 		m_ViewportHeight = height;
-
+		SceneRenderer::OnViewPortResize(width, height);
 		// Resize our non-FixedAspectRatio cameras
 		auto view = m_Registry.view<CameraComponent>();
 		for (auto entity : view)
@@ -91,5 +100,9 @@ namespace Syndra {
 	{
 	}
 
+	template<>
+	void Scene::OnComponentAdded<MeshComponent>(Entity entity, MeshComponent& component)
+	{
+	}
 
 }

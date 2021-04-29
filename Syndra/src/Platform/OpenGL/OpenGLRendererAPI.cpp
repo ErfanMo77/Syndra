@@ -37,11 +37,25 @@ namespace Syndra {
 		glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DEBUG_SEVERITY_NOTIFICATION, 0, NULL, GL_FALSE);
 #endif
 
-		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		glEnable(GL_BLEND);
+		glFrontFace(GL_CW);
 		glCullFace(GL_FRONT);
 		glEnable(GL_CULL_FACE);
 		glEnable(GL_DEPTH_TEST);
+	}
+
+	static GLenum RenderStateToGLState(RenderState state)
+	{
+		switch (state)
+		{
+		case RenderState::DEPTH_TEST:       return GL_DEPTH_TEST;
+		case RenderState::CULL:				return GL_CULL_FACE;
+		case RenderState::BLEND:			return GL_BLEND;
+		}
+
+		SN_CORE_ASSERT(false, "Renderstate should be defined!");
+		return 0;
 	}
 
 	void OpenGLRendererAPI::SetClearColor(const glm::vec4& color)
@@ -56,12 +70,20 @@ namespace Syndra {
 
 	void OpenGLRendererAPI::DrawIndexed(const Ref<VertexArray>& vertexArray)
 	{
-		glDrawArrays(GL_TRIANGLES,0,36);
+		uint32_t count = vertexArray->GetIndexBuffer()->GetCount();
+		
+		glDrawElements(GL_TRIANGLES, count, GL_UNSIGNED_INT, nullptr);
+		glBindTexture(GL_TEXTURE_2D, 0);
 	}
 
 	void OpenGLRendererAPI::SetViewport(uint32_t x, uint32_t y, uint32_t width, uint32_t height)
 	{
 		glViewport(x, y, width, height);
+	}
+
+	void OpenGLRendererAPI::SetState(RenderState stateID, bool on)
+	{
+		on ? glEnable(RenderStateToGLState(stateID)) : glDisable(RenderStateToGLState(stateID));
 	}
 
 	std::string OpenGLRendererAPI::GetRendererInfo()

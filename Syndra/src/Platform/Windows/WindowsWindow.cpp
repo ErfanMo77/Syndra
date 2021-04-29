@@ -8,6 +8,7 @@
 //#include "Engine/Renderer/Renderer.h"
 
 #include "Platform/OpenGL/OpenGLContext.h"
+#include "stb_image.h"
 
 namespace Syndra {
 
@@ -42,8 +43,10 @@ namespace Syndra {
 		glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
 		glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
 		glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-		glfwWindowHint(GLFW_SAMPLES,8);
+		//glfwWindowHint(GLFW_SAMPLES,8);
 		SN_CORE_INFO("Creating window {0} ({1}, {2})", props.Title, props.Width, props.Height);
+
+
 
 		if (s_GLFWWindowCount == 0)
 		{
@@ -62,6 +65,12 @@ namespace Syndra {
 			m_Window = glfwCreateWindow((int)props.Width, (int)props.Height, m_Data.Title.c_str(), nullptr, nullptr);
 			++s_GLFWWindowCount;
 		}
+
+		//GLFWimage images[1];
+		//images[0].pixels = stbi_load("assets/Logo/LOGO100.png", &images[0].width, &images[0].height,0, 4);
+		//glfwSetWindowIcon(m_Window, 1, images);
+		//stbi_image_free(images[0].pixels);
+
 		m_Context = new OpenGLContext(m_Window);
 		m_Context->Init();
 		//SN_CORE_INFO(m_Window);

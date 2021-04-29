@@ -3,6 +3,7 @@
 #include "Engine/Renderer/RenderCommand.h"
 #include "Engine/Renderer/PerspectiveCamera.h"
 #include "Engine/Renderer/OrthographicCamera.h"
+#include "Engine/Renderer/Model.h"
 
 namespace Syndra {
 
@@ -13,6 +14,7 @@ namespace Syndra {
 		static void EndScene();
 
 		static void Submit(const Ref<Shader>& shader, const Ref<VertexArray>& vertexArray);
+		static void Submit(const Ref<Shader>& shader, const Model& model);
 
 		static void OnWindowResize(uint32_t width, uint32_t height);
 
