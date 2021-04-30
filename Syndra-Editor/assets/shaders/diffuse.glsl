@@ -44,18 +44,19 @@ void main(){
     vec3 norm = normalize(v_normal);
 	vec3 lightDir = normalize(lightPos - v_pos);
 	vec3 viewDir = normalize(cameraPos - v_pos);
-	vec3 reflectDir = reflect(-lightDir,norm);
+	vec3 halfwayDir = normalize(lightDir + viewDir);
+	//vec3 reflectDir = reflect(-lightDir,norm);
 
 	float diff = max(dot(norm,lightDir),0);
 
-	float spec = pow(max(dot(viewDir, reflectDir), 0.0), 16);
+	float spec = pow(max(dot(halfwayDir, norm), 0.0), 4);
 
 	vec3 color = texture(texture_diffuse1,v_uv).rgb;
 
 	vec3 specular = spec * texture(texture_specular1,v_uv).rgb;
 	vec3 diffuse = diff * color;
 
-	vec3 result = diffuse + specular + vec3(0.05);
+	vec3 result = diffuse + specular + vec3(0.06);
 	if(color == vec3(0)){
 		result = vec3(diff);
 	}
