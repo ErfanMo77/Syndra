@@ -1,7 +1,7 @@
 // Basic diffuse Shader
 #type vertex
 
-#version 460 core
+#version 450 core
 	
 layout(location = 0) in vec3 a_pos;
 layout(location = 1) in vec2 a_uv;
@@ -25,7 +25,7 @@ void main(){
 }
 
 #type fragment
-#version 460 core
+#version 450 core
 layout(location = 0) out int id;
 
 in vec3 v_pos;

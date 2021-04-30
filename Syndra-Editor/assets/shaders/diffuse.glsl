@@ -1,7 +1,7 @@
 // Basic diffuse Shader
 #type vertex
 
-#version 460 core
+#version 450 core
 	
 layout(location = 0) in vec3 a_pos;
 layout(location = 1) in vec2 a_uv;
@@ -25,10 +25,12 @@ void main(){
 }
 
 #type fragment
-#version 460 core
+#version 450 core
 layout(location = 0) out vec4 fragColor;	
 
 uniform sampler2D texture_diffuse1;
+uniform sampler2D texture_specular1;
+
 uniform vec3 cubeCol;
 
 uniform vec3 cameraPos;
@@ -45,8 +47,15 @@ void main(){
 	vec3 reflectDir = reflect(-lightDir,norm);
 
 	float diff = max(dot(norm,lightDir),0);
+
+	float spec = pow(max(dot(viewDir, reflectDir), 0.0), 16);
+
 	vec3 color = texture(texture_diffuse1,v_uv).rgb;
-	vec3 result = (diff+0.2)*color;
+
+	vec3 specular = spec * texture(texture_specular1,v_uv).rgb;
+	vec3 diffuse = diff * color;
+
+	vec3 result = diffuse + specular + vec3(0.05);
 	if(color == vec3(0)){
 		result = vec3(diff);
 	}

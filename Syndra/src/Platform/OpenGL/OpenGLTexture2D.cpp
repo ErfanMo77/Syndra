@@ -89,7 +89,7 @@ namespace Syndra {
 
 	void OpenGLTexture2D::BindTexture(uint32_t rendererID, uint32_t slot)
 	{
-		glActiveTexture(GL_TEXTURE0 + slot);
+		//glActiveTexture(GL_TEXTURE0 + slot);
 		glBindTextureUnit(slot, rendererID);
 	}
 
