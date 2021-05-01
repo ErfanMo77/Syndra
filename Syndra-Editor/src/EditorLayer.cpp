@@ -357,6 +357,10 @@ namespace Syndra {
 		ImGui::Begin("Scene settings");
 		ImGui::ColorEdit3("cube color", glm::value_ptr(m_CubeColor));
 		ImGui::ColorEdit3("clear color", glm::value_ptr(m_ClearColor));
+		if (ImGui::Button("Reload shader")) {
+			m_ActiveScene->ReloadShader();
+		}
+		
 
 		ImGui::End();
 

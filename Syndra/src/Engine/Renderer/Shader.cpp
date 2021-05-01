@@ -64,6 +64,11 @@ namespace Syndra {
 		return m_Shaders[name];
 	}
 
+	void ShaderLibrary::DeleteShader(const Ref<Shader>& shader)
+	{
+		m_Shaders.erase(shader->GetName());
+	}
+
 	bool ShaderLibrary::Exists(const std::string& name) const
 	{
 		return m_Shaders.find(name) != m_Shaders.end();

@@ -155,6 +155,12 @@ namespace Syndra {
 		Renderer::EndScene();
 	}
 
+	void SceneRenderer::Reload()
+	{
+		s_Data->shaders.DeleteShader(s_Data->diffuse);
+		s_Data->diffuse = s_Data->shaders.Load("assets/shaders/diffuse.glsl");
+	}
+
 	void SceneRenderer::OnViewPortResize(uint32_t width, uint32_t height)
 	{
 		s_Data->mainFB->Resize(width, height);

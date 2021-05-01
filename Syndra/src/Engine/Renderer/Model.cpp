@@ -16,7 +16,7 @@ namespace Syndra {
 		// check for errors
 		if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) // if is Not Zero
 		{
-			std::cout << "ERROR::ASSIMP:: " << importer.GetErrorString() << std::endl;
+			SN_CORE_ERROR("ERROR::ASSIMP:: {0}", importer.GetErrorString());
 			return;
 		}
 		// retrieve the directory path of the filepath
@@ -112,8 +112,10 @@ namespace Syndra {
 		std::vector<texture> specularMaps = loadMaterialTextures(material, aiTextureType_SPECULAR, "texture_specular");
 		textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
 		// 3. normal maps
-		std::vector<texture> normalMaps = loadMaterialTextures(material, aiTextureType_HEIGHT, "texture_normal");
+		std::vector<texture> normalMaps = loadMaterialTextures(material, aiTextureType_DISPLACEMENT, "texture_normal");
+		std::vector<texture> normalMaps2 = loadMaterialTextures(material, aiTextureType_HEIGHT, "texture_normal");
 		textures.insert(textures.end(), normalMaps.begin(), normalMaps.end());
+		textures.insert(textures.end(), normalMaps2.begin(), normalMaps2.end());
 		// 4. height maps
 		std::vector<texture> heightMaps = loadMaterialTextures(material, aiTextureType_AMBIENT, "texture_height");
 		textures.insert(textures.end(), heightMaps.begin(), heightMaps.end());

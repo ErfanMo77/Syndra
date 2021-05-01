@@ -25,6 +25,7 @@ namespace Syndra {
 		void OnUpdateRuntime(Timestep ts);
 		void OnUpdateEditor(Timestep ts, PerspectiveCamera& camera);
 		void OnViewportResize(uint32_t width, uint32_t height);
+		void ReloadShader() { SceneRenderer::Reload(); }
 
 		uint32_t GetMainTextureID() { return SceneRenderer::GetTextureID(0); }
 		Ref<FrameBuffer> GetMouseFrameBuffer() { return SceneRenderer::GetMouseFrameBuffer(); }

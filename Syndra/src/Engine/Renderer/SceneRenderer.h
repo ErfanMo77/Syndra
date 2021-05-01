@@ -28,6 +28,8 @@ namespace Syndra {
 
 		static void EndScene();
 
+		static void Reload();
+
 		static void OnViewPortResize(uint32_t width, uint32_t height);
 
 		static uint32_t GetTextureID(int index) { return s_Data->postProcFB->GetColorAttachmentRendererID(index); }

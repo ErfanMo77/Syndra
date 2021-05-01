@@ -52,7 +52,7 @@ namespace Syndra {
 		if (ImGui::BeginPopupContextWindow(0, 1, false))
 		{
 			if (ImGui::MenuItem("Create empty entity")) {
-				m_Context->CreateEntity();
+				m_SelectionContext = *m_Context->CreateEntity();
 			}
 			ImGui::EndPopup();
 		}
