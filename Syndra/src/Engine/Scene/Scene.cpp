@@ -16,14 +16,31 @@ namespace Syndra {
 	{
 	}
 
-	Entity Scene::CreateEntity(const std::string& name)
+	Ref<Entity> Scene::CreateEntity(const std::string& name)
 	{
 		Entity entity = { m_Registry.create() };
 		auto& tag = entity.AddComponent<TagComponent>();
 		tag.Tag = name.empty() ? "Entity" : name;
 		entity.AddComponent<TransformComponent>();
-		m_Entities.push_back(CreateRef<Entity>(entity));
-		return entity;
+		Ref<Entity> ent = CreateRef<Entity>(entity);
+		m_Entities.push_back(ent);
+		return ent;
+	}
+
+	Ref<Entity> Scene::CreateEntity(const Entity& other)
+	{
+		Entity entity = { m_Registry.create() };
+		Ref<Entity> ent = CreateRef<Entity>(entity);
+		ent->AddComponent<TagComponent>(other.GetComponent<TagComponent>());
+		ent->AddComponent<TransformComponent>(other.GetComponent<TransformComponent>());
+		if (other.HasComponent<CameraComponent>()) {
+			ent->AddComponent<CameraComponent>(other.GetComponent<CameraComponent>());
+		}
+		if (other.HasComponent<MeshComponent>()) {
+			ent->AddComponent<MeshComponent>(other.GetComponent<MeshComponent>());
+		}
+		m_Entities.push_back(ent);
+		return ent;
 	}
 
 	void Scene::DestroyEntity(const Entity& entity)

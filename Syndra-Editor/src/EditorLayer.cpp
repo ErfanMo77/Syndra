@@ -187,7 +187,7 @@ namespace Syndra {
 
 		m_ActiveScene->OnUpdateEditor(ts, *m_Camera);
 
-		if (m_ViewportFocused) {
+		if (m_ViewportFocused && m_ViewportHovered) {
 			m_Camera->OnUpdate(ts);
 		}
 
@@ -357,6 +357,10 @@ namespace Syndra {
 		ImGui::Begin("Scene settings");
 		ImGui::ColorEdit3("cube color", glm::value_ptr(m_CubeColor));
 		ImGui::ColorEdit3("clear color", glm::value_ptr(m_ClearColor));
+		if (ImGui::Button("Reload shader")) {
+			m_ActiveScene->ReloadShader();
+		}
+		
 
 		ImGui::End();
 

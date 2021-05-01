@@ -8,7 +8,8 @@ namespace Syndra {
 	{
 		DEPTH_TEST,
 		BLEND,
-		CULL
+		CULL,
+		SRGB
 	};
 
 	class RendererAPI {

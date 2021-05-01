@@ -52,6 +52,7 @@ namespace Syndra {
 		case RenderState::DEPTH_TEST:       return GL_DEPTH_TEST;
 		case RenderState::CULL:				return GL_CULL_FACE;
 		case RenderState::BLEND:			return GL_BLEND;
+		case RenderState::SRGB:             return GL_FRAMEBUFFER_SRGB;
 		}
 
 		SN_CORE_ASSERT(false, "Renderstate should be defined!");

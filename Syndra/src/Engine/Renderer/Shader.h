@@ -36,6 +36,8 @@ namespace Syndra {
 		Ref<Shader> Load(const std::string& name, const std::string& filepath);
 
 		Ref<Shader> Get(const std::string& name);
+		
+		void DeleteShader(const Ref<Shader>& shader);
 
 		bool Exists(const std::string& name) const;
 	private:
