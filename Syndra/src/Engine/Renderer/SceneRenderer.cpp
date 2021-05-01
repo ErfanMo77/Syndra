@@ -83,20 +83,20 @@ namespace Syndra {
 		}
 		s_Data->mainFB->Unbind();
 
-		s_Data->mouseFB->Bind();
-		RenderCommand::Clear();
-		s_Data->mouseFB->ClearAttachment(0, -1);
-		RenderCommand::SetState(RenderState::DEPTH_TEST, true);
+		//s_Data->mouseFB->Bind();
+		//RenderCommand::Clear();
+		//s_Data->mouseFB->ClearAttachment(0, -1);
+		//RenderCommand::SetState(RenderState::DEPTH_TEST, true);
 
-		for (auto ent : view)
-		{
-			auto& tc = view.get<TransformComponent>(ent);
-			auto& mc = view.get<MeshComponent>(ent);
-			//TODO material
-			s_Data->mouseShader->Bind();
-			SceneRenderer::RenderEntityID(ent, tc, mc);
-		}
-		s_Data->mouseFB->Unbind();
+		//for (auto ent : view)
+		//{
+		//	auto& tc = view.get<TransformComponent>(ent);
+		//	auto& mc = view.get<MeshComponent>(ent);
+		//	//TODO material
+		//	s_Data->mouseShader->Bind();
+		//	SceneRenderer::RenderEntityID(ent, tc, mc);
+		//}
+		//s_Data->mouseFB->Unbind();
 	}
 
 	void SceneRenderer::RenderEntityColor(const entt::entity& entity, TransformComponent& tc, MeshComponent& mc)
@@ -140,6 +140,7 @@ namespace Syndra {
 		//-------------------------------------------------post-processing pass---------------------------------------------------//
 
 		s_Data->postProcFB->Bind();
+		RenderCommand::SetState(RenderState::SRGB, true);
 		RenderCommand::Clear();
 		s_Data->screenVao->Bind();
 		RenderCommand::SetState(RenderState::DEPTH_TEST, false);
@@ -148,7 +149,9 @@ namespace Syndra {
 		glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, s_Data->mainFB->GetColorAttachmentRendererID());
 		Renderer::Submit(s_Data->aa, s_Data->screenVao);
 		s_Data->aa->Unbind();
+		RenderCommand::SetState(RenderState::SRGB, false);
 		s_Data->postProcFB->Unbind();
+		
 		Renderer::EndScene();
 	}
 
