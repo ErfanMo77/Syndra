@@ -50,9 +50,9 @@ void main(){
 #version 450 core
 layout(location = 0) out vec4 fragColor;	
 
-uniform sampler2D texture_diffuse1;
-uniform sampler2D texture_specular1;
-uniform sampler2D texture_normal1;
+layout(binding = 0) uniform sampler2D texture_diffuse1;
+layout(binding = 1) uniform sampler2D texture_specular1;
+layout(binding = 2) uniform sampler2D texture_normal1;
 
 in VS_OUT {
     vec3 v_pos;
