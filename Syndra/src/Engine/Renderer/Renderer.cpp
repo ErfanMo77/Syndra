@@ -18,7 +18,7 @@ namespace Syndra {
 	void Renderer::Submit(const Ref<Shader>& shader,const Ref<VertexArray>& vertexArray)
 	{
 		shader->Bind();
-		shader->SetMat4("u_ViewProjection", m_SceneData->ViewProjectionMatrix);
+		//shader->SetMat4("u_ViewProjection", m_SceneData->ViewProjectionMatrix);
 		vertexArray->Bind();
 		RenderCommand::DrawIndexed(vertexArray);
 	}
@@ -26,7 +26,7 @@ namespace Syndra {
 	void Renderer::Submit(const Ref<Shader>& shader, const Model& model)
 	{
 		shader->Bind();
-		shader->SetMat4("u_ViewProjection", m_SceneData->ViewProjectionMatrix);
+		//shader->SetMat4("u_ViewProjection", m_SceneData->ViewProjectionMatrix);
 
 		auto& meshes = model.meshes;
 		for (auto& mesh : meshes) {

@@ -2,7 +2,6 @@
 #include "Engine/Renderer/SceneRenderer.h"
 #include "Engine/Scene/Entity.h"
 #include "Engine/Scene/Scene.h"
-#include "glad/glad.h"
 
 namespace Syndra {
 
@@ -55,17 +54,19 @@ namespace Syndra {
 		};
 		s_Data->screenEbo = IndexBuffer::Create(quadIndices, sizeof(quadIndices) / sizeof(uint32_t));
 		s_Data->screenVao->SetIndexBuffer(s_Data->screenEbo);
+		s_Data->CameraUniformBuffer = UniformBuffer::Create(sizeof(glm::mat4), 0);
 	}
 
 	void SceneRenderer::BeginScene(const PerspectiveCamera& camera)
 	{
-		s_Data->camera = camera;
+		s_Data->CameraBuffer.ViewProjection = camera.GetViewProjection();
+		s_Data->CameraBuffer.position = camera.GetPosition();
+		s_Data->CameraUniformBuffer->SetData(&s_Data->CameraBuffer, sizeof(glm::mat4));
 		s_Data->mainFB->Bind();
 		RenderCommand::SetState(RenderState::DEPTH_TEST, true);
 		RenderCommand::SetClearColor(glm::vec4(s_Data->clearColor, 1.0f));
 		RenderCommand::Clear();
 
-		//glEnable(GL_DEPTH_TEST);
 		Renderer::BeginScene(camera);
 
 	}
@@ -106,8 +107,8 @@ namespace Syndra {
 		//TODO material system
 		//m_Texture->Bind(0);
 		s_Data->diffuse->SetMat4("u_trans", tc.GetTransform());
-		s_Data->diffuse->SetFloat3("cameraPos", s_Data->camera.GetPosition());
-		s_Data->diffuse->SetFloat3("lightPos", s_Data->camera.GetPosition());
+		s_Data->diffuse->SetFloat3("cameraPos", s_Data->CameraBuffer.position);
+		s_Data->diffuse->SetFloat3("lightPos", s_Data->CameraBuffer.position);
 		//difShader->SetFloat3("cubeCol", m_CubeColor);
 		//glEnable(GL_DEPTH_TEST);
 		//TODO add selected entities
@@ -145,9 +146,10 @@ namespace Syndra {
 		s_Data->screenVao->Bind();
 		RenderCommand::SetState(RenderState::DEPTH_TEST, false);
 		s_Data->aa->Bind();
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, s_Data->mainFB->GetColorAttachmentRendererID());
+		Texture2D::BindTexture(s_Data->mainFB->GetColorAttachmentRendererID(), 0);
+
 		Renderer::Submit(s_Data->aa, s_Data->screenVao);
+
 		s_Data->aa->Unbind();
 		RenderCommand::SetState(RenderState::SRGB, false);
 		s_Data->postProcFB->Unbind();

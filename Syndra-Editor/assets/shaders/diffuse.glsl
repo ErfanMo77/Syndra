@@ -9,9 +9,16 @@ layout(location = 2) in vec3 a_normal;
 layout(location = 3) in vec3 a_tangent;
 layout(location = 4) in vec3 a_bitangent;
 
+layout(std140, binding = 0) uniform camera
+{
+	mat4 u_ViewProjection;
+};
 
-uniform mat4 u_ViewProjection;
 uniform mat4 u_trans;
+
+//uniform vec3 cubeCol;
+uniform vec3 cameraPos;
+uniform vec3 lightPos;
 
 out VS_OUT {
 	vec3 v_pos;
@@ -20,11 +27,6 @@ out VS_OUT {
 	vec3 TangentViewPos;
 	vec3 TangentFragPos;
 } vs_out;
-
-//uniform vec3 cubeCol;
-
-uniform vec3 cameraPos;
-uniform vec3 lightPos;
 
 void main(){
 
