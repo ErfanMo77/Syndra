@@ -44,13 +44,20 @@ namespace Syndra {
 		struct CameraData
 		{
 			glm::mat4 ViewProjection;
-			glm::vec3 position;
+			glm::vec4 position;
+		};
+
+		struct Transform
+		{
+			glm::mat4 transform;
+			glm::vec4 lightPos;
 		};
 
 		struct SceneData
 		{
 			CameraData CameraBuffer;
-			Ref<UniformBuffer> CameraUniformBuffer;
+			Transform TransformBuffer;
+			Ref<UniformBuffer> CameraUniformBuffer, TransformUniformBuffer;
 			ShaderLibrary shaders;
 			Ref<Shader> diffuse,outline,mouseShader,aa;
 			Ref<FrameBuffer> mainFB, mouseFB, postProcFB;

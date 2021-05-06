@@ -2,6 +2,7 @@
 #include "Engine/Renderer/SceneRenderer.h"
 #include "Engine/Scene/Entity.h"
 #include "Engine/Scene/Scene.h"
+#include <glad/glad.h>
 
 namespace Syndra {
 
@@ -24,13 +25,15 @@ namespace Syndra {
 		if (!s_Data->aa) {
 			s_Data->shaders.Load("assets/shaders/aa.glsl");
 			s_Data->shaders.Load("assets/shaders/diffuse.glsl");
-			s_Data->shaders.Load("assets/shaders/mouse.glsl");
-			s_Data->shaders.Load("assets/shaders/outline.glsl");
+			//s_Data->shaders.Load("assets/shaders/mouse.glsl");
+			//s_Data->shaders.Load("assets/shaders/outline.glsl");
 		}
 		s_Data->aa = s_Data->shaders.Get("aa");
 		s_Data->diffuse = s_Data->shaders.Get("diffuse");
-		s_Data->mouseShader = s_Data->shaders.Get("mouse");
-		s_Data->outline = s_Data->shaders.Get("outline");
+		//s_Data->mouseShader = s_Data->shaders.Get("mouse");
+		//s_Data->outline = s_Data->shaders.Get("outline");
+
+		/*s_Data->pbrMaterial = Material::Create(s_Data->diffuse);*/
 
 		s_Data->clearColor = glm::vec3(0.196f, 0.196f, 0.196f);
 
@@ -54,14 +57,17 @@ namespace Syndra {
 		};
 		s_Data->screenEbo = IndexBuffer::Create(quadIndices, sizeof(quadIndices) / sizeof(uint32_t));
 		s_Data->screenVao->SetIndexBuffer(s_Data->screenEbo);
-		s_Data->CameraUniformBuffer = UniformBuffer::Create(sizeof(glm::mat4), 0);
+		s_Data->CameraUniformBuffer = UniformBuffer::Create(sizeof(CameraData), 0);
+		s_Data->TransformUniformBuffer = UniformBuffer::Create(sizeof(Transform), 1);
 	}
 
 	void SceneRenderer::BeginScene(const PerspectiveCamera& camera)
 	{
 		s_Data->CameraBuffer.ViewProjection = camera.GetViewProjection();
-		s_Data->CameraBuffer.position = camera.GetPosition();
-		s_Data->CameraUniformBuffer->SetData(&s_Data->CameraBuffer, sizeof(glm::mat4));
+		s_Data->CameraBuffer.position = glm::vec4(camera.GetPosition(),0);
+		s_Data->CameraUniformBuffer->SetData(&s_Data->CameraBuffer, sizeof(CameraData));
+
+		s_Data->TransformBuffer.lightPos = glm::vec4(camera.GetPosition(),0);
 		s_Data->mainFB->Bind();
 		RenderCommand::SetState(RenderState::DEPTH_TEST, true);
 		RenderCommand::SetClearColor(glm::vec4(s_Data->clearColor, 1.0f));
@@ -79,8 +85,11 @@ namespace Syndra {
 		{
 			auto& tc = view.get<TransformComponent>(ent);
 			auto& mc = view.get<MeshComponent>(ent);
-			//TODO material
-			SceneRenderer::RenderEntityColor(ent, tc, mc);
+			if (!mc.path.empty()) {
+				s_Data->TransformBuffer.transform = tc.GetTransform();
+				s_Data->TransformUniformBuffer->SetData(&s_Data->TransformBuffer, sizeof(Transform));
+				SceneRenderer::RenderEntityColor(ent, tc, mc);
+			}
 		}
 		s_Data->mainFB->Unbind();
 
@@ -106,9 +115,9 @@ namespace Syndra {
 		s_Data->diffuse->Bind();
 		//TODO material system
 		//m_Texture->Bind(0);
-		s_Data->diffuse->SetMat4("u_trans", tc.GetTransform());
-		s_Data->diffuse->SetFloat3("cameraPos", s_Data->CameraBuffer.position);
-		s_Data->diffuse->SetFloat3("lightPos", s_Data->CameraBuffer.position);
+		//s_Data->diffuse->SetMat4("u_trans", tc.GetTransform());
+		//s_Data->diffuse->SetFloat3("cameraPos", s_Data->CameraBuffer.position);
+		//s_Data->diffuse->SetFloat3("lightPos", s_Data->CameraBuffer.position);
 		//difShader->SetFloat3("cubeCol", m_CubeColor);
 		//glEnable(GL_DEPTH_TEST);
 		//TODO add selected entities
@@ -130,10 +139,10 @@ namespace Syndra {
 	{
 		//-------------------------------------------------entity id pass--------------------------------------------------------//
 
-		s_Data->mouseShader->SetMat4("u_trans", tc.GetTransform());
-		s_Data->mouseShader->SetInt("u_ID", (uint32_t)entity);
-		Renderer::Submit(s_Data->mouseShader, mc.model);
-		s_Data->mouseShader->Unbind();
+		//s_Data->mouseShader->SetMat4("u_trans", tc.GetTransform());
+		//s_Data->mouseShader->SetInt("u_ID", (uint32_t)entity);
+		//Renderer::Submit(s_Data->mouseShader, mc.model);
+		//s_Data->mouseShader->Unbind();
 	}
 
 	void SceneRenderer::EndScene()

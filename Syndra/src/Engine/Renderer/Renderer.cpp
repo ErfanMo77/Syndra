@@ -1,7 +1,7 @@
 #include "lpch.h"
 #include "Engine/Renderer/Renderer.h"
 #include "Engine/Renderer/RenderCommand.h"
-
+#include <glad/glad.h>
 namespace Syndra {
 
 	Renderer::SceneData* Renderer::m_SceneData = new Renderer::SceneData;
@@ -27,7 +27,6 @@ namespace Syndra {
 	{
 		shader->Bind();
 		//shader->SetMat4("u_ViewProjection", m_SceneData->ViewProjectionMatrix);
-
 		auto& meshes = model.meshes;
 		for (auto& mesh : meshes) {
 			if (mesh.textures.size() == 0) {

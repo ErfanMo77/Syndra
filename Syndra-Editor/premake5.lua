@@ -2,7 +2,7 @@ project "Syndra-Editor"
 	kind "ConsoleApp"
 	language "C++"
 	cppdialect "C++17"
-	staticruntime "on"
+	staticruntime "off"
 	
 	targetdir ("%{wks.location}/bin/" .. outputDir .. "/%{prj.name}")
 	objdir ("%{wks.location}/bin-int/" .. outputDir .. "/%{prj.name}")
@@ -33,7 +33,6 @@ project "Syndra-Editor"
 	}
 
 	filter "system:windows"
-		staticruntime "on"
 		systemversion "latest"
 
 	filter "configurations:Debug"

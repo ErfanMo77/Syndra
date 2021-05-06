@@ -10,6 +10,8 @@ workspace "Syndra-Engine"
 
 outputDir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 
+VULKAN_SDK = os.getenv("VULKAN_SDK")
+
 IncludeDir = {}
 IncludeDir["GLFW"] =  "%{wks.location}/Syndra/vendor/GLFW/include"
 IncludeDir["Glad"] =  "%{wks.location}/Syndra/vendor/Glad/include"
@@ -20,6 +22,29 @@ IncludeDir["entt"] = "%{wks.location}/Syndra/vendor/entt/Include"
 IncludeDir["yaml_cpp"] = "%{wks.location}/Syndra/vendor/yaml-cpp/include"
 IncludeDir["ImGuizmo"] = "%{wks.location}/Syndra/vendor/ImGuizmo"
 IncludeDir["assimp"] = "%{wks.location}/Syndra/vendor/assimp/include"
+IncludeDir["VulkanSDK"] = "%{VULKAN_SDK}/Include"
+IncludeDir["shaderc"] = "%{wks.location}/Syndra/vendor/shaderc/include"
+IncludeDir["SPIRV_Cross"] = "%{wks.location}/Syndra/vendor/SPIRV-Cross"
+
+
+LibraryDir = {}
+
+LibraryDir["VulkanSDK"] = "%{VULKAN_SDK}/Lib"
+LibraryDir["VulkanSDK_Debug"] = "%{wks.location}/Syndra/vendor/VulkanSDK/Lib"
+LibraryDir["VulkanSDK_DLL"] = "%{wks.location}/Syndra/vendor/VulkanSDK/Bin"
+
+Library = {}
+Library["Vulkan"] = "%{LibraryDir.VulkanSDK}/vulkan-1.lib"
+Library["VulkanUtils"] = "%{LibraryDir.VulkanSDK}/VkLayer_utils.lib"
+
+Library["ShaderC_Debug"] = "%{LibraryDir.VulkanSDK_Debug}/shaderc_sharedd.lib"
+Library["SPIRV_Cross_Debug"] = "%{LibraryDir.VulkanSDK_Debug}/spirv-cross-cored.lib"
+Library["SPIRV_Cross_GLSL_Debug"] = "%{LibraryDir.VulkanSDK_Debug}/spirv-cross-glsld.lib"
+Library["SPIRV_Tools_Debug"] = "%{LibraryDir.VulkanSDK_Debug}/SPIRV-Toolsd.lib"
+
+Library["ShaderC_Release"] = "%{LibraryDir.VulkanSDK}/shaderc_shared.lib"
+Library["SPIRV_Cross_Release"] = "%{LibraryDir.VulkanSDK}/spirv-cross-core.lib"
+Library["SPIRV_Cross_GLSL_Release"] = "%{LibraryDir.VulkanSDK}/spirv-cross-glsl.lib"
 
 group "Dependencies"
 	include "Syndra/vendor/GLFW"
@@ -35,7 +60,7 @@ project "Syndra"
 	kind "StaticLib"
 	language "C++"
 	cppdialect "C++17"
-	staticruntime "on"
+	staticruntime "off"
 
 	targetdir ("bin/" .. outputDir .. "/%{prj.name}")
 	objdir ("bin-int/" .. outputDir .. "/%{prj.name}")
@@ -67,7 +92,8 @@ project "Syndra"
 		"%{IncludeDir.entt}",
 		"%{IncludeDir.yaml_cpp}",
 		"%{IncludeDir.ImGuizmo}",
-		"%{IncludeDir.assimp}"
+		"%{IncludeDir.assimp}",
+		"%{IncludeDir.VulkanSDK}"
 	}
 
 	libdirs {
@@ -89,7 +115,6 @@ project "Syndra"
 
 	filter "system:windows"
 		cppdialect "C++latest"
-		staticruntime "on"
 		systemversion "latest"
 
 	defines
@@ -100,14 +125,32 @@ project "Syndra"
 	filter "configurations:Debug"
 		defines "SN_DEBUG"
 		symbols "on"
+		links
+		{
+			"%{Library.ShaderC_Debug}",
+			"%{Library.SPIRV_Cross_Debug}",
+			"%{Library.SPIRV_Cross_GLSL_Debug}"
+		}
 		
 	filter "configurations:release"
 		defines "SN_RELEASE"
-		optimize "on"	
+		optimize "on"
+		links
+		{
+			"%{Library.ShaderC_Release}",
+			"%{Library.SPIRV_Cross_Release}",
+			"%{Library.SPIRV_Cross_GLSL_Release}"
+		}		
 		
 	filter "configurations:Dist"
 		defines "SN_DIST"
 		optimize "on"
+		links
+		{
+			"%{Library.ShaderC_Release}",
+			"%{Library.SPIRV_Cross_Release}",
+			"%{Library.SPIRV_Cross_GLSL_Release}"
+		}
 
 
 project "Sandbox"
@@ -115,7 +158,7 @@ project "Sandbox"
 	kind "ConsoleApp"
 	language "C++"
 	cppdialect "C++17"
-	staticruntime "on"
+	staticruntime "off"
 
 	targetdir ("bin/" .. outputDir .. "/%{prj.name}")
 	objdir ("bin-int/" .. outputDir .. "/%{prj.name}")
@@ -142,7 +185,7 @@ project "Sandbox"
 	}
 
 	filter "system:windows"
-		staticruntime "on"
+		staticruntime "off"
 		systemversion "latest"
 
 	filter "configurations:Debug"
