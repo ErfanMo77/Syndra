@@ -9,11 +9,11 @@ layout(location = 2) in vec3 a_normal;
 layout(location = 3) in vec3 a_tangent;
 layout(location = 4) in vec3 a_bitangent;
 
-layout(std140, binding = 0) uniform camera
+layout(binding = 0) uniform camera
 {
 	mat4 u_ViewProjection;
 	vec4 cameraPos;
-};
+} cam;
 
 layout(binding = 1) uniform Transform
 {
@@ -47,10 +47,9 @@ void main(){
 	mat3 TBN = transpose(mat3(T, B, N));
 
 	vs_out.TangentLightPos = TBN * vec3(transform.lightPos);
-    vs_out.TangentViewPos  = TBN * vec3(cameraPos);
+    vs_out.TangentViewPos  = TBN * vec3(cam.cameraPos);
     vs_out.TangentFragPos  = TBN * vs_out.v_pos;
-
-	gl_Position = u_ViewProjection * transform.u_trans *vec4(a_pos,1.0);
+	gl_Position = cam.u_ViewProjection * transform.u_trans *vec4(a_pos, 1.0);
 }
 
 #type fragment
@@ -60,6 +59,10 @@ layout(location = 0) out vec4 fragColor;
 layout(binding = 0) uniform sampler2D texture_diffuse1;
 layout(binding = 1) uniform sampler2D texture_specular1;
 layout(binding = 2) uniform sampler2D texture_normal1;
+
+layout(std430,push_constant) uniform pc{
+	vec4 col;
+} push;
 
 struct VS_OUT {
     vec3 v_pos;
@@ -96,5 +99,5 @@ void main(){
 	if(color == vec3(0)){
 		result = vec3(diff);
 	}
-	fragColor = vec4(result,1.0);
+	fragColor = vec4(result*push.col.rgb,1.0);
 }

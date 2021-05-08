@@ -53,9 +53,15 @@ namespace Syndra {
 			glm::vec4 lightPos;
 		};
 
+		struct ShaderData
+		{
+			glm::vec4 col;
+		};
+
 		struct SceneData
 		{
 			CameraData CameraBuffer;
+			ShaderData ShaderBuffer;
 			Transform TransformBuffer;
 			Ref<UniformBuffer> CameraUniformBuffer, TransformUniformBuffer;
 			ShaderLibrary shaders;

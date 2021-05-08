@@ -66,6 +66,7 @@ namespace Syndra {
 		s_Data->CameraBuffer.ViewProjection = camera.GetViewProjection();
 		s_Data->CameraBuffer.position = glm::vec4(camera.GetPosition(),0);
 		s_Data->CameraUniformBuffer->SetData(&s_Data->CameraBuffer, sizeof(CameraData));
+		
 
 		s_Data->TransformBuffer.lightPos = glm::vec4(camera.GetPosition(),0);
 		s_Data->mainFB->Bind();
@@ -88,6 +89,7 @@ namespace Syndra {
 			if (!mc.path.empty()) {
 				s_Data->TransformBuffer.transform = tc.GetTransform();
 				s_Data->TransformUniformBuffer->SetData(&s_Data->TransformBuffer, sizeof(Transform));
+				s_Data->ShaderBuffer.col = glm::vec4(0.5f);
 				SceneRenderer::RenderEntityColor(ent, tc, mc);
 			}
 		}
@@ -113,6 +115,8 @@ namespace Syndra {
 	{
 		//--------------------------------------------------color and outline pass------------------------------------------------//
 		s_Data->diffuse->Bind();
+
+		s_Data->diffuse->SetFloat4("push.col", glm::vec4(0.5f));
 		//TODO material system
 		//m_Texture->Bind(0);
 		//s_Data->diffuse->SetMat4("u_trans", tc.GetTransform());

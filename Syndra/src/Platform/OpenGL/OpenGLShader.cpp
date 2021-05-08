@@ -86,17 +86,8 @@ namespace Syndra {
 		std::string source = ReadFile(filepath);
 		auto shaderSources = PreProcess(source);
 
-		//{
-		//	Timer timer;
-		//	CompileOrGetVulkanBinaries(shaderSources);
-		//	CompileOrGetOpenGLBinaries();
-		//	CreateProgram();
-		//	SN_CORE_WARN("Shader creation took {0} ms", timer.ElapsedMillis());
-		//}
-
 		CompileOrGetVulkanBinaries(shaderSources);
 		CompileOrGetOpenGLBinaries();
-		CreateProgram();
 
 		// Extract name from filepath
 		auto lastSlash = filepath.find_last_of("/\\");
@@ -115,7 +106,7 @@ namespace Syndra {
 
 		CompileOrGetVulkanBinaries(sources);
 		CompileOrGetOpenGLBinaries();
-		CreateProgram();
+		//CreateProgram();
 	}
 
 	OpenGLShader::~OpenGLShader()
@@ -182,9 +173,9 @@ namespace Syndra {
 		shaderc::Compiler compiler;
 		shaderc::CompileOptions options;
 		options.SetTargetEnvironment(shaderc_target_env_vulkan, shaderc_env_version_vulkan_1_2);
-		const bool optimize = true;
+		const bool optimize = false;
 		if (optimize)
-			options.SetOptimizationLevel(shaderc_optimization_level_performance);
+			options.SetOptimizationLevel(shaderc_optimization_level_size);
 
 		std::filesystem::path cacheDirectory = GetCacheDirectory();
 
@@ -236,58 +227,22 @@ namespace Syndra {
 	{
 		auto& shaderData = m_OpenGLSPIRV;
 
-		shaderc::Compiler compiler;
-		shaderc::CompileOptions options;
-		options.SetTargetEnvironment(shaderc_target_env_opengl, shaderc_env_version_opengl_4_5);
-		const bool optimize = false;
-		if (optimize)
-			options.SetOptimizationLevel(shaderc_optimization_level_performance);
-
 		std::filesystem::path cacheDirectory = GetCacheDirectory();
 
-		shaderData.clear();
-		m_OpenGLSourceCode.clear();
 		for (auto&& [stage, spirv] : m_VulkanSPIRV)
 		{
-			std::filesystem::path shaderFilePath = m_FilePath;
-			std::filesystem::path cachedPath = cacheDirectory / (shaderFilePath.filename().string() + GLShaderStageCachedOpenGLFileExtension(stage));
+			spirv_cross::CompilerGLSL glsl(std::move(m_VulkanSPIRV[stage]));
+			spirv_cross::ShaderResources resources = glsl.get_shader_resources();
+			spirv_cross::CompilerGLSL::Options options;
 
-			std::ifstream in(cachedPath, std::ios::in | std::ios::binary);
-			if (in.is_open())
-			{
-				in.seekg(0, std::ios::end);
-				auto size = in.tellg();
-				in.seekg(0, std::ios::beg);
+			options.version = 460;
+			options.es = false;
+			glsl.set_common_options(options);
 
-				auto& data = shaderData[stage];
-				data.resize(size / sizeof(uint32_t));
-				in.read((char*)data.data(), size);
-			}
-			else
-			{
-				spirv_cross::CompilerGLSL glslCompiler(spirv);
-				m_OpenGLSourceCode[stage] = glslCompiler.compile();
-				auto& source = m_OpenGLSourceCode[stage];
-
-				shaderc::SpvCompilationResult mod = compiler.CompileGlslToSpv(source, GLShaderStageToShaderC(stage), m_FilePath.c_str());
-				if (mod.GetCompilationStatus() != shaderc_compilation_status_success)
-				{
-					//SN_CORE_ERROR(mod.GetErrorMessage());
-					//SN_CORE_ASSERT(false);
-				}
-
-				shaderData[stage] = std::vector<uint32_t>(mod.cbegin(), mod.cend());
-
-				std::ofstream out(cachedPath, std::ios::out | std::ios::binary);
-				if (out.is_open())
-				{
-					auto& data = shaderData[stage];
-					out.write((char*)data.data(), data.size() * sizeof(uint32_t));
-					out.flush();
-					out.close();
-				}
-			}
+			m_OpenGLSourceCode[stage] = glsl.compile();
+			SN_CORE_TRACE(m_OpenGLSourceCode[stage]);
 		}
+		Compile(m_OpenGLSourceCode);
 	}
 
 	void OpenGLShader::CreateProgram()
@@ -335,10 +290,10 @@ namespace Syndra {
 	{
 		spirv_cross::Compiler compiler(shaderData);
 		spirv_cross::ShaderResources resources = compiler.get_shader_resources();
-
 		SN_CORE_TRACE("OpenGLShader::Reflect - {0} {1}", GLShaderStageToString(stage), m_FilePath);
 		SN_CORE_TRACE("    {0} uniform buffers", resources.uniform_buffers.size());
-		SN_CORE_TRACE("    {0} resources", resources.sampled_images.size());
+		SN_CORE_TRACE("    {0} samplers", resources.sampled_images.size());
+		SN_CORE_TRACE("    {0} push constants", resources.push_constant_buffers.size());
 
 		SN_CORE_TRACE("Uniform buffers:");
 		for (const auto& resource : resources.uniform_buffers)
@@ -353,6 +308,30 @@ namespace Syndra {
 			SN_CORE_TRACE("    Binding = {0}", binding);
 			SN_CORE_TRACE("    Members = {0}", memberCount);
 		}
+
+		SN_CORE_TRACE("samplers:");
+		for (const auto& resource : resources.sampled_images)
+		{
+			unsigned set = compiler.get_decoration(resource.id, spv::DecorationDescriptorSet);
+			unsigned binding = compiler.get_decoration(resource.id, spv::DecorationBinding);
+			SN_CORE_TRACE("Image {0} at set {1}, binding = {2}", resource.name.c_str(), set, binding);
+			// Modify the decoration to prepare it for GLSL.
+			compiler.unset_decoration(resource.id, spv::DecorationDescriptorSet);
+		}
+
+		SN_CORE_TRACE("Push constants:");
+		for (const auto& resource : resources.push_constant_buffers)
+		{
+			const auto& bufferType = compiler.get_type(resource.base_type_id);
+			uint32_t bufferSize = compiler.get_declared_struct_size(bufferType);
+			uint32_t binding = compiler.get_decoration(resource.id, spv::DecorationBinding);
+			int memberCount = bufferType.member_types.size();
+			SN_CORE_TRACE("  {0}", resource.name);
+			SN_CORE_TRACE("    Size = {0}", bufferSize);
+			SN_CORE_TRACE("    Binding = {0}", binding);
+			SN_CORE_TRACE("    Members = {0}", memberCount);
+		}
+		SN_CORE_TRACE("========================================================================================");
 	}
 
 	void OpenGLShader::Compile(const std::unordered_map<GLenum, std::string>& shaderSources)
