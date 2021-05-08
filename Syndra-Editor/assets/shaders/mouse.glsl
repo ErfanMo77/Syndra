@@ -10,7 +10,10 @@ layout(location = 3) in vec3 a_tangent;
 layout(location = 4) in vec3 a_bitangent;
 
 
-uniform mat4 u_ViewProjection;
+layout(std140, binding = 0) uniform camera
+{
+	mat4 u_ViewProjection;
+};
 uniform mat4 u_trans;
 
 out vec3 v_pos;

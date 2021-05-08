@@ -8,7 +8,10 @@ layout(location = 1) in vec2 a_uv;
 layout(location = 2) in vec3 a_normal;
 
 
-uniform mat4 u_ViewProjection;
+layout(std140, binding = 0) uniform camera
+{
+	mat4 u_ViewProjection;
+};
 uniform mat4 u_trans;
 
 out vec3 v_pos;

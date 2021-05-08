@@ -10,3 +10,7 @@ bin-int/
 **.vcxproj.user
 *.log
 imgui.ini
+
+Syndra/vendor/VulkanSDK
+Syndra-Editor/assets/cache
+scripts/__pycache__

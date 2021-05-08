@@ -3,6 +3,7 @@
 #include "Engine/Scene/Components.h"
 #include "Engine/Renderer/Renderer.h"
 #include "Engine/Renderer/FrameBuffer.h"
+#include "Engine/Renderer/UniformBuffer.h"
 #include "entt.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
@@ -39,9 +40,30 @@ namespace Syndra {
 		static FramebufferSpecification GetMainFrameSpec() { return s_Data->mainFB->GetSpecification(); }
 
 	private:
+
+		struct CameraData
+		{
+			glm::mat4 ViewProjection;
+			glm::vec4 position;
+		};
+
+		struct Transform
+		{
+			glm::mat4 transform;
+			glm::vec4 lightPos;
+		};
+
+		struct ShaderData
+		{
+			glm::vec4 col;
+		};
+
 		struct SceneData
 		{
-			PerspectiveCamera camera;
+			CameraData CameraBuffer;
+			ShaderData ShaderBuffer;
+			Transform TransformBuffer;
+			Ref<UniformBuffer> CameraUniformBuffer, TransformUniformBuffer;
 			ShaderLibrary shaders;
 			Ref<Shader> diffuse,outline,mouseShader,aa;
 			Ref<FrameBuffer> mainFB, mouseFB, postProcFB;

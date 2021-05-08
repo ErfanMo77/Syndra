@@ -1,7 +1,7 @@
 // Basic diffuse Shader
 #type vertex
 
-#version 450 core
+#version 460
 	
 layout(location = 0) in vec3 a_pos;
 layout(location = 1) in vec2 a_uv;
@@ -9,29 +9,36 @@ layout(location = 2) in vec3 a_normal;
 layout(location = 3) in vec3 a_tangent;
 layout(location = 4) in vec3 a_bitangent;
 
+layout(binding = 0) uniform camera
+{
+	mat4 u_ViewProjection;
+	vec4 cameraPos;
+} cam;
 
-uniform mat4 u_ViewProjection;
-uniform mat4 u_trans;
+layout(binding = 1) uniform Transform
+{
+	 mat4 u_trans;
+	 vec4 lightPos;
+} transform;
 
-out VS_OUT {
+
+
+struct VS_OUT {
 	vec3 v_pos;
 	vec2 v_uv;
 	vec3 TangentLightPos;
 	vec3 TangentViewPos;
 	vec3 TangentFragPos;
-} vs_out;
+};
 
-//uniform vec3 cubeCol;
-
-uniform vec3 cameraPos;
-uniform vec3 lightPos;
+layout(location = 0) out VS_OUT vs_out;
 
 void main(){
 
-    vs_out.v_pos = vec3(u_trans * vec4(a_pos, 1.0));   
+    vs_out.v_pos = vec3(transform.u_trans * vec4(a_pos, 1.0));   
     vs_out.v_uv = a_uv;
 
-	mat3 normalMatrix = transpose(inverse(mat3(u_trans)));
+	mat3 normalMatrix = transpose(inverse(mat3(transform.u_trans)));
     vec3 T = normalize(normalMatrix * a_tangent);
     vec3 N = normalize(normalMatrix * a_normal);
 	T = normalize(T - dot(T, N) * N);
@@ -39,30 +46,33 @@ void main(){
 
 	mat3 TBN = transpose(mat3(T, B, N));
 
-	vs_out.TangentLightPos = TBN * lightPos;
-    vs_out.TangentViewPos  = TBN * cameraPos;
+	vs_out.TangentLightPos = TBN * vec3(transform.lightPos);
+    vs_out.TangentViewPos  = TBN * vec3(cam.cameraPos);
     vs_out.TangentFragPos  = TBN * vs_out.v_pos;
-
-	gl_Position = u_ViewProjection * u_trans *vec4(a_pos,1.0);
+	gl_Position = cam.u_ViewProjection * transform.u_trans *vec4(a_pos, 1.0);
 }
 
 #type fragment
-#version 450 core
+#version 460
 layout(location = 0) out vec4 fragColor;	
 
-uniform sampler2D texture_diffuse1;
-uniform sampler2D texture_specular1;
-uniform sampler2D texture_normal1;
+layout(binding = 0) uniform sampler2D texture_diffuse1;
+layout(binding = 1) uniform sampler2D texture_specular1;
+layout(binding = 2) uniform sampler2D texture_normal1;
 
-in VS_OUT {
+layout(std430,push_constant) uniform pc{
+	vec4 col;
+} push;
+
+struct VS_OUT {
     vec3 v_pos;
     vec2 v_uv;
     vec3 TangentLightPos;
     vec3 TangentViewPos;
     vec3 TangentFragPos;
-} fs_in;
+};
 
-
+layout(location = 0) in VS_OUT fs_in;
 
 void main(){	
 
@@ -89,5 +99,5 @@ void main(){
 	if(color == vec3(0)){
 		result = vec3(diff);
 	}
-	fragColor = vec4(result,1.0);
+	fragColor = vec4(result*push.col.rgb,1.0);
 }
