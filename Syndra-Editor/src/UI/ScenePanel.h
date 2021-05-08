@@ -26,6 +26,7 @@ namespace Syndra {
 	private:
 		Ref<Scene> m_Context;
 		Entity m_SelectionContext;
+		ShaderLibrary m_Shaders;
 		bool m_EntityCreated = false;
 
 	};

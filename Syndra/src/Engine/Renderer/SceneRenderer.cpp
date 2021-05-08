@@ -30,10 +30,21 @@ namespace Syndra {
 		}
 		s_Data->aa = s_Data->shaders.Get("aa");
 		s_Data->diffuse = s_Data->shaders.Get("diffuse");
+		//sample code
+		for (auto& member : s_Data->diffuse->GetPushConstants())
+		{
+			for (auto& mem : member.members)
+			{
+				SN_CORE_ERROR("Diffuse shader members: {0} {1}", mem.name, mem.size);
+			}	
+		}
+
+		for (auto& sampler : s_Data->diffuse->GetSamplers())
+		{
+			SN_CORE_ERROR("Sampler : {0}, set={1}, binding{2}", sampler.name, sampler.set, sampler.binding);
+		}
 		//s_Data->mouseShader = s_Data->shaders.Get("mouse");
 		//s_Data->outline = s_Data->shaders.Get("outline");
-
-		/*s_Data->pbrMaterial = Material::Create(s_Data->diffuse);*/
 
 		s_Data->clearColor = glm::vec3(0.196f, 0.196f, 0.196f);
 
@@ -84,13 +95,27 @@ namespace Syndra {
 		s_Data->mainFB->Bind();
 		for (auto ent : view)
 		{
-			auto& tc = view.get<TransformComponent>(ent);
-			auto& mc = view.get<MeshComponent>(ent);
+			//auto& tc = view.get<TransformComponent>(ent);
+			//auto& mc = view.get<MeshComponent>(ent);
+			//if (!mc.path.empty()) {
+			//	s_Data->TransformBuffer.transform = tc.GetTransform();
+			//	s_Data->TransformUniformBuffer->SetData(&s_Data->TransformBuffer, sizeof(Transform));
+			//	s_Data->ShaderBuffer.col = glm::vec4(0.5f);
+			//	SceneRenderer::RenderEntityColor(ent, tc, mc);
+			//}
+		}
+
+		auto viewMat = scene.m_Registry.view<TransformComponent, MeshComponent,MaterialComponent>();
+		for (auto ent : viewMat)
+		{
+			auto& tc = viewMat.get<TransformComponent>(ent);
+			auto& mc = viewMat.get<MeshComponent>(ent);
+			auto& mat = viewMat.get<MaterialComponent>(ent);
 			if (!mc.path.empty()) {
 				s_Data->TransformBuffer.transform = tc.GetTransform();
 				s_Data->TransformUniformBuffer->SetData(&s_Data->TransformBuffer, sizeof(Transform));
 				s_Data->ShaderBuffer.col = glm::vec4(0.5f);
-				SceneRenderer::RenderEntityColor(ent, tc, mc);
+				SceneRenderer::RenderEntityColor(ent, tc, mc, mat);
 			}
 		}
 		s_Data->mainFB->Unbind();
@@ -114,9 +139,9 @@ namespace Syndra {
 	void SceneRenderer::RenderEntityColor(const entt::entity& entity, TransformComponent& tc, MeshComponent& mc)
 	{
 		//--------------------------------------------------color and outline pass------------------------------------------------//
-		s_Data->diffuse->Bind();
+		
 
-		s_Data->diffuse->SetFloat4("push.col", glm::vec4(0.5f));
+		//s_Data->diffuse->SetFloat4("push.col", glm::vec4(0.5f));
 		//TODO material system
 		//m_Texture->Bind(0);
 		//s_Data->diffuse->SetMat4("u_trans", tc.GetTransform());
@@ -137,6 +162,12 @@ namespace Syndra {
 		//}
 		//glEnable(GL_DEPTH_TEST);
 		Renderer::Submit(s_Data->diffuse, mc.model);
+	}
+
+	void SceneRenderer::RenderEntityColor(const entt::entity& entity, TransformComponent& tc, MeshComponent& mc, MaterialComponent& mat)
+	{
+		mat.material->Bind();
+		Renderer::Submit(mat.material, mc.model);
 	}
 
 	void SceneRenderer::RenderEntityID(const entt::entity& entity, TransformComponent& tc, MeshComponent& mc)

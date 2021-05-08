@@ -99,5 +99,5 @@ void main(){
 	if(color == vec3(0)){
 		result = vec3(diff);
 	}
-	fragColor = vec4(result*push.col.rgb,1.0);
+	fragColor = vec4(color,1.0);
 }

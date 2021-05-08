@@ -6,9 +6,29 @@
 
 namespace Syndra {
 
+	struct PCMember {
+		std::string name;
+		size_t size;
+	};
+
+	struct PushConstant
+	{
+		std::string name;
+		uint32_t size;
+		std::vector<PCMember> members;
+	};
+
+	struct Sampler
+	{
+		std::string name;
+		uint32_t set;
+		uint32_t binding;
+	};
+
 	class Shader
 	{
 	public:
+
 		virtual ~Shader() = default;
 
 		virtual void Bind() const = 0;
@@ -20,6 +40,9 @@ namespace Syndra {
 		virtual void SetFloat3(const std::string& name, const glm::vec3& value) = 0;
 		virtual void SetFloat4(const std::string& name, const glm::vec4& value) = 0;
 		virtual void SetMat4(const std::string& name, const glm::mat4& value) = 0;
+
+		virtual std::vector<PushConstant> GetPushConstants() = 0;
+		virtual std::vector<Sampler> GetSamplers() = 0;
 
 		virtual const std::string& GetName() const = 0;
 

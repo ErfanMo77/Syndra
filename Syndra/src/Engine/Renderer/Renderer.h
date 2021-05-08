@@ -1,5 +1,6 @@
 #pragma once
 #include "Engine/Renderer/Shader.h"
+#include "Engine/Renderer/Material.h"
 #include "Engine/Renderer/RenderCommand.h"
 #include "Engine/Renderer/PerspectiveCamera.h"
 #include "Engine/Renderer/OrthographicCamera.h"
@@ -15,6 +16,7 @@ namespace Syndra {
 
 		static void Submit(const Ref<Shader>& shader, const Ref<VertexArray>& vertexArray);
 		static void Submit(const Ref<Shader>& shader, const Model& model);
+		static void Submit(const Ref<Material>& material, const Model& model);
 
 		static void OnWindowResize(uint32_t width, uint32_t height);
 

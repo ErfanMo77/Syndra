@@ -15,6 +15,7 @@ namespace Syndra {
 	ScenePanel::ScenePanel(const Ref<Scene>& scene)
 	{
 		SetContext(scene);
+		m_Shaders = scene->GetShaderLibrary();
 	}
 
 	void ScenePanel::SetContext(const Ref<Scene>& scene)
@@ -269,10 +270,51 @@ namespace Syndra {
 				component.Rotation = glm::radians(Rot);
 				DrawVec3Control("Scale", component.Scale, 1.0f);
 		});
-
 		ImGui::Separator();
+		DrawComponent<MaterialComponent>("Material", entity, false, [](auto& component)
+			{
+				ImGui::Separator();
+				auto& shaderName = component.m_Shader->GetName();
+
+				char buffer[256];
+				memset(buffer, 0, sizeof(buffer));
+				strcpy_s(buffer, shaderName.c_str());
+				//ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 2,5 });
+				//ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, { 10,0 });
+				//ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x - 40);
+
+				//TODO add all available shaders
+				if (ImGui::InputText("##Name", buffer, sizeof(buffer))) {
+				}
+				ImGuiIO& io = ImGui::GetIO();
+				std::vector<Sampler>& samplers = component.material->GetSamplers();
+				std::vector<MaterialTexture>& textures = component.material->GetTextures();
+				for (auto& sampler: samplers)
+				{
+					int frame_padding = -1 + 0;                             // -1 == uses default padding (style.FramePadding)
+					ImVec2 size = ImVec2(32.0f, 32.0f);                     // Size of the image we want to make visible
+					ImVec2 uv0 = ImVec2(0.0f, 0.0f);                        // UV coordinates for lower-left
+					ImVec2 uv1 = ImVec2(32.0f / 1, 32.0f / 1);				// UV coordinates for (32,32) in our texture
+					ImVec4 bg_col = ImVec4(0.0f, 0.0f, 0.0f, 1.0f);         // Black background
+					ImVec4 tint_col = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);       // No tint
+					ImGui::Text(sampler.name.c_str());
+					ImGui::NewLine();
+					if (ImGui::ImageButton(io.Fonts->TexID, size, uv0, uv1, frame_padding, bg_col, tint_col)) {
+						auto path = FileDialogs::OpenFile("Syndra Model (*.*)\0*.*\0");
+						if (path) {
+							auto& texture = Texture2D::Create(*path);
+							textures.push_back({texture, sampler.binding, true});
+						}
+					}
+					//ImGui::Button(sampler.name.c_str(),ImVec2(400,20));
+				}
+
+			});
+
+		
 
 		if (entity.HasComponent<MeshComponent>()) {
+			ImGui::Separator();
 			auto& tag = entity.GetComponent<MeshComponent>().path;
 
 			char buffer[256];
@@ -391,6 +433,15 @@ namespace Syndra {
 			{
 				if (!m_SelectionContext.HasComponent<MeshComponent>())
 					m_SelectionContext.AddComponent<MeshComponent>();
+				ImGui::CloseCurrentPopup();
+			}
+
+			if (ImGui::MenuItem("Material"))
+			{
+				if (!m_SelectionContext.HasComponent<MaterialComponent>())
+					m_SelectionContext.AddComponent<MaterialComponent>(m_Shaders.Get("diffuse"));
+				else
+					SN_CORE_WARN("This entity already has the Camera Component!");
 				ImGui::CloseCurrentPopup();
 			}
 			ImGui::EndPopup();
