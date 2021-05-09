@@ -16,6 +16,12 @@ namespace Syndra {
 	{
 		SetContext(scene);
 		m_Shaders = scene->GetShaderLibrary();
+		int size = m_Shaders.GetShaders().size();
+		int index = 0;
+		for (auto&& [name, shader] : m_Shaders.GetShaders())
+		{
+			m_ShaderNames.push_back(name);
+		}
 	}
 
 	void ScenePanel::SetContext(const Ref<Scene>& scene)
@@ -138,8 +144,8 @@ namespace Syndra {
 		ImGui::PopID();
 	}
 
-	template<typename T, typename UIFunction>
-	static void DrawComponent(const std::string& name, Entity entity, bool removable,UIFunction uiFunction)
+	template<typename T>
+	static bool DrawComponent(const std::string& name, Entity entity, bool removable, bool* removed)
 	{
 		const ImGuiTreeNodeFlags treeNodeFlags = ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed |ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_AllowItemOverlap | ImGuiTreeNodeFlags_FramePadding;
 		if (entity.HasComponent<T>())
@@ -167,15 +173,12 @@ namespace Syndra {
 				ImGui::EndPopup();
 			}
 
-			if (open)
-			{
-				uiFunction(component);
-				ImGui::TreePop();
-			}
-
 			if (removeComponent)
-				entity.RemoveComponent<T>();
+				*removed = true;
+			
+			return open;
 		}
+		return false;
 	}
 
 
@@ -244,7 +247,8 @@ namespace Syndra {
 	{
 		ImGui::Separator();
 
-		if (entity.HasComponent<TagComponent>()) {
+		static bool TagRemoved = false;
+		if (DrawComponent<TagComponent>("Tag", entity, false, &TagRemoved)) {
 			auto& tag = entity.GetComponent<TagComponent>().Tag;
 
 			char buffer[256];
@@ -257,63 +261,25 @@ namespace Syndra {
 				tag = std::string(buffer);
 			}
 			ImGui::PopStyleVar(2);
+			ImGui::TreePop();
 		}
 
 		ImGui::Separator();
 
-		DrawComponent<TransformComponent>("Transform", entity, false,[](auto& component)
-		{
-				ImGui::Separator();
-				DrawVec3Control("Translation", component.Translation);
-				glm::vec3 Rot = glm::degrees(component.Rotation);
-				DrawVec3Control("Rotation", Rot);
-				component.Rotation = glm::radians(Rot);
-				DrawVec3Control("Scale", component.Scale, 1.0f);
-		});
-		ImGui::Separator();
-		DrawComponent<MaterialComponent>("Material", entity, false, [](auto& component)
-			{
-				ImGui::Separator();
-				auto& shaderName = component.m_Shader->GetName();
+		static bool TransformRemoved = false;
+		if (DrawComponent<TransformComponent>("Transform", entity, false, &TransformRemoved)) {
+			auto& component = entity.GetComponent<TransformComponent>();
+			ImGui::Separator();
+			DrawVec3Control("Translation", component.Translation);
+			glm::vec3 Rot = glm::degrees(component.Rotation);
+			DrawVec3Control("Rotation", Rot);
+			component.Rotation = glm::radians(Rot);
+			DrawVec3Control("Scale", component.Scale, 1.0f);
+			ImGui::TreePop();
+		}
 
-				char buffer[256];
-				memset(buffer, 0, sizeof(buffer));
-				strcpy_s(buffer, shaderName.c_str());
-				//ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 2,5 });
-				//ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, { 10,0 });
-				//ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x - 40);
-
-				//TODO add all available shaders
-				if (ImGui::InputText("##Name", buffer, sizeof(buffer))) {
-				}
-				ImGuiIO& io = ImGui::GetIO();
-				std::vector<Sampler>& samplers = component.material->GetSamplers();
-				std::vector<MaterialTexture>& textures = component.material->GetTextures();
-				for (auto& sampler: samplers)
-				{
-					int frame_padding = -1 + 0;                             // -1 == uses default padding (style.FramePadding)
-					ImVec2 size = ImVec2(32.0f, 32.0f);                     // Size of the image we want to make visible
-					ImVec2 uv0 = ImVec2(0.0f, 0.0f);                        // UV coordinates for lower-left
-					ImVec2 uv1 = ImVec2(32.0f / 1, 32.0f / 1);				// UV coordinates for (32,32) in our texture
-					ImVec4 bg_col = ImVec4(0.0f, 0.0f, 0.0f, 1.0f);         // Black background
-					ImVec4 tint_col = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);       // No tint
-					ImGui::Text(sampler.name.c_str());
-					ImGui::NewLine();
-					if (ImGui::ImageButton(io.Fonts->TexID, size, uv0, uv1, frame_padding, bg_col, tint_col)) {
-						auto path = FileDialogs::OpenFile("Syndra Model (*.*)\0*.*\0");
-						if (path) {
-							auto& texture = Texture2D::Create(*path);
-							textures.push_back({texture, sampler.binding, true});
-						}
-					}
-					//ImGui::Button(sampler.name.c_str(),ImVec2(400,20));
-				}
-
-			});
-
-		
-
-		if (entity.HasComponent<MeshComponent>()) {
+		static bool MeshRemoved = false;
+		if (DrawComponent<MeshComponent>("Mesh", entity, false, &MeshRemoved)) {
 			ImGui::Separator();
 			auto& tag = entity.GetComponent<MeshComponent>().path;
 
@@ -343,67 +309,138 @@ namespace Syndra {
 				}
 			}
 			ImGui::PopStyleVar(2);
+			ImGui::TreePop();
+			if (MeshRemoved) {
+				entity.RemoveComponent<MeshComponent>();
+				MeshRemoved = false;
+			}
 		}
 
-		DrawComponent<CameraComponent>("Camera", entity, true,[](auto& component)
+		static bool MaterialRemoved = false;
+		ImGui::Separator();
+		if (DrawComponent<MaterialComponent>("Material", entity, true, &MaterialRemoved))
+		{
+			auto& component = entity.GetComponent<MaterialComponent>();
+			ImGui::Separator();
+			//ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 2,5 });
+			//ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, { 10,0 });
+			//ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x - 40);
+
+			static int item_current_idx = 0;                    // Here our selection data is an index.
+			const char* combo_label = m_Shaders.Get("main")->GetName().c_str();  // Label to preview before opening the combo (technically it could be anything)
+			if (ImGui::BeginCombo("shaders", combo_label))
 			{
-				auto& camera = component.Camera;
-
-				ImGui::Checkbox("Primary", &component.Primary);
-
-				const char* projectionTypeStrings[] = { "Perspective", "Orthographic" };
-				const char* currentProjectionTypeString = projectionTypeStrings[(int)camera.GetProjectionType()];
-				if (ImGui::BeginCombo("Projection", currentProjectionTypeString))
+				for (int n = 0; n < m_ShaderNames.size(); n++)
 				{
-					for (int i = 0; i < 2; i++)
-					{
-						bool isSelected = currentProjectionTypeString == projectionTypeStrings[i];
-						if (ImGui::Selectable(projectionTypeStrings[i], isSelected))
-						{
-							currentProjectionTypeString = projectionTypeStrings[i];
-							camera.SetProjectionType((SceneCamera::ProjectionType)i);
-						}
+					const bool is_selected = (item_current_idx == n);
+					if (ImGui::Selectable(m_ShaderNames[n].c_str(), is_selected)) {
+						item_current_idx = n;
+						component.material = Material::Create(m_Shaders.Get(m_ShaderNames[n]));
+					}
+					// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+					if (is_selected)
+						ImGui::SetItemDefaultFocus();
+				}
+				ImGui::EndCombo();
+			}
+			ImGuiIO& io = ImGui::GetIO();
+			std::vector<Sampler>& samplers = component.material->GetSamplers();
+			std::vector<MaterialTexture>& textures = component.material->GetTextures();
+			for (auto& sampler : samplers)
+			{
+				int frame_padding = -1 + 0;                             // -1 == uses default padding (style.FramePadding)
+				ImVec2 size = ImVec2(32.0f, 32.0f);                     // Size of the image we want to make visible
+				ImVec2 uv0 = ImVec2(0.0f, 0.0f);                        // UV coordinates for lower-left
+				ImVec2 uv1 = ImVec2(32.0f / 1, 32.0f / 1);				// UV coordinates for (32,32) in our texture
+				ImVec4 bg_col = ImVec4(0.0f, 0.0f, 0.0f, 1.0f);         // Black background
+				ImVec4 tint_col = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);       // No tint
+				ImGui::Text(sampler.name.c_str());
+				ImGui::NewLine();
+				if (ImGui::ImageButton(io.Fonts->TexID, size, uv0, uv1, frame_padding, bg_col, tint_col)) {
+					auto path = FileDialogs::OpenFile("Syndra Texture (*.*)\0*.*\0");
+					if (path) {
+						auto& texture = Texture2D::Create(*path);
+						textures.push_back({ texture, sampler.binding, true });
+					}
+				}
+				//ImGui::Button(sampler.name.c_str(),ImVec2(400,20));
+			}
+			ImGui::TreePop();
 
-						if (isSelected)
-							ImGui::SetItemDefaultFocus();
+			if (MaterialRemoved) {
+				entity.RemoveComponent<MaterialComponent>();
+				MaterialRemoved = false;
+			}
+		}
+
+		static bool CameraRemoved = false;
+		if (DrawComponent<CameraComponent>("Camera", entity, true, &CameraRemoved))
+		{
+			auto& component = entity.GetComponent<CameraComponent>();
+			auto& camera = component.Camera;
+
+			ImGui::Checkbox("Primary", &component.Primary);
+
+			const char* projectionTypeStrings[] = { "Perspective", "Orthographic" };
+			const char* currentProjectionTypeString = projectionTypeStrings[(int)camera.GetProjectionType()];
+			if (ImGui::BeginCombo("Projection", currentProjectionTypeString))
+			{
+				for (int i = 0; i < 2; i++)
+				{
+					bool isSelected = currentProjectionTypeString == projectionTypeStrings[i];
+					if (ImGui::Selectable(projectionTypeStrings[i], isSelected))
+					{
+						currentProjectionTypeString = projectionTypeStrings[i];
+						camera.SetProjectionType((SceneCamera::ProjectionType)i);
 					}
 
-					ImGui::EndCombo();
+					if (isSelected)
+						ImGui::SetItemDefaultFocus();
 				}
 
-				if (camera.GetProjectionType() == SceneCamera::ProjectionType::Perspective)
-				{
-					float perspectiveVerticalFov = glm::degrees(camera.GetPerspectiveVerticalFOV());
-					if (ImGui::DragFloat("Vertical FOV", &perspectiveVerticalFov))
-						camera.SetPerspectiveVerticalFOV(glm::radians(perspectiveVerticalFov));
+				ImGui::EndCombo();
+			}
 
-					float perspectiveNear = camera.GetPerspectiveNearClip();
-					if (ImGui::DragFloat("Near", &perspectiveNear))
-						camera.SetPerspectiveNearClip(perspectiveNear);
+			if (camera.GetProjectionType() == SceneCamera::ProjectionType::Perspective)
+			{
+				float perspectiveVerticalFov = glm::degrees(camera.GetPerspectiveVerticalFOV());
+				if (ImGui::DragFloat("Vertical FOV", &perspectiveVerticalFov))
+					camera.SetPerspectiveVerticalFOV(glm::radians(perspectiveVerticalFov));
 
-					float perspectiveFar = camera.GetPerspectiveFarClip();
-					if (ImGui::DragFloat("Far", &perspectiveFar))
-						camera.SetPerspectiveFarClip(perspectiveFar);
-				}
+				float perspectiveNear = camera.GetPerspectiveNearClip();
+				if (ImGui::DragFloat("Near", &perspectiveNear))
+					camera.SetPerspectiveNearClip(perspectiveNear);
 
-				if (camera.GetProjectionType() == SceneCamera::ProjectionType::Orthographic)
-				{
-					float orthoSize = camera.GetOrthographicSize();
-					if (ImGui::DragFloat("Size", &orthoSize))
-						camera.SetOrthographicSize(orthoSize);
+				float perspectiveFar = camera.GetPerspectiveFarClip();
+				if (ImGui::DragFloat("Far", &perspectiveFar))
+					camera.SetPerspectiveFarClip(perspectiveFar);
+			}
 
-					float orthoNear = camera.GetOrthographicNearClip();
-					if (ImGui::DragFloat("Near", &orthoNear))
-						camera.SetOrthographicNearClip(orthoNear);
+			if (camera.GetProjectionType() == SceneCamera::ProjectionType::Orthographic)
+			{
+				float orthoSize = camera.GetOrthographicSize();
+				if (ImGui::DragFloat("Size", &orthoSize))
+					camera.SetOrthographicSize(orthoSize);
 
-					float orthoFar = camera.GetOrthographicFarClip();
-					if (ImGui::DragFloat("Far", &orthoFar))
-						camera.SetOrthographicFarClip(orthoFar);
+				float orthoNear = camera.GetOrthographicNearClip();
+				if (ImGui::DragFloat("Near", &orthoNear))
+					camera.SetOrthographicNearClip(orthoNear);
 
-					ImGui::Checkbox("Fixed Aspect Ratio", &component.FixedAspectRatio);
-				}
-				ImGui::Separator();
-			});
+				float orthoFar = camera.GetOrthographicFarClip();
+				if (ImGui::DragFloat("Far", &orthoFar))
+					camera.SetOrthographicFarClip(orthoFar);
+
+				ImGui::Checkbox("Fixed Aspect Ratio", &component.FixedAspectRatio);
+			}
+			ImGui::Separator();
+			ImGui::TreePop();
+
+			if (CameraRemoved) {
+				entity.RemoveComponent<CameraComponent>();
+				CameraRemoved = false;
+			}
+		}
+	
 
 		
 		float buttonSz = 100;

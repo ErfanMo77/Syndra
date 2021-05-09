@@ -68,7 +68,7 @@ namespace Syndra {
 			Transform TransformBuffer;
 			Ref<UniformBuffer> CameraUniformBuffer, TransformUniformBuffer;
 			ShaderLibrary shaders;
-			Ref<Shader> diffuse,outline,mouseShader,aa;
+			Ref<Shader> diffuse,outline,mouseShader,aa, main;
 			Ref<FrameBuffer> mainFB, mouseFB, postProcFB;
 			Ref<VertexArray> screenVao;
 			Ref<VertexBuffer> screenVbo;

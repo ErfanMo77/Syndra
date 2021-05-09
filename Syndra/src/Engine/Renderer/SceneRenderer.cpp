@@ -25,18 +25,20 @@ namespace Syndra {
 		if (!s_Data->aa) {
 			s_Data->shaders.Load("assets/shaders/aa.glsl");
 			s_Data->shaders.Load("assets/shaders/diffuse.glsl");
+			s_Data->shaders.Load("assets/shaders/main.glsl");
 			//s_Data->shaders.Load("assets/shaders/mouse.glsl");
 			//s_Data->shaders.Load("assets/shaders/outline.glsl");
 		}
 		s_Data->aa = s_Data->shaders.Get("aa");
 		s_Data->diffuse = s_Data->shaders.Get("diffuse");
+		s_Data->main = s_Data->shaders.Get("main");
 		//sample code
 		for (auto& member : s_Data->diffuse->GetPushConstants())
 		{
 			for (auto& mem : member.members)
 			{
 				SN_CORE_ERROR("Diffuse shader members: {0} {1}", mem.name, mem.size);
-			}	
+			}
 		}
 
 		for (auto& sampler : s_Data->diffuse->GetSamplers())
@@ -75,11 +77,11 @@ namespace Syndra {
 	void SceneRenderer::BeginScene(const PerspectiveCamera& camera)
 	{
 		s_Data->CameraBuffer.ViewProjection = camera.GetViewProjection();
-		s_Data->CameraBuffer.position = glm::vec4(camera.GetPosition(),0);
+		s_Data->CameraBuffer.position = glm::vec4(camera.GetPosition(), 0);
 		s_Data->CameraUniformBuffer->SetData(&s_Data->CameraBuffer, sizeof(CameraData));
-		
 
-		s_Data->TransformBuffer.lightPos = glm::vec4(camera.GetPosition(),0);
+
+		s_Data->TransformBuffer.lightPos = glm::vec4(camera.GetPosition(), 0);
 		s_Data->mainFB->Bind();
 		RenderCommand::SetState(RenderState::DEPTH_TEST, true);
 		RenderCommand::SetClearColor(glm::vec4(s_Data->clearColor, 1.0f));
@@ -95,27 +97,20 @@ namespace Syndra {
 		s_Data->mainFB->Bind();
 		for (auto ent : view)
 		{
-			//auto& tc = view.get<TransformComponent>(ent);
-			//auto& mc = view.get<MeshComponent>(ent);
-			//if (!mc.path.empty()) {
-			//	s_Data->TransformBuffer.transform = tc.GetTransform();
-			//	s_Data->TransformUniformBuffer->SetData(&s_Data->TransformBuffer, sizeof(Transform));
-			//	s_Data->ShaderBuffer.col = glm::vec4(0.5f);
-			//	SceneRenderer::RenderEntityColor(ent, tc, mc);
-			//}
-		}
-
-		auto viewMat = scene.m_Registry.view<TransformComponent, MeshComponent,MaterialComponent>();
-		for (auto ent : viewMat)
-		{
-			auto& tc = viewMat.get<TransformComponent>(ent);
-			auto& mc = viewMat.get<MeshComponent>(ent);
-			auto& mat = viewMat.get<MaterialComponent>(ent);
+			auto& tc = view.get<TransformComponent>(ent);
+			auto& mc = view.get<MeshComponent>(ent);
 			if (!mc.path.empty()) {
 				s_Data->TransformBuffer.transform = tc.GetTransform();
 				s_Data->TransformUniformBuffer->SetData(&s_Data->TransformBuffer, sizeof(Transform));
 				s_Data->ShaderBuffer.col = glm::vec4(0.5f);
-				SceneRenderer::RenderEntityColor(ent, tc, mc, mat);
+				if (scene.m_Registry.has<MaterialComponent>(ent)){
+					auto& mat = scene.m_Registry.get<MaterialComponent>(ent);
+					SceneRenderer::RenderEntityColor(ent, tc, mc, mat);
+				}
+				else 
+				{
+					SceneRenderer::RenderEntityColor(ent, tc, mc);
+				}
 			}
 		}
 		s_Data->mainFB->Unbind();
@@ -139,7 +134,6 @@ namespace Syndra {
 	void SceneRenderer::RenderEntityColor(const entt::entity& entity, TransformComponent& tc, MeshComponent& mc)
 	{
 		//--------------------------------------------------color and outline pass------------------------------------------------//
-		
 
 		//s_Data->diffuse->SetFloat4("push.col", glm::vec4(0.5f));
 		//TODO material system
@@ -161,12 +155,13 @@ namespace Syndra {
 			//RenderCommand::SetState(GL_DEPTH_TEST, false);
 		//}
 		//glEnable(GL_DEPTH_TEST);
-		Renderer::Submit(s_Data->diffuse, mc.model);
+		RenderCommand::SetState(RenderState::CULL, false);
+		Renderer::Submit(s_Data->main, mc.model);
+		RenderCommand::SetState(RenderState::CULL, true);
 	}
 
 	void SceneRenderer::RenderEntityColor(const entt::entity& entity, TransformComponent& tc, MeshComponent& mc, MaterialComponent& mat)
 	{
-		mat.material->Bind();
 		Renderer::Submit(mat.material, mc.model);
 	}
 

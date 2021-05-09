@@ -57,10 +57,10 @@ namespace Syndra {
 	}
 
 	void Renderer::Submit(const Ref<Material>& material, const Model& model)
-	{
-		//shader->SetMat4("u_ViewProjection", m_SceneData->ViewProjectionMatrix);
+	{	
 		auto& meshes = model.meshes;
 		for (auto& mesh : meshes) {
+			material->Bind();
 			auto vertexArray = mesh.GetVertexArray();
 			vertexArray->Bind();
 			RenderCommand::DrawIndexed(vertexArray);

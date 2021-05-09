@@ -24,6 +24,7 @@ namespace Syndra {
 		void DrawComponents(Entity entity);
 
 	private:
+		std::vector<std::string> m_ShaderNames;
 		Ref<Scene> m_Context;
 		Entity m_SelectionContext;
 		ShaderLibrary m_Shaders;

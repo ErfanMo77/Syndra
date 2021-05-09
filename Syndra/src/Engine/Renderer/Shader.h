@@ -59,6 +59,8 @@ namespace Syndra {
 		Ref<Shader> Load(const std::string& name, const std::string& filepath);
 
 		Ref<Shader> Get(const std::string& name);
+
+		std::unordered_map<std::string, Ref<Shader>> GetShaders() { return m_Shaders; }
 		
 		void DeleteShader(const Ref<Shader>& shader);
 
