@@ -10,6 +10,7 @@ namespace Syndra {
 	{
 		Entity::s_Scene = this;
 		SceneRenderer::Initialize();
+		m_Shaders = SceneRenderer::GetShaderLibrary();
 	}
 
 	Scene::~Scene()
@@ -119,6 +120,11 @@ namespace Syndra {
 
 	template<>
 	void Scene::OnComponentAdded<MeshComponent>(Entity entity, MeshComponent& component)
+	{
+	}
+
+	template<>
+	void Scene::OnComponentAdded<MaterialComponent>(Entity entity, MaterialComponent& component)
 	{
 	}
 

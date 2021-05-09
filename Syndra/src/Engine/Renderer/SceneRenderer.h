@@ -24,6 +24,7 @@ namespace Syndra {
 		static void RenderScene(Scene& scene);
 
 		static void RenderEntityColor(const entt::entity& entity, TransformComponent& tc, MeshComponent& mc);
+		static void RenderEntityColor(const entt::entity& entity, TransformComponent& tc, MeshComponent& mc, MaterialComponent& mat);
 
 		static void RenderEntityID(const entt::entity& entity, TransformComponent& tc, MeshComponent& mc);
 
@@ -38,6 +39,8 @@ namespace Syndra {
 		static Ref<FrameBuffer> GetMouseFrameBuffer() { return s_Data->mouseFB; }
 
 		static FramebufferSpecification GetMainFrameSpec() { return s_Data->mainFB->GetSpecification(); }
+
+		static ShaderLibrary& GetShaderLibrary() { return s_Data->shaders; }
 
 	private:
 
@@ -65,7 +68,7 @@ namespace Syndra {
 			Transform TransformBuffer;
 			Ref<UniformBuffer> CameraUniformBuffer, TransformUniformBuffer;
 			ShaderLibrary shaders;
-			Ref<Shader> diffuse,outline,mouseShader,aa;
+			Ref<Shader> diffuse,outline,mouseShader,aa, main;
 			Ref<FrameBuffer> mainFB, mouseFB, postProcFB;
 			Ref<VertexArray> screenVao;
 			Ref<VertexBuffer> screenVbo;

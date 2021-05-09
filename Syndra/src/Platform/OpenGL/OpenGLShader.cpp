@@ -86,15 +86,15 @@ namespace Syndra {
 		std::string source = ReadFile(filepath);
 		auto shaderSources = PreProcess(source);
 
-		CompileOrGetVulkanBinaries(shaderSources);
-		CompileOrGetOpenGLBinaries();
-
 		// Extract name from filepath
 		auto lastSlash = filepath.find_last_of("/\\");
 		lastSlash = lastSlash == std::string::npos ? 0 : lastSlash + 1;
 		auto lastDot = filepath.rfind('.');
 		auto count = lastDot == std::string::npos ? filepath.size() - lastSlash : lastDot - lastSlash;
 		m_Name = filepath.substr(lastSlash, count);
+
+		CompileOrGetVulkanBinaries(shaderSources);
+		CompileOrGetOpenGLBinaries();
 	}
 
 	OpenGLShader::OpenGLShader(const std::string& name, const std::string& vertexSrc, const std::string& fragmentSrc)
@@ -106,7 +106,6 @@ namespace Syndra {
 
 		CompileOrGetVulkanBinaries(sources);
 		CompileOrGetOpenGLBinaries();
-		//CreateProgram();
 	}
 
 	OpenGLShader::~OpenGLShader()
@@ -218,9 +217,10 @@ namespace Syndra {
 				}
 			}
 		}
-
+		SN_CORE_WARN("=================================={0} Shader=======================================", m_Name);
 		for (auto&& [stage, data] : shaderData)
 			Reflect(stage, data);
+		SN_CORE_WARN("===================================================================================");
 	}
 
 	void OpenGLShader::CompileOrGetOpenGLBinaries()
@@ -240,57 +240,15 @@ namespace Syndra {
 			glsl.set_common_options(options);
 
 			m_OpenGLSourceCode[stage] = glsl.compile();
-			SN_CORE_TRACE(m_OpenGLSourceCode[stage]);
 		}
 		Compile(m_OpenGLSourceCode);
-	}
-
-	void OpenGLShader::CreateProgram()
-	{
-		GLuint program = glCreateProgram();
-
-		std::vector<GLuint> shaderIDs;
-		for (auto&& [stage, spirv] : m_OpenGLSPIRV)
-		{
-			GLuint shaderID = shaderIDs.emplace_back(glCreateShader(stage));
-			glShaderBinary(1, &shaderID, GL_SHADER_BINARY_FORMAT_SPIR_V, spirv.data(), spirv.size() * sizeof(uint32_t));
-			glSpecializeShader(shaderID, "main", 0, nullptr, nullptr);
-			glAttachShader(program, shaderID);
-		}
-
-		glLinkProgram(program);
-
-		GLint isLinked;
-		glGetProgramiv(program, GL_LINK_STATUS, &isLinked);
-		if (isLinked == GL_FALSE)
-		{
-			GLint maxLength;
-			glGetProgramiv(program, GL_INFO_LOG_LENGTH, &maxLength);
-
-			std::vector<GLchar> infoLog(maxLength);
-			glGetProgramInfoLog(program, maxLength, &maxLength, infoLog.data());
-			SN_CORE_ERROR("Shader linking failed ({0}):\n{1}", m_FilePath, infoLog.data());
-
-			glDeleteProgram(program);
-
-			for (auto id : shaderIDs)
-				glDeleteShader(id);
-		}
-
-		for (auto id : shaderIDs)
-		{
-			glDetachShader(program, id);
-			glDeleteShader(id);
-		}
-
-		m_RendererID = program;
 	}
 
 	void OpenGLShader::Reflect(GLenum stage, const std::vector<uint32_t>& shaderData)
 	{
 		spirv_cross::Compiler compiler(shaderData);
 		spirv_cross::ShaderResources resources = compiler.get_shader_resources();
-		SN_CORE_TRACE("OpenGLShader::Reflect - {0} {1}", GLShaderStageToString(stage), m_FilePath);
+		SN_CORE_INFO("OpenGLShader::Reflect - {0} {1}", GLShaderStageToString(stage), m_FilePath);
 		SN_CORE_TRACE("    {0} uniform buffers", resources.uniform_buffers.size());
 		SN_CORE_TRACE("    {0} samplers", resources.sampled_images.size());
 		SN_CORE_TRACE("    {0} push constants", resources.push_constant_buffers.size());
@@ -307,9 +265,14 @@ namespace Syndra {
 			SN_CORE_TRACE("    Size = {0}", bufferSize);
 			SN_CORE_TRACE("    Binding = {0}", binding);
 			SN_CORE_TRACE("    Members = {0}", memberCount);
-		}
 
-		SN_CORE_TRACE("samplers:");
+			for (const auto& member : compiler.get_active_buffer_ranges(resource.id))
+			{
+				SN_CORE_TRACE("        member {0} : {1} ", member.index, compiler.get_member_name(resource.base_type_id, member.index));
+			}
+		}
+		SN_CORE_WARN("=======================================");
+		SN_CORE_TRACE("Samplers:");
 		for (const auto& resource : resources.sampled_images)
 		{
 			unsigned set = compiler.get_decoration(resource.id, spv::DecorationDescriptorSet);
@@ -317,8 +280,13 @@ namespace Syndra {
 			SN_CORE_TRACE("Image {0} at set {1}, binding = {2}", resource.name.c_str(), set, binding);
 			// Modify the decoration to prepare it for GLSL.
 			compiler.unset_decoration(resource.id, spv::DecorationDescriptorSet);
+			m_Samplers.push_back({ resource.name, set, binding });
+			std::sort(m_Samplers.begin(), m_Samplers.end(), [&](Sampler first, Sampler second) {
+				return first.binding < second.binding;
+				}
+			);
 		}
-
+		SN_CORE_WARN("=======================================");
 		SN_CORE_TRACE("Push constants:");
 		for (const auto& resource : resources.push_constant_buffers)
 		{
@@ -330,6 +298,18 @@ namespace Syndra {
 			SN_CORE_TRACE("    Size = {0}", bufferSize);
 			SN_CORE_TRACE("    Binding = {0}", binding);
 			SN_CORE_TRACE("    Members = {0}", memberCount);
+			std::vector<PCMember> members;
+			for (const auto& member : compiler.get_active_buffer_ranges(resource.id))
+			{
+				//members.push_back({ compiler.get_member_name(resource.base_type_id, member.index) , });
+				SN_CORE_TRACE("        member {0} : {1} size = {2}"
+					,member.index
+					,compiler.get_member_name(resource.base_type_id, member.index)
+					, compiler.get_declared_struct_member_size(bufferType, member.index)
+				);
+				members.push_back({ compiler.get_member_name(resource.base_type_id, member.index) , compiler.get_declared_struct_member_size(bufferType, member.index) });
+			}
+			m_PushConstants.push_back({ resource.name, bufferSize, members });
 		}
 		SN_CORE_TRACE("========================================================================================");
 	}

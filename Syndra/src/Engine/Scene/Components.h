@@ -8,6 +8,7 @@
 
 #include "Engine/Scene/SceneCamera.h"
 #include "Engine/Renderer/Model.h"
+#include "Engine/Renderer/Material.h"
 
 namespace Syndra {
 
@@ -61,6 +62,20 @@ namespace Syndra {
 
 		CameraComponent() = default;
 		CameraComponent(const CameraComponent&) = default;
+	};
+
+	struct MaterialComponent
+	{
+		Ref<Material> material;
+		Ref<Shader> m_Shader;
+
+		MaterialComponent() = default;
+
+		MaterialComponent(Ref<Shader> shader) {
+			m_Shader = shader;
+			material = Material::Create(shader);
+		}
+
 	};
 
 }

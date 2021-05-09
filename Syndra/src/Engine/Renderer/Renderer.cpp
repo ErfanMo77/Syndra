@@ -23,10 +23,10 @@ namespace Syndra {
 		RenderCommand::DrawIndexed(vertexArray);
 	}
 
+
 	void Renderer::Submit(const Ref<Shader>& shader, const Model& model)
 	{
 		shader->Bind();
-		//shader->SetMat4("u_ViewProjection", m_SceneData->ViewProjectionMatrix);
 		auto& meshes = model.meshes;
 		for (auto& mesh : meshes) {
 			if (mesh.textures.size() == 0) {
@@ -50,6 +50,17 @@ namespace Syndra {
 				//	number = std::to_string(heightNr++); // transfer unsigned int to stream
 			}
 
+			auto vertexArray = mesh.GetVertexArray();
+			vertexArray->Bind();
+			RenderCommand::DrawIndexed(vertexArray);
+		}
+	}
+
+	void Renderer::Submit(const Ref<Material>& material, const Model& model)
+	{	
+		auto& meshes = model.meshes;
+		for (auto& mesh : meshes) {
+			material->Bind();
 			auto vertexArray = mesh.GetVertexArray();
 			vertexArray->Bind();
 			RenderCommand::DrawIndexed(vertexArray);

@@ -24,8 +24,15 @@ namespace Syndra {
 		void DrawComponents(Entity entity);
 
 	private:
+		std::vector<std::string> m_ShaderNames;
+		
+		Ref<Texture2D> m_EmptyTexture;
+
+		std::string m_SelectedShader;
+
 		Ref<Scene> m_Context;
 		Entity m_SelectionContext;
+		ShaderLibrary m_Shaders;
 		bool m_EntityCreated = false;
 
 	};

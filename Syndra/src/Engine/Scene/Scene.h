@@ -31,6 +31,9 @@ namespace Syndra {
 		Ref<FrameBuffer> GetMouseFrameBuffer() { return SceneRenderer::GetMouseFrameBuffer(); }
 		FramebufferSpecification GetSpec() { return SceneRenderer::GetMainFrameSpec(); }
 
+		ShaderLibrary& GetShaderLibrary() { return m_Shaders; }
+		void SetShaderLibrary(const ShaderLibrary& shaders) { m_Shaders = shaders; }
+
 	private:
 		template<typename T>
 		void OnComponentAdded(Entity entity, T& component);
@@ -39,6 +42,8 @@ namespace Syndra {
 		entt::registry m_Registry;
 
 		std::vector<Ref<Entity>> m_Entities;
+
+		ShaderLibrary m_Shaders;
 
 		uint32_t m_ViewportWidth = 0;
 		uint32_t m_ViewportHeight = 0;
