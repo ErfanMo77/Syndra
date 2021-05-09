@@ -22,6 +22,8 @@ namespace Syndra {
 		{
 			m_ShaderNames.push_back(name);
 		}
+		m_EmptyTexture = Texture2D::Create("assets/Models/cube/default.png");
+		m_SelectedShader = "main";
 	}
 
 	void ScenePanel::SetContext(const Ref<Scene>& scene)
@@ -288,12 +290,12 @@ namespace Syndra {
 			strcpy_s(buffer, tag.c_str());
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 2,5 });
 			ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, { 10,0 });
-			ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x - 40);
+			ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x - 80);
 			if (ImGui::InputText("##Path", buffer, sizeof(buffer))) {
 				tag = std::string(buffer);
 			}
 			ImGui::SameLine();
-			if (ImGui::Button("...")) {
+			if (ImGui::Button("Open")) {
 				auto path = FileDialogs::OpenFile("Syndra Model (*.*)\0*.*\0");
 				auto dir = std::filesystem::current_path();
 				if (path) {
@@ -327,16 +329,20 @@ namespace Syndra {
 			//ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x - 40);
 
 			static int item_current_idx = 0;                    // Here our selection data is an index.
-			const char* combo_label = m_Shaders.Get("main")->GetName().c_str();  // Label to preview before opening the combo (technically it could be anything)
+			const char* combo_label = m_SelectedShader.c_str();				// Label to preview before opening the combo (technically it could be anything)
 			if (ImGui::BeginCombo("shaders", combo_label))
 			{
 				for (int n = 0; n < m_ShaderNames.size(); n++)
 				{
 					const bool is_selected = (item_current_idx == n);
+
 					if (ImGui::Selectable(m_ShaderNames[n].c_str(), is_selected)) {
 						item_current_idx = n;
 						component.material = Material::Create(m_Shaders.Get(m_ShaderNames[n]));
+						m_SelectedShader = m_ShaderNames[n];
+
 					}
+
 					// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
 					if (is_selected)
 						ImGui::SetItemDefaultFocus();
@@ -346,24 +352,23 @@ namespace Syndra {
 			ImGuiIO& io = ImGui::GetIO();
 			std::vector<Sampler>& samplers = component.material->GetSamplers();
 			std::vector<MaterialTexture>& textures = component.material->GetTextures();
+			ImTextureID textureId = reinterpret_cast<void*>(m_EmptyTexture->GetRendererID());
 			for (auto& sampler : samplers)
 			{
+				ImGui::PushID(sampler.name.c_str());
 				int frame_padding = -1 + 0;                             // -1 == uses default padding (style.FramePadding)
-				ImVec2 size = ImVec2(32.0f, 32.0f);                     // Size of the image we want to make visible
-				ImVec2 uv0 = ImVec2(0.0f, 0.0f);                        // UV coordinates for lower-left
-				ImVec2 uv1 = ImVec2(32.0f / 1, 32.0f / 1);				// UV coordinates for (32,32) in our texture
-				ImVec4 bg_col = ImVec4(0.0f, 0.0f, 0.0f, 1.0f);         // Black background
-				ImVec4 tint_col = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);       // No tint
-				ImGui::Text(sampler.name.c_str());
-				ImGui::NewLine();
-				if (ImGui::ImageButton(io.Fonts->TexID, size, uv0, uv1, frame_padding, bg_col, tint_col)) {
+				ImVec2 size = ImVec2(64.0f,64.0f);                     // Size of the image we want to make visible
+				ImGui::Text(sampler.name.c_str());	
+				if (ImGui::ImageButton(textureId, size, ImVec2{ 0, 1 }, ImVec2{ 1, 0 })) {
 					auto path = FileDialogs::OpenFile("Syndra Texture (*.*)\0*.*\0");
 					if (path) {
 						auto& texture = Texture2D::Create(*path);
+						textureId = reinterpret_cast<void*>(texture->GetRendererID());
 						textures.push_back({ texture, sampler.binding, true });
 					}
 				}
-				//ImGui::Button(sampler.name.c_str(),ImVec2(400,20));
+				ImGui::PopID();
+				ImGui::NewLine();
 			}
 			ImGui::TreePop();
 
@@ -371,6 +376,7 @@ namespace Syndra {
 				entity.RemoveComponent<MaterialComponent>();
 				MaterialRemoved = false;
 			}
+			ImGui::Separator();
 		}
 
 		static bool CameraRemoved = false;
@@ -476,7 +482,7 @@ namespace Syndra {
 			if (ImGui::MenuItem("Material"))
 			{
 				if (!m_SelectionContext.HasComponent<MaterialComponent>())
-					m_SelectionContext.AddComponent<MaterialComponent>(m_Shaders.Get("diffuse"));
+					m_SelectionContext.AddComponent<MaterialComponent>(m_Shaders.Get("main"));
 				else
 					SN_CORE_WARN("This entity already has the Camera Component!");
 				ImGui::CloseCurrentPopup();

@@ -156,7 +156,7 @@ namespace Syndra {
 		//}
 		//glEnable(GL_DEPTH_TEST);
 		RenderCommand::SetState(RenderState::CULL, false);
-		Renderer::Submit(s_Data->main, mc.model);
+		Renderer::Submit(s_Data->diffuse, mc.model);
 		RenderCommand::SetState(RenderState::CULL, true);
 	}
 
