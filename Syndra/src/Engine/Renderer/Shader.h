@@ -23,6 +23,7 @@ namespace Syndra {
 		std::string name;
 		uint32_t set;
 		uint32_t binding;
+		bool isUsed;
 	};
 
 	class Shader

@@ -280,7 +280,7 @@ namespace Syndra {
 			SN_CORE_TRACE("Image {0} at set {1}, binding = {2}", resource.name.c_str(), set, binding);
 			// Modify the decoration to prepare it for GLSL.
 			compiler.unset_decoration(resource.id, spv::DecorationDescriptorSet);
-			m_Samplers.push_back({ resource.name, set, binding });
+			m_Samplers.push_back({ resource.name, set, binding, true });
 			std::sort(m_Samplers.begin(), m_Samplers.end(), [&](Sampler first, Sampler second) {
 				return first.binding < second.binding;
 				}
