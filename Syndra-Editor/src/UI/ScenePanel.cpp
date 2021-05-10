@@ -1,8 +1,6 @@
 #include "lpch.h"
 #include "ScenePanel.h"
 #include <filesystem>
-#include <imgui/imgui.h>
-#include <imgui/imgui_internal.h>
 
 #include "Engine/Utils/PlatformUtils.h"
 #include "Engine/Renderer/Model.h"
@@ -23,6 +21,7 @@ namespace Syndra {
 			m_ShaderNames.push_back(name);
 		}
 		m_EmptyTexture = Texture2D::Create("assets/Models/cube/default.png");
+		m_TextureId = reinterpret_cast<void*>(m_EmptyTexture->GetRendererID());
 		m_SelectedShader = "main";
 	}
 
@@ -281,7 +280,7 @@ namespace Syndra {
 		}
 
 		static bool MeshRemoved = false;
-		if (DrawComponent<MeshComponent>("Mesh", entity, false, &MeshRemoved)) {
+		if (DrawComponent<MeshComponent>("Mesh", entity, true, &MeshRemoved)) {
 			ImGui::Separator();
 			auto& tag = entity.GetComponent<MeshComponent>().path;
 
@@ -289,12 +288,14 @@ namespace Syndra {
 			memset(buffer, 0, sizeof(buffer));
 			strcpy_s(buffer, tag.c_str());
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 2,5 });
-			ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, { 10,0 });
+			ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, { 5,0 });
 			ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x - 80);
 			if (ImGui::InputText("##Path", buffer, sizeof(buffer))) {
 				tag = std::string(buffer);
 			}
+			ImGui::PopStyleVar(2);
 			ImGui::SameLine();
+			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 5,4 });
 			if (ImGui::Button("Open")) {
 				auto path = FileDialogs::OpenFile("Syndra Model (*.*)\0*.*\0");
 				auto dir = std::filesystem::current_path();
@@ -310,7 +311,7 @@ namespace Syndra {
 					entity.GetComponent<MeshComponent>().model = Model(*path);
 				}
 			}
-			ImGui::PopStyleVar(2);
+			ImGui::PopStyleVar();
 			ImGui::TreePop();
 			if (MeshRemoved) {
 				entity.RemoveComponent<MeshComponent>();
@@ -323,14 +324,22 @@ namespace Syndra {
 		if (DrawComponent<MaterialComponent>("Material", entity, true, &MaterialRemoved))
 		{
 			auto& component = entity.GetComponent<MaterialComponent>();
+
 			ImGui::Separator();
 			//ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 2,5 });
 			//ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, { 10,0 });
 			//ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x - 40);
+			ImGui::Columns(2);
+			ImGui::SetColumnWidth(0, 80);
+			ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{ 0, 0 });
+			ImGui::Text("Shaders\0");
 
+			ImGui::PopStyleVar();
+			ImGui::NextColumn();
+			ImGui::PushItemWidth(ImGui::GetContentRegionAvailWidth());
 			static int item_current_idx = 0;                    // Here our selection data is an index.
 			const char* combo_label = m_SelectedShader.c_str();				// Label to preview before opening the combo (technically it could be anything)
-			if (ImGui::BeginCombo("shaders", combo_label))
+			if (ImGui::BeginCombo("##Shaders", combo_label))
 			{
 				for (int n = 0; n < m_ShaderNames.size(); n++)
 				{
@@ -349,26 +358,38 @@ namespace Syndra {
 				}
 				ImGui::EndCombo();
 			}
+			ImGui::PopItemWidth();
+			ImGui::Columns(1);
+			ImGui::Separator();
 			ImGuiIO& io = ImGui::GetIO();
 			std::vector<Sampler>& samplers = component.material->GetSamplers();
-			std::vector<MaterialTexture>& textures = component.material->GetTextures();
-			ImTextureID textureId = reinterpret_cast<void*>(m_EmptyTexture->GetRendererID());
+			auto& materialTextures = component.material->GetTextures();
 			for (auto& sampler : samplers)
-			{
+			{			
 				ImGui::PushID(sampler.name.c_str());
 				int frame_padding = -1 + 0;                             // -1 == uses default padding (style.FramePadding)
 				ImVec2 size = ImVec2(64.0f,64.0f);                     // Size of the image we want to make visible
-				ImGui::Text(sampler.name.c_str());	
-				if (ImGui::ImageButton(textureId, size, ImVec2{ 0, 1 }, ImVec2{ 1, 0 })) {
+				ImGui::Text(sampler.name.c_str());
+				m_TextureId = reinterpret_cast<void*>(m_EmptyTexture->GetRendererID());
+				auto& texture = component.material->GetTexture(sampler);
+				if (texture)
+				{
+					m_TextureId = reinterpret_cast<void*>(texture->GetRendererID());
+				}
+
+				ImGui::SameLine();
+				ImGui::Checkbox("Use", &sampler.isUsed);
+
+				if (ImGui::ImageButton(m_TextureId, size, ImVec2{ 0, 1 }, ImVec2{ 1, 0 })) {
+
 					auto path = FileDialogs::OpenFile("Syndra Texture (*.*)\0*.*\0");
 					if (path) {
-						auto& texture = Texture2D::Create(*path);
-						textureId = reinterpret_cast<void*>(texture->GetRendererID());
-						textures.push_back({ texture, sampler.binding, true });
+						materialTextures[sampler.binding] = Texture2D::Create(*path);
 					}
 				}
 				ImGui::PopID();
-				ImGui::NewLine();
+				
+
 			}
 			ImGui::TreePop();
 

@@ -23,13 +23,12 @@ namespace Syndra {
 		s_Data->mouseFB = FrameBuffer::Create(fbSpec);
 
 		if (!s_Data->aa) {
-			s_Data->shaders.Load("assets/shaders/aa.glsl");
 			s_Data->shaders.Load("assets/shaders/diffuse.glsl");
 			s_Data->shaders.Load("assets/shaders/main.glsl");
 			//s_Data->shaders.Load("assets/shaders/mouse.glsl");
 			//s_Data->shaders.Load("assets/shaders/outline.glsl");
 		}
-		s_Data->aa = s_Data->shaders.Get("aa");
+		s_Data->aa = Shader::Create("assets/shaders/aa.glsl");
 		s_Data->diffuse = s_Data->shaders.Get("diffuse");
 		s_Data->main = s_Data->shaders.Get("main");
 		//sample code
