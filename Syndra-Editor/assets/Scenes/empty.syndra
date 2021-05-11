@@ -1,3 +1,15 @@
 Scene: Untitled
 Entities:
-  []
+  - Entity: 0
+    TagComponent:
+      Tag: Entity
+    TransformComponent:
+      Translation: [0, 0, 0]
+      Rotation: [0, 0, 0]
+      Scale: [1, 1, 1]
+    MaterialComponent:
+      shader: main
+      Textures:
+        - {binding: 0, path: C:\Users\MSI\Desktop\1.jpg}
+        - {binding: 1, path: empty}
+        - {binding: 2, path: C:\Users\MSI\Desktop\111.png}

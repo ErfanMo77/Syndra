@@ -18,6 +18,7 @@ namespace Syndra {
 		virtual void SetData(void* data, uint32_t size) override;
 		virtual bool operator ==(const Texture& other) const override;
 
+		virtual std::string GetPath() const override { return m_Path; }
 
 		virtual void Bind(uint32_t slot = 0) const override;
 

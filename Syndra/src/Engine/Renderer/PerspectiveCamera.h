@@ -20,7 +20,7 @@ namespace Syndra {
 
 		inline float GetDistance() const { return m_Distance; }
 		inline void SetDistance(float distance) { m_Distance = distance; }
-		void SetPosition(glm::vec3 position) { m_Position = position; }
+		void SetPosition(glm::vec3 position);
 		glm::vec3 GetFocalPoint() { return m_FocalPoint; }
 		void SetFocalPoint(glm::vec3 position) { m_FocalPoint = position; UpdateView(); }
 		inline void SetViewportSize(float width, float height) { m_ViewportWidth = width; m_ViewportHeight = height; UpdateProjection(); }
@@ -36,6 +36,8 @@ namespace Syndra {
 
 		float GetPitch() const { return m_Pitch; }
 		float GetYaw() const { return m_Yaw; }
+
+		void SetYawPitch(float yaw, float pitch);
 
 		float GetFOV() { return m_FOV; }
 		void SetFov(float fov) { m_FOV = fov; UpdateProjection(); }

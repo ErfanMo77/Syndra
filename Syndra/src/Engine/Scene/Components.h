@@ -70,7 +70,9 @@ namespace Syndra {
 		Ref<Shader> m_Shader;
 
 		MaterialComponent() = default;
-
+		MaterialComponent(const Ref<Material>& material, const Ref<Shader>& shader)
+			:material(material), m_Shader(shader)
+		{}
 		MaterialComponent(Ref<Shader> shader) {
 			m_Shader = shader;
 			material = Material::Create(shader);

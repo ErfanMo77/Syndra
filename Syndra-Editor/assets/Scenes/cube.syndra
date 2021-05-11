@@ -1,4 +1,9 @@
 Scene: Untitled
+Camera:
+  position: [-18.6398182, 25.3658142, 13.5904636]
+  FOV: 45
+  Near: 0.100000001
+  Far: 6684.73389
 Entities:
   - Entity: 0
     TagComponent:

@@ -24,9 +24,6 @@ namespace Syndra {
 
 		Ref<Texture2D> GetTexture(const Sampler& sampler);
 
-		bool IsBinded(const Sampler& sampler) const;
-
-
 
 		static Ref<Material> Create(Ref<Shader>& shader);
 

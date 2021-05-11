@@ -21,6 +21,8 @@ namespace Syndra{
 
 		virtual bool operator==(const Texture& other) const = 0;
 
+		virtual std::string GetPath() const = 0;
+
 		static void BindTexture(uint32_t rendererID, uint32_t slot);
 	};
 
