@@ -10,7 +10,11 @@ namespace Syndra {
 	public:
 
 		Material() = default;
-		Material(const Material& material) = default;
+		Material(const Material& material) { 
+			m_Shader = material.m_Shader;
+			m_Samplers = m_Shader->GetSamplers();
+			m_PushConstants = m_Shader->GetPushConstants();
+		};
 		Material(Ref<Shader>& shader);
 
 		void Bind();

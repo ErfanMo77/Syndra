@@ -109,14 +109,6 @@ namespace Syndra{
 		});
 	}
 
-	void PerspectiveCamera::SetPosition(glm::vec3 position)
-	{
-		m_Position = CalculatePosition();
-		glm::quat orientation = GetOrientation();
-		m_ViewMatrix = glm::translate(glm::mat4(1.0f), m_Position) * glm::toMat4(orientation);
-		m_ViewMatrix = glm::inverse(m_ViewMatrix);
-	}
-
 	bool PerspectiveCamera::OnMouseScroll(MouseScrolledEvent& e)
 	{
 		float delta = e.GetYOffset() * 0.1f;

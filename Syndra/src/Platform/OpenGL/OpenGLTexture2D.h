@@ -9,6 +9,7 @@ namespace Syndra {
 	public:
 		OpenGLTexture2D(uint32_t width, uint32_t height);
 		OpenGLTexture2D(const std::string& path);
+		OpenGLTexture2D(uint32_t mWidth, uint32_t mHeight,const unsigned char* data);
 		virtual ~OpenGLTexture2D();
 
 		virtual uint32_t GetWidth() const override { return m_Width; };

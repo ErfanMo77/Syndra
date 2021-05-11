@@ -31,6 +31,18 @@ namespace Syndra {
 		return nullptr;
 	}
 
+	Ref<Syndra::Texture2D> Texture2D::Create(uint32_t width, uint32_t height,const unsigned char* data)
+	{
+		switch (Renderer::GetAPI())
+		{
+		case RendererAPI::API::NONE:    SN_CORE_ASSERT(false, "RendererAPI::None is currently not supported!"); return nullptr;
+		case RendererAPI::API::OpenGL:  return CreateRef<OpenGLTexture2D>(width,height,data);
+		}
+
+		SN_CORE_ASSERT(false, "Unknown RendererAPI!");
+		return nullptr;
+	}
+
 	void Texture::BindTexture(uint32_t rendererID, uint32_t slot)
 	{
 		switch (Renderer::GetAPI())

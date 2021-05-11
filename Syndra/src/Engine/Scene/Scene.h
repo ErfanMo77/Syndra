@@ -12,7 +12,7 @@ namespace Syndra {
 	class Scene
 	{
 	public:
-		Scene();
+		Scene(const std::string& name = "Untitled");
 		Scene(const Scene& other) = default;
 		~Scene();
 
@@ -43,6 +43,9 @@ namespace Syndra {
 		entt::registry m_Registry;
 
 		std::vector<Ref<Entity>> m_Entities;
+		
+		std::string m_Name;
+
 		PerspectiveCamera* m_Camera;
 		ShaderLibrary m_Shaders;
 

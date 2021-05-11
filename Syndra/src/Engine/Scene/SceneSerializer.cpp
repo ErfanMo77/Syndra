@@ -189,8 +189,12 @@ namespace Syndra {
 	void SceneSerializer::Serialize(const std::string& filepath)
 	{
 		YAML::Emitter out;
+
+		auto nameWithPost = filepath.substr(filepath.find_last_of("\\")+1);
+		auto name = nameWithPost.substr(0,nameWithPost.find("."));
+
 		out << YAML::BeginMap;
-		out << YAML::Key << "Scene" << YAML::Value << "Untitled";
+		out << YAML::Key << "Scene" << YAML::Value << name;
 
 		//camera
 		out << YAML::Key << "Camera"   <<   YAML::Value << YAML::BeginMap;
@@ -221,6 +225,7 @@ namespace Syndra {
 			return false;
 
 		std::string sceneName = data["Scene"].as<std::string>();
+		m_Scene->m_Name = sceneName;
 		SN_CORE_TRACE("Deserializing scene '{0}'", sceneName);
 
 		auto camera = data["Camera"];

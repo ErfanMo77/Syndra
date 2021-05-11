@@ -25,6 +25,9 @@ namespace Syndra{
 		bool IsVSync() const override;
 
 		virtual void* GetNativeWindow() const override{ return m_Window; }
+
+		virtual void SetTitle(const std::string& title) override;
+
 	private:
 		virtual void Init(const WindowProps& props);
 		virtual void Shutdown();

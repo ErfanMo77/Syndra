@@ -1,8 +1,8 @@
-Scene: Untitled
+Scene: rock
 Camera:
-  Yaw: 6.55680084
-  Pitch: 0.818400383
-  distance: 1781.17505
+  Yaw: 7.47119856
+  Pitch: 0.590400815
+  distance: 1530.67517
   FOV: 45
   Near: 0.100000001
   Far: 3236.85791

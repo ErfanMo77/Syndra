@@ -6,7 +6,8 @@
 
 namespace Syndra {
 
-	Scene::Scene()
+	Scene::Scene(const std::string& name)
+		:m_Name(name)
 	{
 		Entity::s_Scene = this;
 		SceneRenderer::Initialize();
@@ -41,6 +42,9 @@ namespace Syndra {
 		}
 		if (other.HasComponent<MeshComponent>()) {
 			ent->AddComponent<MeshComponent>(other.GetComponent<MeshComponent>());
+		}
+		if (other.HasComponent<MaterialComponent>()) {
+			ent->AddComponent<MaterialComponent>(other.GetComponent<MaterialComponent>());
 		}
 		m_Entities.push_back(ent);
 		return ent;

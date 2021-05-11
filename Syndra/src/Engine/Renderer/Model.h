@@ -20,6 +20,7 @@ namespace Syndra {
 		Model(std::string& path, bool gamma = false);
 
 	private:
+		const aiScene* m_Scene;
 		void loadModel(std::string const& path);
 		void processNode(aiNode* node, const aiScene* scene);
 		Mesh processMesh(aiMesh* mesh, const aiScene* scene);
