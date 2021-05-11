@@ -17,13 +17,12 @@ namespace Syndra {
 	EditorLayer::EditorLayer()
 		:Layer("Editor Layer")
 	{
-		m_Camera = new PerspectiveCamera(45.0f, 1.66f, 0.1f, 1000.0f);
+		
 		m_Info = RenderCommand::GetInfo();
 	}
 
 	EditorLayer::~EditorLayer()
 	{
-		delete m_Camera;
 	}
 
 	void EditorLayer::OnAttach()
@@ -43,7 +42,7 @@ namespace Syndra {
 		RenderCommand::Init();
 
 		auto& app = Application::Get();
-		m_Camera->SetViewportSize((float)app.GetWindow().GetWidth(), (float)app.GetWindow().GetHeight());
+		m_ActiveScene->m_Camera->SetViewportSize((float)app.GetWindow().GetWidth(), (float)app.GetWindow().GetHeight());
 	}
 
 	void EditorLayer::OnDetach()
@@ -57,19 +56,19 @@ namespace Syndra {
 			m_ViewportSize.x > 0.0f && m_ViewportSize.y > 0.0f && // zero sized framebuffer is invalid
 			(spec.Width != (uint32_t)m_ViewportSize.x || spec.Height != (uint32_t)m_ViewportSize.y))
 		{	
-			m_Camera->SetViewportSize(m_ViewportSize.x, m_ViewportSize.y);
 			m_ActiveScene->OnViewportResize((uint32_t)m_ViewportSize.x, (uint32_t)m_ViewportSize.y);
 		}
 
 		if (Input::IsKeyPressed(Key::Escape)) {
 			Application::Get().Close();
 		}
-
-		m_ActiveScene->OnUpdateEditor(ts, *m_Camera);
-
 		if (m_ViewportFocused && m_ViewportHovered) {
-			m_Camera->OnUpdate(ts);
+			m_ActiveScene->OnCameraUpdate(ts);
 		}
+
+		m_ActiveScene->OnUpdateEditor(ts);
+
+
 	}
 
 	void EditorLayer::OnImGuiRender()
@@ -219,8 +218,8 @@ namespace Syndra {
 		ImGuizmo::SetDrawlist();
 
 		ImGuizmo::SetRect(m_ViewportBounds[0].x, m_ViewportBounds[0].y, m_ViewportBounds[1].x - m_ViewportBounds[0].x, m_ViewportBounds[1].y - m_ViewportBounds[0].y);
-		const glm::mat4& cameraProjection = m_Camera->GetProjection();
-		glm::mat4 cameraView = m_Camera->GetViewMatrix();
+		const glm::mat4& cameraProjection = m_ActiveScene->m_Camera->GetProjection();
+		glm::mat4 cameraView = m_ActiveScene->m_Camera->GetViewMatrix();
 
 		/*ImGuizmo::DrawGrid(glm::value_ptr(cameraView), glm::value_ptr(cameraProjection), glm::value_ptr(glm::mat4(1.0f)), 10);*/
 		
@@ -269,20 +268,20 @@ namespace Syndra {
 		if (camerSettings) {
 			ImGui::Begin("Camera settings", &camerSettings);
 			//FOV
-			float fov = m_Camera->GetFOV();
+			float fov = m_ActiveScene->m_Camera->GetFOV();
 			if (ImGui::SliderFloat("Fov", &fov, 10, 180)) {
-				m_Camera->SetFov(fov);
+				m_ActiveScene->m_Camera->SetFov(fov);
 			}
 			ImGui::Separator();
 			//near-far clip
-			float nearClip = m_Camera->GetNear();
-			float farClip = m_Camera->GetFar();
+			float nearClip = m_ActiveScene->m_Camera->GetNear();
+			float farClip = m_ActiveScene->m_Camera->GetFar();
 			if (ImGui::SliderFloat("Far clip", &farClip , 10, 10000)) {
-				m_Camera->SetFarClip(farClip);
+				m_ActiveScene->m_Camera->SetFarClip(farClip);
 			}
 			ImGui::Separator();
 			if (ImGui::SliderFloat("Near clip", &nearClip, 0.0001f, 1)) {
-				m_Camera->SetNearClip(nearClip);
+				m_ActiveScene->m_Camera->SetNearClip(nearClip);
 			}
 			ImGui::End();
 		}
@@ -290,7 +289,7 @@ namespace Syndra {
 
 	void EditorLayer::OnEvent(Event& event)
 	{
-		m_Camera->OnEvent(event);
+		m_ActiveScene->m_Camera->OnEvent(event);
 		EventDispatcher dispatcher(event);
 		dispatcher.Dispatch<KeyPressedEvent>(SN_BIND_EVENT_FN(EditorLayer::OnKeyPressed));
 		dispatcher.Dispatch<MouseButtonPressedEvent>(SN_BIND_EVENT_FN(EditorLayer::OnMouseButtonPressed));
@@ -358,7 +357,7 @@ namespace Syndra {
 		case Key::F:
 		{
 			if (m_ScenePanel->GetSelectedEntity()) {
-				m_Camera->SetFocalPoint(m_ScenePanel->GetSelectedEntity().GetComponent<TransformComponent>().Translation);
+				m_ActiveScene->m_Camera->SetFocalPoint(m_ScenePanel->GetSelectedEntity().GetComponent<TransformComponent>().Translation);
 			}
 			break;
 		}

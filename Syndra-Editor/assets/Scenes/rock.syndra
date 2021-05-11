@@ -1,12 +1,19 @@
 Scene: Untitled
+Camera:
+  Yaw: 6.55680084
+  Pitch: 0.818400383
+  distance: 1781.17505
+  FOV: 45
+  Near: 0.100000001
+  Far: 3236.85791
 Entities:
   - Entity: 0
     TagComponent:
-      Tag: Entity
+      Tag: Rock
     TransformComponent:
       Translation: [0, 0, 0]
-      Rotation: [0, 0, 0]
-      Scale: [1, 1, 1]
+      Rotation: [0, 0, -0.0875763074]
+      Scale: [1, 1, 1.0955137]
     MeshComponent:
       Path: D:\Bridge stuff\Downloaded\3d\rock_sandstone_sakbO\Aset_rock_sandstone_L_sakbO_LOD0.fbx
     MaterialComponent:

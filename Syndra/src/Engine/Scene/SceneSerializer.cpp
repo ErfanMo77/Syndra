@@ -191,6 +191,17 @@ namespace Syndra {
 		YAML::Emitter out;
 		out << YAML::BeginMap;
 		out << YAML::Key << "Scene" << YAML::Value << "Untitled";
+
+		//camera
+		out << YAML::Key << "Camera"   <<   YAML::Value << YAML::BeginMap;
+		out << YAML::Key << "Yaw"      <<   YAML::Value << m_Scene->m_Camera->GetYaw();
+		out << YAML::Key << "Pitch"    <<   YAML::Value << m_Scene->m_Camera->GetPitch();
+		out << YAML::Key << "distance" <<   YAML::Value << m_Scene->m_Camera->GetDistance();
+		out << YAML::Key << "FOV"      <<   YAML::Value << m_Scene->m_Camera->GetFOV();
+		out << YAML::Key << "Near"     <<   YAML::Value << m_Scene->m_Camera->GetNear();
+		out << YAML::Key << "Far"      <<   YAML::Value << m_Scene->m_Camera->GetFar();
+		out << YAML::EndMap; // Camera
+
 		out << YAML::Key << "Entities" << YAML::Value << YAML::BeginSeq;
 		for (auto& entity : m_Scene->m_Entities)
 		{
@@ -211,6 +222,21 @@ namespace Syndra {
 
 		std::string sceneName = data["Scene"].as<std::string>();
 		SN_CORE_TRACE("Deserializing scene '{0}'", sceneName);
+
+		auto camera = data["Camera"];
+		auto yaw = camera["Yaw"].as<float>();
+		auto pitch = camera["Pitch"].as<float>();
+		auto distance = camera["distance"].as<float>();
+		auto fov = camera["FOV"].as <float> ();
+		auto nearClip = camera["Near"].as<float>();
+		auto farClip = camera["Far"].as<float>();
+
+		m_Scene->m_Camera->SetFarClip(farClip);
+		m_Scene->m_Camera->SetNearClip(nearClip);
+		m_Scene->m_Camera->SetFov(fov);
+		m_Scene->m_Camera->SetDistance(distance);
+		m_Scene->m_Camera->SetYawPitch(yaw,pitch);
+
 
 		auto entities = data["Entities"];
 		if (entities)

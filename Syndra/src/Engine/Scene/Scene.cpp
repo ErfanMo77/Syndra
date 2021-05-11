@@ -11,10 +11,12 @@ namespace Syndra {
 		Entity::s_Scene = this;
 		SceneRenderer::Initialize();
 		m_Shaders = SceneRenderer::GetShaderLibrary();
+		m_Camera = new PerspectiveCamera(45.0f, 1.66f, 0.1f, 1000.0f);
 	}
 
 	Scene::~Scene()
 	{
+		delete m_Camera;
 	}
 
 	Ref<Entity> Scene::CreateEntity(const std::string& name)
@@ -74,9 +76,9 @@ namespace Syndra {
 
 	}
 
-	void Scene::OnUpdateEditor(Timestep ts, PerspectiveCamera& camera)
+	void Scene::OnUpdateEditor(Timestep ts)
 	{
-		SceneRenderer::BeginScene(camera);
+		SceneRenderer::BeginScene(*m_Camera);
 		SceneRenderer::RenderScene(*this);
 		SceneRenderer::EndScene();
 	}
@@ -85,6 +87,7 @@ namespace Syndra {
 	{
 		m_ViewportWidth = width;
 		m_ViewportHeight = height;
+		m_Camera->SetViewportSize(width, height);
 		SceneRenderer::OnViewPortResize(width, height);
 		// Resize our non-FixedAspectRatio cameras
 		auto view = m_Registry.view<CameraComponent>();

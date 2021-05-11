@@ -338,7 +338,7 @@ namespace Syndra {
 			ImGui::NextColumn();
 			ImGui::PushItemWidth(ImGui::GetContentRegionAvailWidth());
 			static int item_current_idx = 0;                    // Here our selection data is an index.
-			const char* combo_label = m_SelectedShader.c_str();				// Label to preview before opening the combo (technically it could be anything)
+			const char* combo_label = component.m_Shader->GetName().c_str();				// Label to preview before opening the combo (technically it could be anything)
 			if (ImGui::BeginCombo("##Shaders", combo_label))
 			{
 				for (int n = 0; n < m_ShaderNames.size(); n++)
