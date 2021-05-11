@@ -22,7 +22,7 @@ namespace Syndra {
 		}
 		m_EmptyTexture = Texture2D::Create("assets/Models/cube/default.png");
 		m_TextureId = reinterpret_cast<void*>(m_EmptyTexture->GetRendererID());
-		m_SelectedShader = "main";
+		m_SelectedShader = "diffuse";
 	}
 
 	void ScenePanel::SetContext(const Ref<Scene>& scene)
@@ -347,9 +347,9 @@ namespace Syndra {
 
 					if (ImGui::Selectable(m_ShaderNames[n].c_str(), is_selected)) {
 						item_current_idx = n;
-						component.material = Material::Create(m_Shaders.Get(m_ShaderNames[n]));
 						m_SelectedShader = m_ShaderNames[n];
-
+						component.material = Material::Create(m_Shaders.Get(m_SelectedShader));
+						component.m_Shader = m_Shaders.Get(m_SelectedShader);
 					}
 
 					// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
@@ -503,7 +503,7 @@ namespace Syndra {
 			if (ImGui::MenuItem("Material"))
 			{
 				if (!m_SelectionContext.HasComponent<MaterialComponent>())
-					m_SelectionContext.AddComponent<MaterialComponent>(m_Shaders.Get("main"));
+					m_SelectionContext.AddComponent<MaterialComponent>(m_Shaders.Get("diffuse"));
 				else
 					SN_CORE_WARN("This entity already has the Camera Component!");
 				ImGui::CloseCurrentPopup();

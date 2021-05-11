@@ -80,9 +80,27 @@ namespace Syndra {
 		return out;
 	}
 
+	YAML::Emitter& operator<<(YAML::Emitter& out, const std::unordered_map<uint32_t, Ref<Texture2D>>& textures)
+	{
+
+		for (auto&& [binding, texture] : textures)
+		{
+			std::string path = "";
+			if (texture) {
+				path = texture->GetPath();
+			}
+			out << YAML::Flow;
+			out << YAML::BeginMap;
+			out << YAML::Key << "binding" << YAML::Value << binding;
+			out << YAML::Key << "path" << YAML::Value << path << YAML::EndMap;
+		}
+		return out;
+	}
+
 	SceneSerializer::SceneSerializer(const Ref<Scene>& scene)
 		: m_Scene(scene)
 	{
+		m_Shaders = scene->GetShaderLibrary();
 	}
 
 	static void SerializeEntity(YAML::Emitter& out, Entity entity)
@@ -148,6 +166,21 @@ namespace Syndra {
 			out << YAML::Key << "Path" << YAML::Value << path;
 
 			out << YAML::EndMap; // MeshComponent
+		}
+
+		if (entity.HasComponent<MaterialComponent>())
+		{
+			out << YAML::Key << "MaterialComponent";
+			out << YAML::BeginMap; // MaterialComponent
+			auto& material = entity.GetComponent<MaterialComponent>();
+			auto& shader = material.m_Shader;
+			out << YAML::Key << "shader" << YAML::Value << shader->GetName();
+
+			out << YAML::Key << "Textures" << YAML::Value << YAML::BeginSeq;
+			out << material.material->GetTextures();
+			out << YAML::EndSeq;
+
+			out << YAML::EndMap; // MaterialComponent
 		}
 
 		out << YAML::EndMap; // Entity
@@ -235,8 +268,42 @@ namespace Syndra {
 					if (mc.path.find("\\") == 0) {
 						filepath = dir.string() + mc.path;
 					}
-					mc.model = Model(filepath);
+					if (!filepath.empty())
+						mc.model = Model(filepath);
 				}
+
+				auto materialComponent = entity["MaterialComponent"];
+				if (materialComponent)
+				{
+					auto dir = std::filesystem::current_path();
+					auto shaderName = materialComponent["shader"].as<std::string>();
+					auto shader = m_Shaders.Get(shaderName);
+
+					auto material = Material::Create(shader);
+					auto& materialTextures = material->GetTextures();
+
+					auto textures = materialComponent["Textures"];
+					if (textures) {
+						for (auto texture : textures)
+						{
+							auto binding = texture["binding"].as<uint32_t>();
+							auto texturePath = texture["path"].as<std::string>();
+							if (!texturePath.empty()) {
+								materialTextures[binding] = Texture2D::Create(texturePath);
+							}
+						}
+					}
+
+					deserializedEntity->AddComponent<MaterialComponent>(material,shader);
+
+					//mc.path = materialComponent["Path"].as<std::string>();
+					//auto filepath = mc.path;
+					//if (mc.path.find("\\") == 0) {
+					//	filepath = dir.string() + mc.path;
+					//}
+					//mc.model = Model(filepath);
+				}
+
 			}
 		}
 
