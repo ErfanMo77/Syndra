@@ -168,6 +168,17 @@ namespace Syndra {
 			out << YAML::EndMap; // MeshComponent
 		}
 
+		if (entity.HasComponent<PointLightComponent>())
+		{
+			out << YAML::Key << "PointLightComponent";
+			out << YAML::BeginMap; // PointLightComponent
+
+			auto& pl = entity.GetComponent<PointLightComponent>();
+			out << YAML::Key << "color" << YAML::Value << pl.color;
+			out << YAML::Key << "distance" << YAML::Value << pl.dist;
+			out << YAML::EndMap; // PointLightComponent
+		}
+
 		if (entity.HasComponent<MaterialComponent>())
 		{
 			out << YAML::Key << "MaterialComponent";
@@ -189,8 +200,12 @@ namespace Syndra {
 	void SceneSerializer::Serialize(const std::string& filepath)
 	{
 		YAML::Emitter out;
+
+		auto nameWithPost = filepath.substr(filepath.find_last_of("\\")+1);
+		auto name = nameWithPost.substr(0,nameWithPost.find("."));
+
 		out << YAML::BeginMap;
-		out << YAML::Key << "Scene" << YAML::Value << "Untitled";
+		out << YAML::Key << "Scene" << YAML::Value << name;
 
 		//camera
 		out << YAML::Key << "Camera"   <<   YAML::Value << YAML::BeginMap;
@@ -221,6 +236,7 @@ namespace Syndra {
 			return false;
 
 		std::string sceneName = data["Scene"].as<std::string>();
+		m_Scene->m_Name = sceneName;
 		SN_CORE_TRACE("Deserializing scene '{0}'", sceneName);
 
 		auto camera = data["Camera"];
@@ -296,6 +312,15 @@ namespace Syndra {
 					}
 					if (!filepath.empty())
 						mc.model = Model(filepath);
+				}
+
+				auto pointLightComponent = entity["PointLightComponent"];
+				if (pointLightComponent)
+				{
+					// Entities always have transforms
+					auto& pl = deserializedEntity->AddComponent<PointLightComponent>();
+					pl.color = pointLightComponent["color"].as<glm::vec4>();
+					pl.dist = pointLightComponent["distance"].as<float>();
 				}
 
 				auto materialComponent = entity["MaterialComponent"];

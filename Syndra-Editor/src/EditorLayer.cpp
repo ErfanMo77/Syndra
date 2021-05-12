@@ -175,14 +175,16 @@ namespace Syndra {
 
 		m_ScenePanel->OnImGuiRender();
 
+		//----------------------------------------------Scene Settings-----------------------------------//
 		ImGui::Begin("Scene settings");
 		ImGui::ColorEdit3("cube color", glm::value_ptr(m_CubeColor));
 		ImGui::ColorEdit3("clear color", glm::value_ptr(m_ClearColor));
 		if (ImGui::Button("Reload shader")) {
 			m_ActiveScene->ReloadShader();
 		}
-		
-
+		static bool vSync = true;
+		ImGui::Checkbox("V-Sync", &vSync);
+		Application::Get().GetWindow().SetVSync(vSync);
 		ImGui::End();
 
 		//----------------------------------------------Renderer info-----------------------------------//
@@ -409,9 +411,10 @@ namespace Syndra {
 			m_ActiveScene = CreateRef<Scene>();
 			m_ActiveScene->OnViewportResize((uint32_t)m_ViewportSize.x, (uint32_t)m_ViewportSize.y);
 			m_ScenePanel->SetContext(m_ActiveScene);
-
+			
 			SceneSerializer serializer(m_ActiveScene);
 			serializer.Deserialize(*filepath);
+			Application::Get().GetWindow().SetTitle("Syndra Editor "+m_ActiveScene->m_Name+ " scene");
 		}
 	}
 

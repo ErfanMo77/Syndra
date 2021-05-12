@@ -319,6 +319,20 @@ namespace Syndra {
 			}
 		}
 
+		static bool pointLightRemoved = false;
+		if (DrawComponent<PointLightComponent>("PointLight", entity, true, &pointLightRemoved)) {
+			auto& component = entity.GetComponent<PointLightComponent>();
+			ImGui::Separator();
+			ImGui::ColorEdit4("color",glm::value_ptr(component.color));
+			ImGui::DragFloat("distance", &component.dist);
+			ImGui::TreePop();
+
+			if (pointLightRemoved) {
+				entity.RemoveComponent<PointLightComponent>();
+				pointLightRemoved = false;
+			}
+		}
+
 		static bool MaterialRemoved = false;
 		ImGui::Separator();
 		if (DrawComponent<MaterialComponent>("Material", entity, true, &MaterialRemoved))
@@ -508,6 +522,14 @@ namespace Syndra {
 					SN_CORE_WARN("This entity already has the Camera Component!");
 				ImGui::CloseCurrentPopup();
 			}
+
+			if (ImGui::MenuItem("PointLight"))
+			{
+				if (!m_SelectionContext.HasComponent<PointLightComponent>())
+					m_SelectionContext.AddComponent<PointLightComponent>();
+				ImGui::CloseCurrentPopup();
+			}
+
 			ImGui::EndPopup();
 		}
 		ImGui::PopItemWidth();

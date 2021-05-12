@@ -14,6 +14,7 @@ namespace Syndra {
 		Assimp::Importer importer;
 		const aiScene* scene = importer.ReadFile(path,aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_FlipUVs | aiProcess_CalcTangentSpace);
 		// check for errors
+		m_Scene = scene;
 		if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) // if is Not Zero
 		{
 			SN_CORE_ERROR("ERROR::ASSIMP:: {0}", importer.GetErrorString());
@@ -131,6 +132,7 @@ namespace Syndra {
 		{
 			aiString str;
 			mat->GetTexture(type, i, &str);
+			SN_CORE_TRACE(str.C_Str());
 			bool skip = false;
 			for (unsigned int j = 0; j < textures_loaded.size(); j++)
 			{
@@ -146,13 +148,24 @@ namespace Syndra {
 				texture texture;
 				std::string filename = str.C_Str();
 				filename = directory + '\\' + filename;
-				auto syndraTexture = Texture2D::Create(filename);
-				syndraTextures.push_back(syndraTexture);
-				texture.id = syndraTexture->GetRendererID();
-				texture.type = typeName;
-				texture.path = str.C_Str();
-				textures.push_back(texture);
-				textures_loaded.push_back(texture); // add to loaded textures
+				Ref<Texture2D> syndraTexture;
+				if (m_Scene->GetEmbeddedTexture(str.C_Str())) {
+					auto width = m_Scene->GetEmbeddedTexture(str.C_Str())->mWidth;
+					auto height = m_Scene->GetEmbeddedTexture(str.C_Str())->mHeight;
+					syndraTexture = Texture2D::Create(width,height,reinterpret_cast<unsigned char*>(m_Scene->GetEmbeddedTexture(str.C_Str())->pcData));
+				}
+				else
+				{
+					syndraTexture = Texture2D::Create(filename);
+				}
+				if (syndraTexture) {
+					syndraTextures.push_back(syndraTexture);
+					texture.id = syndraTexture->GetRendererID();
+					texture.type = typeName;
+					texture.path = str.C_Str();
+					textures.push_back(texture);
+					textures_loaded.push_back(texture); // add to loaded textures
+				}
 			}
 		}
 		return textures;

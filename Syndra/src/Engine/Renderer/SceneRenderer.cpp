@@ -71,6 +71,8 @@ namespace Syndra {
 		s_Data->screenVao->SetIndexBuffer(s_Data->screenEbo);
 		s_Data->CameraUniformBuffer = UniformBuffer::Create(sizeof(CameraData), 0);
 		s_Data->TransformUniformBuffer = UniformBuffer::Create(sizeof(Transform), 1);
+		SN_CORE_TRACE("SIZE OF POINTLIGHTS : {0}", sizeof(s_Data->pointLights));
+		s_Data->PointLightsBuffer = UniformBuffer::Create(sizeof(s_Data->pointLights), 2);
 	}
 
 	void SceneRenderer::BeginScene(const PerspectiveCamera& camera)
@@ -79,6 +81,13 @@ namespace Syndra {
 		s_Data->CameraBuffer.position = glm::vec4(camera.GetPosition(), 0);
 		s_Data->CameraUniformBuffer->SetData(&s_Data->CameraBuffer, sizeof(CameraData));
 
+		for (auto pointLight : s_Data->pointLights) {
+			pointLight.color = glm::vec4(0);
+			pointLight.position = glm::vec4(0);
+			pointLight.dist = 0.0f;
+		}
+
+		s_Data->PointLightsBuffer->SetData(&s_Data->pointLights, sizeof(s_Data->pointLights));
 
 		s_Data->TransformBuffer.lightPos = glm::vec4(camera.GetPosition(), 0);
 		s_Data->mainFB->Bind();
@@ -92,6 +101,19 @@ namespace Syndra {
 
 	void SceneRenderer::RenderScene(Scene& scene)
 	{
+		auto viewLights = scene.m_Registry.view<TransformComponent, PointLightComponent>();
+		int index = 0;
+		for (auto ent:viewLights)
+		{
+			auto& tc = viewLights.get<TransformComponent>(ent);
+			auto& pl = viewLights.get<PointLightComponent>(ent);
+			s_Data->pointLights[index].color = pl.color;
+			s_Data->pointLights[index].position = glm::vec4(tc.Translation,1);
+			s_Data->pointLights[index].dist = pl.dist;
+			index++;
+		}
+		s_Data->PointLightsBuffer->SetData(&s_Data->pointLights, sizeof(s_Data->pointLights));
+
 		auto view = scene.m_Registry.view<TransformComponent, MeshComponent>();
 		s_Data->mainFB->Bind();
 		for (auto ent : view)
