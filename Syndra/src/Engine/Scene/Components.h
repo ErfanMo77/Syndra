@@ -64,6 +64,16 @@ namespace Syndra {
 		CameraComponent(const CameraComponent&) = default;
 	};
 
+	struct PointLightComponent 
+	{
+		glm::vec4 color;
+		glm::vec4 pos;
+		float dist;
+
+		PointLightComponent() = default;
+		PointLightComponent(const PointLightComponent&) = default;
+	};
+
 	struct MaterialComponent
 	{
 		Ref<Material> material;
@@ -78,7 +88,6 @@ namespace Syndra {
 			m_Shader = shader;
 			material = Material::Create(shader);
 		}
-
 	};
 
 }

@@ -1,8 +1,8 @@
 Scene: sponza
 Camera:
-  Yaw: 1.53119981
-  Pitch: 0.324000269
-  distance: 95.9866638
+  Yaw: 4.51200008
+  Pitch: 0.34559992
+  distance: 87.0939255
   FOV: 45
   Near: 0.100000001
   Far: 4165.13281
@@ -16,3 +16,23 @@ Entities:
       Scale: [0.100000001, 0.100000001, 0.100000001]
     MeshComponent:
       Path: C:\Users\MSI\Desktop\crytek-sponza-huge-vray.fbx
+  - Entity: 1
+    TagComponent:
+      Tag: light1
+    TransformComponent:
+      Translation: [-21.0002346, 170.663559, 38.01968]
+      Rotation: [0, 0, 0]
+      Scale: [1, 1, 1]
+    PointLightComponent:
+      color: [0.789029539, 0.789021611, 0.789021611, 0.164705887]
+      distance: 256
+  - Entity: 2
+    TagComponent:
+      Tag: light2
+    TransformComponent:
+      Translation: [-46.187542, 29.1269321, -3.40205979]
+      Rotation: [0, 0, 0]
+      Scale: [1, 1, 1]
+    PointLightComponent:
+      color: [0.729957819, 0.729950488, 0.729950488, 0]
+      distance: 145

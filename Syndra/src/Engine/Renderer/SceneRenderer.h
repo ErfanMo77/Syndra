@@ -56,6 +56,14 @@ namespace Syndra {
 			glm::vec4 lightPos;
 		};
 
+		struct PointLight
+		{
+			glm::vec4 position;
+			glm::vec4 color;
+			float dist;
+			glm::vec3 dummy;
+		};
+
 		struct ShaderData
 		{
 			glm::vec4 col;
@@ -66,7 +74,8 @@ namespace Syndra {
 			CameraData CameraBuffer;
 			ShaderData ShaderBuffer;
 			Transform TransformBuffer;
-			Ref<UniformBuffer> CameraUniformBuffer, TransformUniformBuffer;
+			PointLight pointLights[4];
+			Ref<UniformBuffer> CameraUniformBuffer, TransformUniformBuffer, PointLightsBuffer;
 			ShaderLibrary shaders;
 			Ref<Shader> diffuse,outline,mouseShader,aa, main;
 			Ref<FrameBuffer> mainFB, mouseFB, postProcFB;
