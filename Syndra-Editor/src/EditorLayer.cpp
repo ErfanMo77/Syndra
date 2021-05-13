@@ -97,16 +97,9 @@ namespace Syndra {
 			dockspace_flags &= ~ImGuiDockNodeFlags_PassthruCentralNode;
 		}
 
-		// When using ImGuiDockNodeFlags_PassthruCentralNode, DockSpace() will render our background
-		// and handle the pass-thru hole, so we ask Begin() to not render a background.
 		if (dockspace_flags & ImGuiDockNodeFlags_PassthruCentralNode)
 			window_flags |= ImGuiWindowFlags_NoBackground;
 
-		// Important: note that we proceed even if Begin() returns false (aka window is collapsed).
-		// This is because we want to keep our DockSpace() active. If a DockSpace() is inactive,
-		// all active windows docked into it will lose their parent and become undocked.
-		// We cannot preserve the docking relationship between an active window and an inactive docking, otherwise
-		// any change of dockspace/settings would lead to windows being stuck in limbo and never being visible.
 		if (!opt_padding)
 			ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
 		ImGui::Begin("DockSpace Demo", &open, window_flags);
@@ -167,38 +160,52 @@ namespace Syndra {
 				}
 				ImGui::EndMenu();
 			}
-
-
-
 			ImGui::EndMenuBar();
 		}
 
-		m_ScenePanel->OnImGuiRender();
-
-		//----------------------------------------------Scene Settings-----------------------------------//
-		ImGui::Begin("Scene settings");
-		ImGui::ColorEdit3("cube color", glm::value_ptr(m_CubeColor));
-		ImGui::ColorEdit3("clear color", glm::value_ptr(m_ClearColor));
-		if (ImGui::Button("Reload shader")) {
-			m_ActiveScene->ReloadShader();
+		if (!m_FullScreen) {
+			m_ScenePanel->OnImGuiRender();
 		}
-		static bool vSync = true;
-		ImGui::Checkbox("V-Sync", &vSync);
-		Application::Get().GetWindow().SetVSync(vSync);
-		ImGui::End();
+		//----------------------------------------------Scene Settings-----------------------------------//
+		if (!m_FullScreen) {
+			ImGui::Begin("Scene settings");
+			ImGui::ColorEdit3("cube color", glm::value_ptr(m_CubeColor));
+			ImGui::ColorEdit3("clear color", glm::value_ptr(m_ClearColor));
+			if (ImGui::Button("Reload shader")) {
+				m_ActiveScene->ReloadShader();
+			}
+			static bool vSync = true;
+			ImGui::Checkbox("V-Sync", &vSync);
+			Application::Get().GetWindow().SetVSync(vSync);
+			ImGui::End();
+		}
+		
+
 
 		//----------------------------------------------Renderer info-----------------------------------//
-		ImGui::Begin("Renderer info");
-		ImGui::Text(m_Info.c_str());
-		ImGui::Text("\nApplication average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
-		ImGui::Text("%d vertices, %d indices (%d triangles)", io.MetricsRenderVertices, io.MetricsRenderIndices, io.MetricsRenderIndices / 3);
-		ImGui::Text("%d active windows (%d visible)", io.MetricsActiveWindows, io.MetricsRenderWindows);
-		ImGui::Text("%d active allocations", io.MetricsActiveAllocations);
-		ImGui::End();
+		if (!m_FullScreen) {
+			ImGui::Begin("Renderer info");
+			ImGui::Text(m_Info.c_str());
+			ImGui::Text("\nApplication average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
+			ImGui::Text("%d vertices, %d indices (%d triangles)", io.MetricsRenderVertices, io.MetricsRenderIndices, io.MetricsRenderIndices / 3);
+			ImGui::Text("%d active windows (%d visible)", io.MetricsActiveWindows, io.MetricsRenderWindows);
+			ImGui::Text("%d active allocations", io.MetricsActiveAllocations);
+			ImGui::End();
+		}
+
 
 		//----------------------------------------------Viewport----------------------------------------//
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{ 0, 0 });
 		ImGui::Begin("Viewport");
+
+		ImGui::Dummy({ 0,5 });
+		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, { 0,10 });
+		if (ImGui::ImageButton(io.Fonts->TexID, { 30,30 })) {
+			m_FullScreen = !m_FullScreen;
+		}
+		ImGui::PopStyleVar();
+
+
 		auto viewportMinRegion = ImGui::GetWindowContentRegionMin();
 		auto viewportMaxRegion = ImGui::GetWindowContentRegionMax();
 		auto viewportOffset = ImGui::GetWindowPos();
@@ -267,25 +274,27 @@ namespace Syndra {
 
 		//-----------------------------------------------Editor camera settings-------------------------------------//
 		static bool camerSettings = true;
-		if (camerSettings) {
-			ImGui::Begin("Camera settings", &camerSettings);
-			//FOV
-			float fov = m_ActiveScene->m_Camera->GetFOV();
-			if (ImGui::SliderFloat("Fov", &fov, 10, 180)) {
-				m_ActiveScene->m_Camera->SetFov(fov);
+		if (!m_FullScreen) {
+			if (camerSettings) {
+				ImGui::Begin("Camera settings", &camerSettings);
+				//FOV
+				float fov = m_ActiveScene->m_Camera->GetFOV();
+				if (ImGui::SliderFloat("Fov", &fov, 10, 180)) {
+					m_ActiveScene->m_Camera->SetFov(fov);
+				}
+				ImGui::Separator();
+				//near-far clip
+				float nearClip = m_ActiveScene->m_Camera->GetNear();
+				float farClip = m_ActiveScene->m_Camera->GetFar();
+				if (ImGui::SliderFloat("Far clip", &farClip, 10, 10000)) {
+					m_ActiveScene->m_Camera->SetFarClip(farClip);
+				}
+				ImGui::Separator();
+				if (ImGui::SliderFloat("Near clip", &nearClip, 0.0001f, 1)) {
+					m_ActiveScene->m_Camera->SetNearClip(nearClip);
+				}
+				ImGui::End();
 			}
-			ImGui::Separator();
-			//near-far clip
-			float nearClip = m_ActiveScene->m_Camera->GetNear();
-			float farClip = m_ActiveScene->m_Camera->GetFar();
-			if (ImGui::SliderFloat("Far clip", &farClip , 10, 10000)) {
-				m_ActiveScene->m_Camera->SetFarClip(farClip);
-			}
-			ImGui::Separator();
-			if (ImGui::SliderFloat("Near clip", &nearClip, 0.0001f, 1)) {
-				m_ActiveScene->m_Camera->SetNearClip(nearClip);
-			}
-			ImGui::End();
 		}
 	}
 

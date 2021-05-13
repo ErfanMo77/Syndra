@@ -73,6 +73,7 @@ namespace Syndra {
 		s_Data->TransformUniformBuffer = UniformBuffer::Create(sizeof(Transform), 1);
 		SN_CORE_TRACE("SIZE OF POINTLIGHTS : {0}", sizeof(s_Data->pointLights));
 		s_Data->PointLightsBuffer = UniformBuffer::Create(sizeof(s_Data->pointLights), 2);
+		s_Data->DirLightBuffer = UniformBuffer::Create(sizeof(s_Data->dirLight), 3);
 	}
 
 	void SceneRenderer::BeginScene(const PerspectiveCamera& camera)
@@ -87,7 +88,12 @@ namespace Syndra {
 			pointLight.dist = 0.0f;
 		}
 
+		s_Data->dirLight.color = glm::vec4(0);
+		s_Data->dirLight.position = glm::vec4(0);
+		s_Data->dirLight.direction = glm::vec4(0);
+
 		s_Data->PointLightsBuffer->SetData(&s_Data->pointLights, sizeof(s_Data->pointLights));
+		s_Data->DirLightBuffer->SetData(&s_Data->dirLight, sizeof(directionalLight));
 
 		s_Data->TransformBuffer.lightPos = glm::vec4(camera.GetPosition(), 0);
 		s_Data->mainFB->Bind();
@@ -101,18 +107,33 @@ namespace Syndra {
 
 	void SceneRenderer::RenderScene(Scene& scene)
 	{
-		auto viewLights = scene.m_Registry.view<TransformComponent, PointLightComponent>();
-		int index = 0;
-		for (auto ent:viewLights)
+		auto viewLights = scene.m_Registry.view<TransformComponent, LightComponent>();
+		int pIndex = 0;
+
+
+		for (auto ent : viewLights)
 		{
 			auto& tc = viewLights.get<TransformComponent>(ent);
-			auto& pl = viewLights.get<PointLightComponent>(ent);
-			s_Data->pointLights[index].color = pl.color;
-			s_Data->pointLights[index].position = glm::vec4(tc.Translation,1);
-			s_Data->pointLights[index].dist = pl.dist;
-			index++;
+			auto& lc = viewLights.get<LightComponent>(ent);
+
+			if (lc.type == LightType::Directional) {
+				auto p = dynamic_cast<DirectionalLight*>(lc.light.get());
+				s_Data->dirLight.color = glm::vec4(lc.light->GetColor(),0);
+				s_Data->dirLight.direction = glm::vec4(p->GetDirection(),0);
+				s_Data->dirLight.position = glm::vec4(tc.Translation, 0);
+			}
+			if (lc.type == LightType::Point) {
+				if (pIndex < 4) {
+					auto p = dynamic_cast<PointLight*>(lc.light.get());
+					s_Data->pointLights[pIndex].color = glm::vec4(p->GetColor(), 1);
+					s_Data->pointLights[pIndex].position = glm::vec4(tc.Translation, 1);
+					s_Data->pointLights[pIndex].dist = p->GetRange();
+					pIndex++;
+				}
+			}
 		}
 		s_Data->PointLightsBuffer->SetData(&s_Data->pointLights, sizeof(s_Data->pointLights));
+		s_Data->DirLightBuffer->SetData(&s_Data->dirLight, sizeof(directionalLight));
 
 		auto view = scene.m_Registry.view<TransformComponent, MeshComponent>();
 		s_Data->mainFB->Bind();

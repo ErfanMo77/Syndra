@@ -168,14 +168,14 @@ namespace Syndra {
 			out << YAML::EndMap; // MeshComponent
 		}
 
-		if (entity.HasComponent<PointLightComponent>())
+		if (entity.HasComponent<LightComponent>())
 		{
 			out << YAML::Key << "PointLightComponent";
 			out << YAML::BeginMap; // PointLightComponent
 
-			auto& pl = entity.GetComponent<PointLightComponent>();
-			out << YAML::Key << "color" << YAML::Value << pl.color;
-			out << YAML::Key << "distance" << YAML::Value << pl.dist;
+			auto& pl = entity.GetComponent<LightComponent>();
+			//out << YAML::Key << "color" << YAML::Value << pl.color;
+			//out << YAML::Key << "distance" << YAML::Value << pl.dist;
 			out << YAML::EndMap; // PointLightComponent
 		}
 
@@ -318,9 +318,9 @@ namespace Syndra {
 				if (pointLightComponent)
 				{
 					// Entities always have transforms
-					auto& pl = deserializedEntity->AddComponent<PointLightComponent>();
-					pl.color = pointLightComponent["color"].as<glm::vec4>();
-					pl.dist = pointLightComponent["distance"].as<float>();
+					auto& pl = deserializedEntity->AddComponent<LightComponent>();
+					pl.light->SetColor(pointLightComponent["color"].as<glm::vec4>());
+					// = pointLightComponent["distance"].as<float>();
 				}
 
 				auto materialComponent = entity["MaterialComponent"];

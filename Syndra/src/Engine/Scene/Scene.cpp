@@ -46,6 +46,9 @@ namespace Syndra {
 		if (other.HasComponent<MaterialComponent>()) {
 			ent->AddComponent<MaterialComponent>(other.GetComponent<MaterialComponent>());
 		}
+		if (other.HasComponent<LightComponent>()) {
+			ent->AddComponent<LightComponent>(other.GetComponent<LightComponent>());
+		}
 		m_Entities.push_back(ent);
 		return ent;
 	}
@@ -136,7 +139,7 @@ namespace Syndra {
 	}
 
 	template<>
-	void Scene::OnComponentAdded<PointLightComponent>(Entity entity, PointLightComponent& component)
+	void Scene::OnComponentAdded<LightComponent>(Entity entity, LightComponent& component)
 	{
 	}
 
