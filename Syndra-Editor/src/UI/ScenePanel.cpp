@@ -243,6 +243,17 @@ namespace Syndra {
 		}
 
 	}
+	std::string LightTypeToLightName(LightType type) {
+		if (type == LightType::Directional)
+			return "Directional";
+		if (type == LightType::Point)
+			return "Point";
+		if (type == LightType::Spot)
+			return "Spot";
+		if (type == LightType::Area)
+			return "Area";
+		return "";
+	}
 
 	void ScenePanel::DrawComponents(Entity entity)
 	{
@@ -319,17 +330,93 @@ namespace Syndra {
 			}
 		}
 
-		static bool pointLightRemoved = false;
-		if (DrawComponent<PointLightComponent>("PointLight", entity, true, &pointLightRemoved)) {
-			auto& component = entity.GetComponent<PointLightComponent>();
+		static bool LightRemoved = false;
+		if (DrawComponent<LightComponent>("Light", entity, true, &LightRemoved)) {
+			auto& component = entity.GetComponent<LightComponent>();
+
 			ImGui::Separator();
-			ImGui::ColorEdit4("color",glm::value_ptr(component.color));
-			ImGui::DragFloat("distance", &component.dist);
+			ImGui::Columns(2);
+			ImGui::SetColumnWidth(0, 80);
+			ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{ 0, 0 });
+			ImGui::Text("LightType\0");
+			
+			ImGui::PopStyleVar();
+			ImGui::NextColumn();
+			ImGui::PushItemWidth(ImGui::GetContentRegionAvailWidth());
+			std::string label = LightTypeToLightName(component.type);
+
+			static int item_current_idx = 0;                    // Here our selection data is an index.
+			const char* combo_label = label.c_str();				// Label to preview before opening the combo (technically it could be anything)
+			if (ImGui::BeginCombo("##Lights", combo_label))
+			{
+				for (int n = 0; n < 4; n++)
+				{
+					const bool is_selected = (item_current_idx == n);
+
+					if (ImGui::Selectable(LightTypeToLightName((LightType)n).c_str(), is_selected)) {
+						component.type = (LightType)n;
+						if (component.type == LightType::Point) {
+							component.light = CreateRef<PointLight>(component.light->GetColor());
+						}
+						if (component.type == LightType::Directional) {
+							component.light = CreateRef<DirectionalLight>(component.light->GetColor());
+						}
+						if (component.type == LightType::Spot) {
+							component.light = CreateRef<SpotLight>(component.light->GetColor());
+						}
+					}
+					if (is_selected)
+						ImGui::SetItemDefaultFocus();
+				}
+				ImGui::EndCombo();
+			}
+			ImGui::PopItemWidth();
+			ImGui::Columns(1);
+
+			ImGui::Separator();
+
+			auto& color4 = glm::vec4(component.light->GetColor(), 1);
+
+
+			ImGui::SetNextItemWidth(60);
+			ImGui::Text("Color\0");
+			ImGui::SameLine();
+			ImGui::ColorEdit4("##color", glm::value_ptr(color4));
+			component.light->SetColor(glm::vec3(color4));
+
+			if (component.type == LightType::Directional) {
+				auto p = dynamic_cast<DirectionalLight*>(component.light.get());
+				auto dir = p->GetDirection();
+				ImGui::SetNextItemWidth(60);
+				ImGui::Text("Direction\0");
+				ImGui::SameLine();
+				ImGui::SliderFloat3("##direction", glm::value_ptr(dir), -1.0, 1.0, "%.3f");
+				p->SetDirection(dir);
+			}
+
+			if (component.type == LightType::Point) 
+			{
+				auto p = dynamic_cast<PointLight*>(component.light.get());
+				float range = p->GetRange();
+				ImGui::DragFloat("range", &range);
+				p->SetRange(range);
+			}
+
+			if (component.type == LightType::Spot) 
+			{
+				auto p = dynamic_cast<SpotLight*>(component.light.get());
+				float iCut = p->GetInnerCutOff();
+				float oCut = p->GetOuterCutOff();
+				ImGui::DragFloat("Inner Cutoff", &iCut);
+				ImGui::DragFloat("Outer Cutoff", &oCut);
+				p->SetCutOff(iCut, oCut);
+			}
+
 			ImGui::TreePop();
 
-			if (pointLightRemoved) {
-				entity.RemoveComponent<PointLightComponent>();
-				pointLightRemoved = false;
+			if (LightRemoved) {
+				entity.RemoveComponent<LightComponent>();
+				LightRemoved = false;
 			}
 		}
 
@@ -523,10 +610,10 @@ namespace Syndra {
 				ImGui::CloseCurrentPopup();
 			}
 
-			if (ImGui::MenuItem("PointLight"))
+			if (ImGui::MenuItem("Light"))
 			{
-				if (!m_SelectionContext.HasComponent<PointLightComponent>())
-					m_SelectionContext.AddComponent<PointLightComponent>();
+				if (!m_SelectionContext.HasComponent<LightComponent>())
+					m_SelectionContext.AddComponent<LightComponent>();
 				ImGui::CloseCurrentPopup();
 			}
 

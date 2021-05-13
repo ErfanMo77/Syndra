@@ -32,6 +32,7 @@ namespace Syndra {
 
 		int m_GizmoType = -1;
 		bool altIsDown=false;
+		bool m_FullScreen = false;
 		std::string m_Info;
 
 		bool m_ViewportFocused = false;

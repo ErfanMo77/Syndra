@@ -9,6 +9,7 @@
 #include "Engine/Scene/SceneCamera.h"
 #include "Engine/Renderer/Model.h"
 #include "Engine/Renderer/Material.h"
+#include "Engine/Scene/Light.h"
 
 namespace Syndra {
 
@@ -64,14 +65,28 @@ namespace Syndra {
 		CameraComponent(const CameraComponent&) = default;
 	};
 
-	struct PointLightComponent 
-	{
-		glm::vec4 color;
-		glm::vec4 pos;
-		float dist;
 
-		PointLightComponent() = default;
-		PointLightComponent(const PointLightComponent&) = default;
+	enum class LightType
+	{
+		Directional,
+		Point,
+		Spot,
+		Area
+	};
+
+
+
+	struct LightComponent 
+	{
+		LightType type;
+		Ref<Light> light;
+
+		LightComponent() {
+			type = LightType::Directional;
+			light = CreateRef<DirectionalLight>();
+		};
+
+		LightComponent(const LightComponent&) = default;
 	};
 
 	struct MaterialComponent
