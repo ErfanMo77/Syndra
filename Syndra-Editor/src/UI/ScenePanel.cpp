@@ -243,17 +243,6 @@ namespace Syndra {
 		}
 
 	}
-	std::string LightTypeToLightName(LightType type) {
-		if (type == LightType::Directional)
-			return "Directional";
-		if (type == LightType::Point)
-			return "Point";
-		if (type == LightType::Spot)
-			return "Spot";
-		if (type == LightType::Area)
-			return "Area";
-		return "";
-	}
 
 	void ScenePanel::DrawComponents(Entity entity)
 	{
@@ -405,6 +394,10 @@ namespace Syndra {
 			if (component.type == LightType::Spot) 
 			{
 				auto p = dynamic_cast<SpotLight*>(component.light.get());
+				auto dir = p->GetDirection();
+				ImGui::Text("Direction\0");
+				ImGui::SameLine();
+				ImGui::SliderFloat3("##direction", glm::value_ptr(dir), -1.0, 1.0, "%.3f");
 				float iCut = p->GetInnerCutOff();
 				float oCut = p->GetOuterCutOff();
 				ImGui::DragFloat("Inner Cutoff", &iCut);

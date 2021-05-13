@@ -42,8 +42,11 @@ namespace Syndra {
 	public:
 		PointLight() = default;
 		PointLight(const glm::vec3 & color) : Light(color) {}
-		PointLight(const glm::vec3 & color, const glm::vec3 & pos)
+		PointLight(const glm::vec3 & color, const glm::vec3& pos)
 			:Light(color), m_Position(pos) {}
+		PointLight(const glm::vec3& color, const glm::vec3& pos, float range)
+			:Light(color), m_Position(pos), m_Range(range) {}
+
 
 		virtual ~PointLight() = default;
 

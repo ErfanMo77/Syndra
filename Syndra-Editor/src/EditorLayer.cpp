@@ -198,9 +198,9 @@ namespace Syndra {
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{ 0, 0 });
 		ImGui::Begin("Viewport");
 
-		ImGui::Dummy({ 0,5 });
-		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, { 0,10 });
-		if (ImGui::ImageButton(io.Fonts->TexID, { 30,30 })) {
+		ImGui::Dummy({ 0,3 });
+		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, { 0,5 });
+		if (ImGui::ImageButton(io.Fonts->TexID, { 20,20 })) {
 			m_FullScreen = !m_FullScreen;
 		}
 		ImGui::PopStyleVar();

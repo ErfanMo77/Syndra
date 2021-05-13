@@ -31,14 +31,6 @@ namespace Syndra {
 		s_Data->aa = Shader::Create("assets/shaders/aa.glsl");
 		s_Data->diffuse = s_Data->shaders.Get("diffuse");
 		s_Data->main = s_Data->shaders.Get("main");
-		//sample code
-		for (auto& member : s_Data->diffuse->GetPushConstants())
-		{
-			for (auto& mem : member.members)
-			{
-				SN_CORE_ERROR("Diffuse shader members: {0} {1}", mem.name, mem.size);
-			}
-		}
 
 		for (auto& sampler : s_Data->diffuse->GetSamplers())
 		{
@@ -82,7 +74,7 @@ namespace Syndra {
 		s_Data->CameraBuffer.position = glm::vec4(camera.GetPosition(), 0);
 		s_Data->CameraUniformBuffer->SetData(&s_Data->CameraBuffer, sizeof(CameraData));
 
-		for (auto pointLight : s_Data->pointLights) {
+		for (auto& pointLight : s_Data->pointLights) {
 			pointLight.color = glm::vec4(0);
 			pointLight.position = glm::vec4(0);
 			pointLight.dist = 0.0f;
@@ -91,9 +83,6 @@ namespace Syndra {
 		s_Data->dirLight.color = glm::vec4(0);
 		s_Data->dirLight.position = glm::vec4(0);
 		s_Data->dirLight.direction = glm::vec4(0);
-
-		s_Data->PointLightsBuffer->SetData(&s_Data->pointLights, sizeof(s_Data->pointLights));
-		s_Data->DirLightBuffer->SetData(&s_Data->dirLight, sizeof(directionalLight));
 
 		s_Data->TransformBuffer.lightPos = glm::vec4(camera.GetPosition(), 0);
 		s_Data->mainFB->Bind();
