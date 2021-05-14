@@ -64,21 +64,27 @@ struct PointLight {
 	float dist;
 };
 
-layout(binding = 2) uniform pointlights
-{
-	PointLight light[4];
-} pointLights;
-
 struct DirLight {
     vec4 position;
     vec4 dir;
 	vec4 color;
 };
 
-layout(binding = 3) uniform dirLight
+struct SpotLight {
+    vec4 position;
+	vec4 color;
+    vec4 direction;
+    float cutOff;
+    float outerCutOff;      
+};
+
+layout(binding = 2) uniform Lights
 {
-	DirLight dirlight;
-} directionalLight;
+	PointLight pLight[4];
+	SpotLight sLight[4];
+	DirLight dLight;
+} lights;
+
 
 struct VS_OUT {
     vec3 v_pos;
@@ -90,6 +96,7 @@ layout(location = 0) in VS_OUT fs_in;
 
 vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir, vec3 col);
 vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir,vec3 col);
+vec3 CalcSpotLight(SpotLight light, vec3 normal, vec3 fragPos, vec3 viewDir, vec3 col);
 
 void main(){	
 
@@ -99,9 +106,12 @@ void main(){
 	vec3 color = texture(texture_diffuse, fs_in.v_uv).rgb;
 
 	vec3 result = vec3(0);
-	result += CalcDirLight(directionalLight.dirlight, norm, viewDir,color);
+	result += CalcDirLight(lights.dLight, norm, viewDir,color);
 	for(int i = 0; i<4; i++){
-		result += CalcPointLight(pointLights.light[i], norm, fs_in.v_pos, viewDir,color);
+		result += CalcPointLight(lights.pLight[i], norm, fs_in.v_pos, viewDir,color);
+	}
+	for(int i=0; i<4; i++){
+		result += CalcSpotLight(lights.sLight[i], norm, fs_in.v_pos, viewDir, color);
 	}
 
 	fragColor = vec4(result,1.0);
@@ -138,7 +148,29 @@ vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir,ve
 	}
 
     color *= attenuation;
-
-
     return color;
+}
+
+vec3 CalcSpotLight(SpotLight light, vec3 normal, vec3 fragPos, vec3 viewDir, vec3 col){
+
+	vec3 lightDir = normalize(light.position.rgb - fragPos);
+
+    float diff = max(dot(normal, lightDir), 0.0);
+
+    float distance = length(light.position.rgb - fragPos);
+    float attenuation = 1.0 / (constant + linear * distance + quadratic * (distance * distance));  
+
+	vec3 color;
+	if(col == vec3(0)){
+		color = vec3(diff)* light.color.rgb;
+	}else {
+		color = col * diff * light.color.rgb;
+	}
+	float theta = dot(lightDir, normalize(-light.direction.rgb)); 
+    float epsilon = light.cutOff - light.outerCutOff;
+    float intensity = clamp((theta - light.outerCutOff) / epsilon, 0.0, 1.0);
+    color *= attenuation * intensity;
+
+	return color;
+
 }

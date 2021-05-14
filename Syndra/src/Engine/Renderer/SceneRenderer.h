@@ -63,6 +63,15 @@ namespace Syndra {
 			float dist;
 			glm::vec3 dummy;
 		};
+		
+		struct spotLight {
+			glm::vec4 position;
+			glm::vec4 color;
+			glm::vec4 direction;
+			float innerCutOff;
+			float outerCutOff;
+			glm::vec2 dummy;
+		};
 
 		struct directionalLight
 		{
@@ -83,7 +92,8 @@ namespace Syndra {
 			Transform TransformBuffer;
 			directionalLight dirLight;
 			pointLight pointLights[4];
-			Ref<UniformBuffer> CameraUniformBuffer, TransformUniformBuffer, PointLightsBuffer, DirLightBuffer;
+			spotLight spotLights[4];
+			Ref<UniformBuffer> CameraUniformBuffer, TransformUniformBuffer, LightsBuffer;
 			ShaderLibrary shaders;
 			Ref<Shader> diffuse,outline,mouseShader,aa, main;
 			Ref<FrameBuffer> mainFB, mouseFB, postProcFB;

@@ -183,20 +183,19 @@ namespace Syndra {
 
 
 		//----------------------------------------------Renderer info-----------------------------------//
-		if (!m_FullScreen) {
-			ImGui::Begin("Renderer info");
-			ImGui::Text(m_Info.c_str());
-			ImGui::Text("\nApplication average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
-			ImGui::Text("%d vertices, %d indices (%d triangles)", io.MetricsRenderVertices, io.MetricsRenderIndices, io.MetricsRenderIndices / 3);
-			ImGui::Text("%d active windows (%d visible)", io.MetricsActiveWindows, io.MetricsRenderWindows);
-			ImGui::Text("%d active allocations", io.MetricsActiveAllocations);
-			ImGui::End();
-		}
+		ImGui::Begin("Renderer info");
+		ImGui::Text(m_Info.c_str());
+		ImGui::Text("\nApplication average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
+		ImGui::Text("%d vertices, %d indices (%d triangles)", io.MetricsRenderVertices, io.MetricsRenderIndices, io.MetricsRenderIndices / 3);
+		ImGui::Text("%d active windows (%d visible)", io.MetricsActiveWindows, io.MetricsRenderWindows);
+		ImGui::Text("%d active allocations", io.MetricsActiveAllocations);
+		ImGui::End();
 
 
 		//----------------------------------------------Viewport----------------------------------------//
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{ 0, 0 });
-		ImGui::Begin("Viewport");
+		static bool viewOpen = true;
+		ImGui::Begin("Viewport", &viewOpen);
 
 		ImGui::Dummy({ 0,3 });
 		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, { 0,5 });

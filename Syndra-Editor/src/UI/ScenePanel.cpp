@@ -366,7 +366,6 @@ namespace Syndra {
 
 			auto& color4 = glm::vec4(component.light->GetColor(), 1);
 
-
 			ImGui::SetNextItemWidth(60);
 			ImGui::Text("Color\0");
 			ImGui::SameLine();
@@ -394,14 +393,10 @@ namespace Syndra {
 			if (component.type == LightType::Spot) 
 			{
 				auto p = dynamic_cast<SpotLight*>(component.light.get());
-				auto dir = p->GetDirection();
-				ImGui::Text("Direction\0");
-				ImGui::SameLine();
-				ImGui::SliderFloat3("##direction", glm::value_ptr(dir), -1.0, 1.0, "%.3f");
 				float iCut = p->GetInnerCutOff();
 				float oCut = p->GetOuterCutOff();
-				ImGui::DragFloat("Inner Cutoff", &iCut);
-				ImGui::DragFloat("Outer Cutoff", &oCut);
+				ImGui::DragFloat("Inner Cutoff", &iCut, 0.5f, 0, 180);
+				ImGui::DragFloat("Outer Cutoff", &oCut, 0.5f, 0, 180);
 				p->SetCutOff(iCut, oCut);
 			}
 

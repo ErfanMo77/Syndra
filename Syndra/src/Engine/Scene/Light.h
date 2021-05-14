@@ -85,8 +85,8 @@ namespace Syndra {
 		glm::vec3 m_Position = { 0.0f,0.0f,0.0f };
 		glm::vec3 m_Direction = { -1.0f,0.0f,0.0f };
 
-		float m_CutOff = 0;
-		float m_OuterCutOff = 0;
+		float m_CutOff = glm::cos(glm::radians(12.5f));
+		float m_OuterCutOff = glm::cos(glm::radians(15.0f));
 	};
 
 }

@@ -32,10 +32,6 @@ namespace Syndra {
 		s_Data->diffuse = s_Data->shaders.Get("diffuse");
 		s_Data->main = s_Data->shaders.Get("main");
 
-		for (auto& sampler : s_Data->diffuse->GetSamplers())
-		{
-			SN_CORE_ERROR("Sampler : {0}, set={1}, binding{2}", sampler.name, sampler.set, sampler.binding);
-		}
 		//s_Data->mouseShader = s_Data->shaders.Get("mouse");
 		//s_Data->outline = s_Data->shaders.Get("outline");
 
@@ -63,9 +59,13 @@ namespace Syndra {
 		s_Data->screenVao->SetIndexBuffer(s_Data->screenEbo);
 		s_Data->CameraUniformBuffer = UniformBuffer::Create(sizeof(CameraData), 0);
 		s_Data->TransformUniformBuffer = UniformBuffer::Create(sizeof(Transform), 1);
-		SN_CORE_TRACE("SIZE OF POINTLIGHTS : {0}", sizeof(s_Data->pointLights));
-		s_Data->PointLightsBuffer = UniformBuffer::Create(sizeof(s_Data->pointLights), 2);
-		s_Data->DirLightBuffer = UniformBuffer::Create(sizeof(s_Data->dirLight), 3);
+
+		SN_CORE_TRACE("SIZE OF POINT LIGHTS : {0}", sizeof(s_Data->pointLights));
+		SN_CORE_TRACE("SIZE OF SPOT LIGHTS : {0}", sizeof(s_Data->spotLights));
+		SN_CORE_TRACE("SIZE OF DIRECTIONAL LIGHT : {0}", sizeof(s_Data->dirLight));
+
+		//Light uniform Buffer layout: -- point lights -- spotlights -- directional light--
+		s_Data->LightsBuffer = UniformBuffer::Create(sizeof(s_Data->pointLights) + sizeof(s_Data->spotLights) + sizeof(s_Data->dirLight), 2);
 	}
 
 	void SceneRenderer::BeginScene(const PerspectiveCamera& camera)
@@ -74,10 +74,20 @@ namespace Syndra {
 		s_Data->CameraBuffer.position = glm::vec4(camera.GetPosition(), 0);
 		s_Data->CameraUniformBuffer->SetData(&s_Data->CameraBuffer, sizeof(CameraData));
 
-		for (auto& pointLight : s_Data->pointLights) {
+		for (auto& pointLight : s_Data->pointLights) 
+		{
 			pointLight.color = glm::vec4(0);
 			pointLight.position = glm::vec4(0);
 			pointLight.dist = 0.0f;
+		}
+
+		for (auto& spot : s_Data->spotLights)
+		{
+			spot.color = glm::vec4(0);
+			spot.position = glm::vec4(0);
+			spot.direction = glm::vec4(0);
+			spot.innerCutOff = glm::cos(glm::radians(12.5f));
+			spot.outerCutOff = glm::cos(glm::radians(15.0f));
 		}
 
 		s_Data->dirLight.color = glm::vec4(0);
@@ -97,9 +107,11 @@ namespace Syndra {
 	void SceneRenderer::RenderScene(Scene& scene)
 	{
 		auto viewLights = scene.m_Registry.view<TransformComponent, LightComponent>();
+		//point light index
 		int pIndex = 0;
-
-
+		//spot light index
+		int sIndex = 0;
+		//Set light values for each entity that has a light component
 		for (auto ent : viewLights)
 		{
 			auto& tc = viewLights.get<TransformComponent>(ent);
@@ -120,9 +132,23 @@ namespace Syndra {
 					pIndex++;
 				}
 			}
+			if (lc.type == LightType::Spot) {
+				if (sIndex < 4) {
+					auto p = dynamic_cast<SpotLight*>(lc.light.get());
+					s_Data->spotLights[sIndex].color = glm::vec4(p->GetColor(), 1);
+					s_Data->spotLights[sIndex].position = glm::vec4(tc.Translation, 1);
+					s_Data->spotLights[sIndex].direction = glm::vec4(tc.Rotation, 0);
+					s_Data->spotLights[sIndex].innerCutOff = glm::cos(glm::radians(p->GetInnerCutOff()));
+					s_Data->spotLights[sIndex].outerCutOff = glm::cos(glm::radians(p->GetOuterCutOff()));
+					sIndex++;
+				}
+			}
 		}
-		s_Data->PointLightsBuffer->SetData(&s_Data->pointLights, sizeof(s_Data->pointLights));
-		s_Data->DirLightBuffer->SetData(&s_Data->dirLight, sizeof(directionalLight));
+
+		//Filling light buffer data with different light values
+		s_Data->LightsBuffer->SetData(&s_Data->pointLights, sizeof(s_Data->pointLights));
+		s_Data->LightsBuffer->SetData(&s_Data->spotLights, sizeof(s_Data->spotLights), sizeof(s_Data->pointLights));
+		s_Data->LightsBuffer->SetData(&s_Data->dirLight, sizeof(s_Data->dirLight), sizeof(s_Data->pointLights) + sizeof(s_Data->spotLights));
 
 		auto view = scene.m_Registry.view<TransformComponent, MeshComponent>();
 		s_Data->mainFB->Bind();
