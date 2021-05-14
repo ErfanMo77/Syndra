@@ -1,0 +1,31 @@
+Scene: spotlight
+Camera:
+  Yaw: 2.48159695
+  Pitch: 0.532800436
+  distance: 27.5823936
+  FOV: 45
+  Near: 0.100000001
+  Far: 1000
+Entities:
+  - Entity: 0
+    TagComponent:
+      Tag: cube
+    TransformComponent:
+      Translation: [0, 0, 0]
+      Rotation: [0, 0, 0]
+      Scale: [0.538228869, 14.5039368, 14.1927385]
+    MeshComponent:
+      Path: \assets\Models\cube\cube.obj
+  - Entity: 1
+    TagComponent:
+      Tag: spotlight
+    TransformComponent:
+      Translation: [-4.60740423, -0.957220674, 0]
+      Rotation: [0, 0, 0]
+      Scale: [1, 1, 1]
+    LightComponent:
+      Type: Spot
+      Color: [1, 1, 1]
+      Direction: [1, 0.119999997, 0]
+      InnerCutOff: 26.4759998
+      OuterCutOff: 96.4660034

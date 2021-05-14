@@ -34,6 +34,8 @@ namespace Syndra {
 
 		static void OnViewPortResize(uint32_t width, uint32_t height);
 
+		static void SetExposure(float exposure) { s_Data->exposure = exposure; }
+
 		static uint32_t GetTextureID(int index) { return s_Data->postProcFB->GetColorAttachmentRendererID(index); }
 
 		static Ref<FrameBuffer> GetMouseFrameBuffer() { return s_Data->mouseFB; }
@@ -63,6 +65,15 @@ namespace Syndra {
 			float dist;
 			glm::vec3 dummy;
 		};
+		
+		struct spotLight {
+			glm::vec4 position;
+			glm::vec4 color;
+			glm::vec4 direction;
+			float innerCutOff;
+			float outerCutOff;
+			glm::vec2 dummy;
+		};
 
 		struct directionalLight
 		{
@@ -80,16 +91,23 @@ namespace Syndra {
 		{
 			CameraData CameraBuffer;
 			ShaderData ShaderBuffer;
+			//Light
+			float exposure;
 			Transform TransformBuffer;
 			directionalLight dirLight;
 			pointLight pointLights[4];
-			Ref<UniformBuffer> CameraUniformBuffer, TransformUniformBuffer, PointLightsBuffer, DirLightBuffer;
+			spotLight spotLights[4];
+			Ref<UniformBuffer> CameraUniformBuffer, TransformUniformBuffer, LightsBuffer;
+			//shaders
 			ShaderLibrary shaders;
 			Ref<Shader> diffuse,outline,mouseShader,aa, main;
+			//FrameBuffers
 			Ref<FrameBuffer> mainFB, mouseFB, postProcFB;
+			//Scene quad VBO, VAO, EBO
 			Ref<VertexArray> screenVao;
 			Ref<VertexBuffer> screenVbo;
 			Ref<IndexBuffer> screenEbo;
+			//Clear color
 			glm::vec3 clearColor;
 		};
 

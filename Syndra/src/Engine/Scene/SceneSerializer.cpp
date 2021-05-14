@@ -170,13 +170,28 @@ namespace Syndra {
 
 		if (entity.HasComponent<LightComponent>())
 		{
-			out << YAML::Key << "PointLightComponent";
-			out << YAML::BeginMap; // PointLightComponent
+			out << YAML::Key << "LightComponent";
+			out << YAML::BeginMap; // LightComponent
 
 			auto& pl = entity.GetComponent<LightComponent>();
-			//out << YAML::Key << "color" << YAML::Value << pl.color;
-			//out << YAML::Key << "distance" << YAML::Value << pl.dist;
-			out << YAML::EndMap; // PointLightComponent
+			out << YAML::Key << "Type" << YAML::Value << LightTypeToLightName(pl.type);
+			out << YAML::Key << "Color" << YAML::Value << pl.light->GetColor();
+			switch (pl.type)
+			{
+			case LightType::Point:
+				out << YAML::Key << "Range" << YAML::Value << dynamic_cast<PointLight*>(pl.light.get())->GetRange();
+				break;
+			case LightType::Directional:
+				out << YAML::Key << "Direction" << YAML::Value << dynamic_cast<DirectionalLight*>(pl.light.get())->GetDirection();
+				break;
+			case LightType::Spot:
+				out << YAML::Key << "Direction" << YAML::Value << dynamic_cast<SpotLight*>(pl.light.get())->GetDirection();
+				out << YAML::Key << "InnerCutOff" << YAML::Value << dynamic_cast<SpotLight*>(pl.light.get())->GetInnerCutOff();
+				out << YAML::Key << "OuterCutOff" << YAML::Value << dynamic_cast<SpotLight*>(pl.light.get())->GetOuterCutOff();
+			default:
+				break;
+			}
+			out << YAML::EndMap; // LightComponent
 		}
 
 		if (entity.HasComponent<MaterialComponent>())
@@ -314,13 +329,31 @@ namespace Syndra {
 						mc.model = Model(filepath);
 				}
 
-				auto pointLightComponent = entity["PointLightComponent"];
-				if (pointLightComponent)
+				auto lightComponent = entity["LightComponent"];
+				if (lightComponent)
 				{
-					// Entities always have transforms
 					auto& pl = deserializedEntity->AddComponent<LightComponent>();
-					pl.light->SetColor(pointLightComponent["color"].as<glm::vec4>());
-					// = pointLightComponent["distance"].as<float>();
+					pl.light->SetColor(lightComponent["Color"].as<glm::vec3>());
+					auto strType = lightComponent["Type"].as<std::string>() ;
+					if (strType == "Directional") {
+						pl.type = LightType::Directional;
+						pl.light = CreateRef<DirectionalLight>(pl.light->GetColor(), lightComponent["Direction"].as<glm::vec3>());
+					}
+					if (strType == "Point") {
+						pl.type = LightType::Point;
+						auto pos = transformComponent["Translation"].as<glm::vec3>();
+						pl.light = CreateRef<PointLight>(pl.light->GetColor(), pos, lightComponent["Range"].as<float>());
+					}
+					if (strType == "Spot") {
+						pl.type = LightType::Spot;
+						auto dir = lightComponent["Direction"].as<glm::vec3>();
+						auto pos = transformComponent["Translation"].as<glm::vec3>();
+						auto iCutOff = lightComponent["InnerCutOff"].as<float>();
+						auto oCutOff = lightComponent["OuterCutOff"].as<float>();
+						pl.light = CreateRef<SpotLight>(pl.light->GetColor(), pos, dir, iCutOff, oCutOff);
+					}
+					//TODO Area light
+
 				}
 
 				auto materialComponent = entity["MaterialComponent"];

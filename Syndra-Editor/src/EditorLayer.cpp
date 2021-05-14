@@ -37,8 +37,6 @@ namespace Syndra {
 		fbSpec.Samples = 4;
 
 		m_ViewportSize = { fbSpec.Width,fbSpec.Height };
-
-
 		RenderCommand::Init();
 
 		auto& app = Application::Get();
@@ -177,30 +175,34 @@ namespace Syndra {
 			static bool vSync = true;
 			ImGui::Checkbox("V-Sync", &vSync);
 			Application::Get().GetWindow().SetVSync(vSync);
+
+			static float exposure = 1f;
+			ImGui::DragFloat("exposure", &exposure, 0.01f, 0, 1);
+			SceneRenderer::SetExposure(exposure);
+
 			ImGui::End();
 		}
 		
 
 
 		//----------------------------------------------Renderer info-----------------------------------//
-		if (!m_FullScreen) {
-			ImGui::Begin("Renderer info");
-			ImGui::Text(m_Info.c_str());
-			ImGui::Text("\nApplication average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
-			ImGui::Text("%d vertices, %d indices (%d triangles)", io.MetricsRenderVertices, io.MetricsRenderIndices, io.MetricsRenderIndices / 3);
-			ImGui::Text("%d active windows (%d visible)", io.MetricsActiveWindows, io.MetricsRenderWindows);
-			ImGui::Text("%d active allocations", io.MetricsActiveAllocations);
-			ImGui::End();
-		}
+		ImGui::Begin("Renderer info");
+		ImGui::Text(m_Info.c_str());
+		ImGui::Text("\nApplication average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
+		ImGui::Text("%d vertices, %d indices (%d triangles)", io.MetricsRenderVertices, io.MetricsRenderIndices, io.MetricsRenderIndices / 3);
+		ImGui::Text("%d active windows (%d visible)", io.MetricsActiveWindows, io.MetricsRenderWindows);
+		ImGui::Text("%d active allocations", io.MetricsActiveAllocations);
+		ImGui::End();
 
 
 		//----------------------------------------------Viewport----------------------------------------//
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{ 0, 0 });
-		ImGui::Begin("Viewport");
+		static bool viewOpen = true;
+		ImGui::Begin("Viewport", &viewOpen);
 
-		ImGui::Dummy({ 0,5 });
-		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, { 0,10 });
-		if (ImGui::ImageButton(io.Fonts->TexID, { 30,30 })) {
+		ImGui::Dummy({ 0,3 });
+		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, { 0,5 });
+		if (ImGui::ImageButton(io.Fonts->TexID, { 20,20 })) {
 			m_FullScreen = !m_FullScreen;
 		}
 		ImGui::PopStyleVar();

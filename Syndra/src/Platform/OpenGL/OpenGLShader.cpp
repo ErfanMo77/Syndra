@@ -268,7 +268,10 @@ namespace Syndra {
 
 			for (const auto& member : compiler.get_active_buffer_ranges(resource.id))
 			{
-				SN_CORE_TRACE("        member {0} : {1} ", member.index, compiler.get_member_name(resource.base_type_id, member.index));
+				SN_CORE_TRACE("        member {0} : {1} size={2}"
+					, member.index
+					, compiler.get_member_name(resource.base_type_id, member.index)
+					, compiler.get_declared_struct_member_size(bufferType, member.index));
 			}
 		}
 		SN_CORE_WARN("=======================================");

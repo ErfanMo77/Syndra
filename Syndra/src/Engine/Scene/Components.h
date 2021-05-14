@@ -74,7 +74,7 @@ namespace Syndra {
 		Area
 	};
 
-
+	std::string LightTypeToLightName(LightType type);
 
 	struct LightComponent 
 	{

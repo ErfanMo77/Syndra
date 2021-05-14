@@ -106,6 +106,18 @@ namespace Syndra {
 		}
 	}
 
+	std::string LightTypeToLightName(LightType type) {
+		if (type == LightType::Directional)
+			return "Directional";
+		if (type == LightType::Point)
+			return "Point";
+		if (type == LightType::Spot)
+			return "Spot";
+		if (type == LightType::Area)
+			return "Area";
+		return "";
+	}
+
 	template<typename T>
 	void Scene::OnComponentAdded(Entity entity, T& component)
 	{
