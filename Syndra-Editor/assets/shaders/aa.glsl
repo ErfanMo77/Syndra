@@ -20,6 +20,10 @@ layout(location = 0) out vec4 fragColor;
 
 layout(binding = 0) uniform sampler2DMS u_Texture;
 
+layout(push_constant) uniform pushConstants{
+	float exposure;
+} pc;
+
 layout(location = 0) in vec2 v_uv;
 
 void main()
@@ -31,6 +35,14 @@ void main()
 	vec4 colorSample3 = texelFetch(u_Texture, texturePosition, 3);
 
 	vec4 antialiased = (colorSample0 + colorSample1 + colorSample2 + colorSample3) / 4.0f;
+
+	const float gamma = 2.2;
+    vec3 hdrColor = antialiased.rgb;
+  
+    // reinhard tone mapping
+    vec3 mapped = vec3(1.0) - exp(-hdrColor * pc.exposure);
+    // gamma correction 
+   // mapped = pow(mapped, vec3(1.0 / gamma));
 	
-	fragColor = antialiased;
+	fragColor = vec4(mapped, 1.0);
 }

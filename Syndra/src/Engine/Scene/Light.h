@@ -15,8 +15,12 @@ namespace Syndra {
 		void SetColor(const glm::vec3& color) { m_Color = color; }
 		glm::vec3 GetColor() const { return m_Color; }
 
+		void SetIntensity(float intensity) { m_Intensity = intensity; }
+		float GetIntensity() { return m_Intensity; }
+
 	private:
 		glm::vec3 m_Color = { 1.0,1.0,1.0 };
+		float m_Intensity = 1;
 	};
 
 
@@ -25,7 +29,10 @@ namespace Syndra {
 		DirectionalLight() = default;
 		DirectionalLight(const glm::vec3& color) : Light(color) {}
 		DirectionalLight(const glm::vec3& color,const glm::vec3& dir)
-			:Light(color), m_Direction(dir) {}
+			:Light(color), m_Direction(dir) 
+		{
+			SetIntensity(50.0f);
+		}
 
 		virtual ~DirectionalLight() = default;
 
@@ -85,8 +92,8 @@ namespace Syndra {
 		glm::vec3 m_Position = { 0.0f,0.0f,0.0f };
 		glm::vec3 m_Direction = { -1.0f,0.0f,0.0f };
 
-		float m_CutOff = glm::cos(glm::radians(12.5f));
-		float m_OuterCutOff = glm::cos(glm::radians(15.0f));
+		float m_CutOff = 12.5f;
+		float m_OuterCutOff = 15.0f;
 	};
 
 }

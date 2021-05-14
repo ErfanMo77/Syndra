@@ -55,8 +55,8 @@ layout(binding = 0) uniform camera
 } cam;
 
 #define constant 1.0
-#define linear 0.09
-#define quadratic 0.032
+#define linear 0.022
+#define quadratic 0.0019
 
 struct PointLight {
     vec4 position;
@@ -103,17 +103,20 @@ void main(){
     vec3 norm = normalize(fs_in.v_normal);
 	vec3 viewDir = normalize(cam.cameraPos.rgb - fs_in.v_pos);
 
-	vec3 color = texture(texture_diffuse, fs_in.v_uv).rgb;
+	vec4 color = texture(texture_diffuse, fs_in.v_uv);
+	if(color.a < .2){
+		discard;
+	}
 
 	vec3 result = vec3(0);
-	result += CalcDirLight(lights.dLight, norm, viewDir,color);
+	result += CalcDirLight(lights.dLight, norm, viewDir,color.rgb);
 	for(int i = 0; i<4; i++){
-		result += CalcPointLight(lights.pLight[i], norm, fs_in.v_pos, viewDir,color);
+		result += CalcPointLight(lights.pLight[i], norm, fs_in.v_pos, viewDir,color.rgb);
 	}
 	for(int i=0; i<4; i++){
-		result += CalcSpotLight(lights.sLight[i], norm, fs_in.v_pos, viewDir, color);
+		result += CalcSpotLight(lights.sLight[i], norm, fs_in.v_pos, viewDir, color.rgb);
 	}
-
+	
 	fragColor = vec4(result,1.0);
 }
 
@@ -137,8 +140,8 @@ vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir,ve
 
     float distance = length(light.position.rgb - fragPos);
     float attenuation = 1.0 / (constant + linear * distance + quadratic * (distance * distance));  
-	if(distance < light.dist){
-		attenuation = 1.;
+	if(distance > light.dist){
+		attenuation = 0;
 	}
 	vec3 color;
 	if(col == vec3(0)){

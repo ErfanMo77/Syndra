@@ -37,8 +37,6 @@ namespace Syndra {
 		fbSpec.Samples = 4;
 
 		m_ViewportSize = { fbSpec.Width,fbSpec.Height };
-
-
 		RenderCommand::Init();
 
 		auto& app = Application::Get();
@@ -177,6 +175,11 @@ namespace Syndra {
 			static bool vSync = true;
 			ImGui::Checkbox("V-Sync", &vSync);
 			Application::Get().GetWindow().SetVSync(vSync);
+
+			static float exposure = 1f;
+			ImGui::DragFloat("exposure", &exposure, 0.01f, 0, 1);
+			SceneRenderer::SetExposure(exposure);
+
 			ImGui::End();
 		}
 		

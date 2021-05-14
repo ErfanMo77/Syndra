@@ -367,10 +367,19 @@ namespace Syndra {
 			auto& color4 = glm::vec4(component.light->GetColor(), 1);
 
 			ImGui::SetNextItemWidth(60);
+			//light's color
 			ImGui::Text("Color\0");
 			ImGui::SameLine();
 			ImGui::ColorEdit4("##color", glm::value_ptr(color4));
 			component.light->SetColor(glm::vec3(color4));
+			//light's intensity
+			float intensity = component.light->GetIntensity();
+			ImGui::Text("Intensity\0");
+			ImGui::SameLine();
+			ImGui::DragFloat("##Intensity", &intensity, 0.1, 0, 100);
+			component.light->SetIntensity(intensity);
+
+			auto PI = glm::pi<float>();
 
 			if (component.type == LightType::Directional) {
 				auto p = dynamic_cast<DirectionalLight*>(component.light.get());
@@ -378,26 +387,43 @@ namespace Syndra {
 				ImGui::SetNextItemWidth(60);
 				ImGui::Text("Direction\0");
 				ImGui::SameLine();
-				ImGui::SliderFloat3("##direction", glm::value_ptr(dir), -1.0, 1.0, "%.3f");
+				ImGui::SliderFloat3("##direction", glm::value_ptr(dir), -2 * PI, 2 * PI, "%.3f");
 				p->SetDirection(dir);
+				p = nullptr;
 			}
 
 			if (component.type == LightType::Point) 
 			{
 				auto p = dynamic_cast<PointLight*>(component.light.get());
 				float range = p->GetRange();
-				ImGui::DragFloat("range", &range);
+				ImGui::Text("Range\0");
+				ImGui::SameLine();
+				ImGui::DragFloat("##range", &range);
 				p->SetRange(range);
+				p = nullptr;
 			}
 
 			if (component.type == LightType::Spot) 
 			{
 				auto p = dynamic_cast<SpotLight*>(component.light.get());
+				ImGui::SetNextItemWidth(60);
+				auto dir = p->GetDirection();
+				ImGui::Text("Direction\0");
+				ImGui::SameLine();
+				ImGui::SliderFloat3("##direction", glm::value_ptr(dir), -2*PI, 2*PI, "%.3f");
+				p->SetDirection(dir);
+
 				float iCut = p->GetInnerCutOff();
 				float oCut = p->GetOuterCutOff();
-				ImGui::DragFloat("Inner Cutoff", &iCut, 0.5f, 0, 180);
-				ImGui::DragFloat("Outer Cutoff", &oCut, 0.5f, 0, 180);
+				ImGui::Text("Cutoff\0",10);
+				ImGui::SameLine();
+				ImGui::DragFloat("##Inner Cutoff", &iCut, 0.5f, 0, 180);
+
+				ImGui::Text("Outer Cutoff\0");
+				ImGui::SameLine();
+				ImGui::DragFloat("##Outer Cutoff", &oCut, 0.5f, p->GetInnerCutOff() + 0.01f, 180);
 				p->SetCutOff(iCut, oCut);
+				p = nullptr;
 			}
 
 			ImGui::TreePop();

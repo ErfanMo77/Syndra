@@ -12,11 +12,12 @@ namespace Syndra {
 	{
 		s_Data = new SceneRenderer::SceneData;
 		FramebufferSpecification fbSpec;
-		fbSpec.Attachments = { FramebufferTextureFormat::RGBA8 , FramebufferTextureFormat::DEPTH24STENCIL8 };
+		fbSpec.Attachments = { FramebufferTextureFormat::RGBA16F , FramebufferTextureFormat::DEPTH24STENCIL8 };
 		fbSpec.Width = 1280;
 		fbSpec.Height = 720;
 		fbSpec.Samples = 4;
 		s_Data->mainFB = FrameBuffer::Create(fbSpec);
+		fbSpec.Attachments = { FramebufferTextureFormat::RGBA8 , FramebufferTextureFormat::DEPTH24STENCIL8 };
 		fbSpec.Samples = 1;
 		s_Data->postProcFB = FrameBuffer::Create(fbSpec);
 		fbSpec.Attachments = { FramebufferTextureFormat::RED_INTEGER , FramebufferTextureFormat::DEPTH24STENCIL8 };
@@ -63,7 +64,7 @@ namespace Syndra {
 		SN_CORE_TRACE("SIZE OF POINT LIGHTS : {0}", sizeof(s_Data->pointLights));
 		SN_CORE_TRACE("SIZE OF SPOT LIGHTS : {0}", sizeof(s_Data->spotLights));
 		SN_CORE_TRACE("SIZE OF DIRECTIONAL LIGHT : {0}", sizeof(s_Data->dirLight));
-
+		s_Data->exposure = 0.2f;
 		//Light uniform Buffer layout: -- point lights -- spotlights -- directional light--
 		s_Data->LightsBuffer = UniformBuffer::Create(sizeof(s_Data->pointLights) + sizeof(s_Data->spotLights) + sizeof(s_Data->dirLight), 2);
 	}
@@ -119,28 +120,31 @@ namespace Syndra {
 
 			if (lc.type == LightType::Directional) {
 				auto p = dynamic_cast<DirectionalLight*>(lc.light.get());
-				s_Data->dirLight.color = glm::vec4(lc.light->GetColor(),0);
+				s_Data->dirLight.color = glm::vec4(lc.light->GetColor(), 0) * p->GetIntensity();
 				s_Data->dirLight.direction = glm::vec4(p->GetDirection(),0);
 				s_Data->dirLight.position = glm::vec4(tc.Translation, 0);
+				p = nullptr;
 			}
 			if (lc.type == LightType::Point) {
 				if (pIndex < 4) {
 					auto p = dynamic_cast<PointLight*>(lc.light.get());
-					s_Data->pointLights[pIndex].color = glm::vec4(p->GetColor(), 1);
+					s_Data->pointLights[pIndex].color = glm::vec4(p->GetColor(), 1) * p->GetIntensity();
 					s_Data->pointLights[pIndex].position = glm::vec4(tc.Translation, 1);
 					s_Data->pointLights[pIndex].dist = p->GetRange();
 					pIndex++;
+					p = nullptr;
 				}
 			}
 			if (lc.type == LightType::Spot) {
 				if (sIndex < 4) {
 					auto p = dynamic_cast<SpotLight*>(lc.light.get());
-					s_Data->spotLights[sIndex].color = glm::vec4(p->GetColor(), 1);
+					s_Data->spotLights[sIndex].color = glm::vec4(p->GetColor(), 1) * p->GetIntensity();
 					s_Data->spotLights[sIndex].position = glm::vec4(tc.Translation, 1);
-					s_Data->spotLights[sIndex].direction = glm::vec4(tc.Rotation, 0);
+					s_Data->spotLights[sIndex].direction = glm::vec4(p->GetDirection(), 0);
 					s_Data->spotLights[sIndex].innerCutOff = glm::cos(glm::radians(p->GetInnerCutOff()));
 					s_Data->spotLights[sIndex].outerCutOff = glm::cos(glm::radians(p->GetOuterCutOff()));
 					sIndex++;
+					p = nullptr;
 				}
 			}
 		}
@@ -242,6 +246,7 @@ namespace Syndra {
 		s_Data->screenVao->Bind();
 		RenderCommand::SetState(RenderState::DEPTH_TEST, false);
 		s_Data->aa->Bind();
+		s_Data->aa->SetFloat("pc.exposure", s_Data->exposure);
 		Texture2D::BindTexture(s_Data->mainFB->GetColorAttachmentRendererID(), 0);
 
 		Renderer::Submit(s_Data->aa, s_Data->screenVao);
