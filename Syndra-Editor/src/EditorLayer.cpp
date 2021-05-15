@@ -176,7 +176,7 @@ namespace Syndra {
 			ImGui::Checkbox("V-Sync", &vSync);
 			Application::Get().GetWindow().SetVSync(vSync);
 
-			static float exposure = 1f;
+			static float exposure = 1.f;
 			ImGui::DragFloat("exposure", &exposure, 0.01f, 0, 1);
 			SceneRenderer::SetExposure(exposure);
 

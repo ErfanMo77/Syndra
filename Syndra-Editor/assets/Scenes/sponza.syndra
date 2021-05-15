@@ -1,8 +1,8 @@
 Scene: sponza
 Camera:
-  Yaw: -17.3640175
-  Pitch: 0.117600031
-  distance: 70.9726105
+  Yaw: -11.1024055
+  Pitch: -0.0984006897
+  distance: 43.2621918
   FOV: 45
   Near: 0.100000001
   Far: 4165.13281
@@ -25,27 +25,30 @@ Entities:
       Scale: [1, 1, 1]
     LightComponent:
       Type: Directional
-      Color: [0.531645536, 0.614700913, 1]
+      Color: [0.282700419, 0.409937978, 1]
+      Intensity: 3.4000001
       Direction: [-3.09200001, -6.28299999, -6.28299999]
   - Entity: 2
     TagComponent:
       Tag: point
     TransformComponent:
-      Translation: [-1.27569592, 21.037838, -7.67770195]
+      Translation: [35.2099991, 18.7219315, -4.06771183]
       Rotation: [0, 0, 0]
       Scale: [0.999939263, 0.999914944, 0.999994636]
     LightComponent:
       Type: Point
-      Color: [0.873417735, 0.627290964, 0.246915564]
-      Range: 61
-  - Entity: 1048579
+      Color: [1, 0.927735925, 0.481012642]
+      Intensity: 2.9000001
+      Range: 88
+  - Entity: 3
     TagComponent:
       Tag: Entity
     TransformComponent:
-      Translation: [-10.7159424, 7.88672876, -19.2601547]
+      Translation: [-27.6100006, 24.7020874, -2.93155169]
       Rotation: [0, 0, 0]
       Scale: [1, 1, 1]
     LightComponent:
       Type: Point
-      Color: [1, 1, 1]
-      Range: 24
+      Color: [1.09803927, 0.611764729, 0.521568656]
+      Intensity: 3.70000005
+      Range: 59
