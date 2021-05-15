@@ -176,6 +176,7 @@ namespace Syndra {
 			auto& pl = entity.GetComponent<LightComponent>();
 			out << YAML::Key << "Type" << YAML::Value << LightTypeToLightName(pl.type);
 			out << YAML::Key << "Color" << YAML::Value << pl.light->GetColor();
+			out << YAML::Key << "Intensity" << YAML::Value << pl.light->GetIntensity();
 			switch (pl.type)
 			{
 			case LightType::Point:
@@ -334,15 +335,17 @@ namespace Syndra {
 				{
 					auto& pl = deserializedEntity->AddComponent<LightComponent>();
 					pl.light->SetColor(lightComponent["Color"].as<glm::vec3>());
-					auto strType = lightComponent["Type"].as<std::string>() ;
+					auto strType = lightComponent["Type"].as<std::string>();
+					auto intensity = lightComponent["Intensity"].as<float>();
+					pl.light->SetIntensity(intensity);
 					if (strType == "Directional") {
 						pl.type = LightType::Directional;
-						pl.light = CreateRef<DirectionalLight>(pl.light->GetColor(), lightComponent["Direction"].as<glm::vec3>());
+						pl.light = CreateRef<DirectionalLight>(pl.light->GetColor(), intensity, lightComponent["Direction"].as<glm::vec3>());
 					}
 					if (strType == "Point") {
 						pl.type = LightType::Point;
 						auto pos = transformComponent["Translation"].as<glm::vec3>();
-						pl.light = CreateRef<PointLight>(pl.light->GetColor(), pos, lightComponent["Range"].as<float>());
+						pl.light = CreateRef<PointLight>(pl.light->GetColor(), intensity, pos, lightComponent["Range"].as<float>());
 					}
 					if (strType == "Spot") {
 						pl.type = LightType::Spot;
@@ -350,7 +353,7 @@ namespace Syndra {
 						auto pos = transformComponent["Translation"].as<glm::vec3>();
 						auto iCutOff = lightComponent["InnerCutOff"].as<float>();
 						auto oCutOff = lightComponent["OuterCutOff"].as<float>();
-						pl.light = CreateRef<SpotLight>(pl.light->GetColor(), pos, dir, iCutOff, oCutOff);
+						pl.light = CreateRef<SpotLight>(pl.light->GetColor(), intensity, pos, dir, iCutOff, oCutOff);
 					}
 					//TODO Area light
 

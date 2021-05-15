@@ -370,8 +370,10 @@ namespace Syndra {
 			//light's color
 			ImGui::Text("Color\0");
 			ImGui::SameLine();
-			ImGui::ColorEdit4("##color", glm::value_ptr(color4));
+			ImGuiColorEditFlags colorFlags =  ImGuiColorEditFlags_HDR ;
+			ImGui::ColorEdit4("##color", glm::value_ptr(color4),colorFlags);
 			component.light->SetColor(glm::vec3(color4));
+
 			//light's intensity
 			float intensity = component.light->GetIntensity();
 			ImGui::Text("Intensity\0");

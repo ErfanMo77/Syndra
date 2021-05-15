@@ -9,7 +9,7 @@ namespace Syndra {
 
 	public:
 		Light() = default;
-		Light(const glm::vec3& color) : m_Color(color) {}
+		Light(const glm::vec3& color, float intensity) : m_Color(color), m_Intensity(intensity) {}
 		virtual ~Light() = default;
 
 		void SetColor(const glm::vec3& color) { m_Color = color; }
@@ -27,11 +27,10 @@ namespace Syndra {
 	class DirectionalLight : public Light {
 	public:
 		DirectionalLight() = default;
-		DirectionalLight(const glm::vec3& color) : Light(color) {}
-		DirectionalLight(const glm::vec3& color,const glm::vec3& dir)
-			:Light(color), m_Direction(dir) 
+		DirectionalLight(const glm::vec3& color) : Light(color,1.0f) {}
+		DirectionalLight(const glm::vec3& color, float intensity, const glm::vec3& dir)
+			:Light(color, intensity), m_Direction(dir)
 		{
-			SetIntensity(50.0f);
 		}
 
 		virtual ~DirectionalLight() = default;
@@ -48,11 +47,11 @@ namespace Syndra {
 	class PointLight : public Light {
 	public:
 		PointLight() = default;
-		PointLight(const glm::vec3 & color) : Light(color) {}
+		PointLight(const glm::vec3 & color) : Light(color,1.0f) {}
 		PointLight(const glm::vec3 & color, const glm::vec3& pos)
-			:Light(color), m_Position(pos) {}
-		PointLight(const glm::vec3& color, const glm::vec3& pos, float range)
-			:Light(color), m_Position(pos), m_Range(range) {}
+			:Light(color,1.0f), m_Position(pos) {}
+		PointLight(const glm::vec3& color, float intensity, const glm::vec3& pos, float range)
+			:Light(color, intensity), m_Position(pos), m_Range(range) {}
 
 
 		virtual ~PointLight() = default;
@@ -72,9 +71,9 @@ namespace Syndra {
 	class SpotLight : public Light {
 	public:
 		SpotLight() = default;
-		SpotLight(const glm::vec3 & color) : Light(color) {}
-		SpotLight(const glm::vec3& color, const glm::vec3& pos, const glm::vec3& dir, float cutOff, float outerCutOff)
-			:Light(color), m_Position(pos), m_Direction(dir), m_CutOff(cutOff), m_OuterCutOff(outerCutOff) {}
+		SpotLight(const glm::vec3 & color) : Light(color,1.0f) {}
+		SpotLight(const glm::vec3& color, float intensity, const glm::vec3& pos, const glm::vec3& dir, float cutOff, float outerCutOff)
+			:Light(color, intensity), m_Position(pos), m_Direction(dir), m_CutOff(cutOff), m_OuterCutOff(outerCutOff) {}
 
 		virtual ~SpotLight() = default;
 

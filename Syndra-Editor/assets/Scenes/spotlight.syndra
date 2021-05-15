@@ -26,6 +26,7 @@ Entities:
     LightComponent:
       Type: Spot
       Color: [1, 1, 1]
+      Intensity: 1
       Direction: [1, 0.119999997, 0]
       InnerCutOff: 26.4759998
       OuterCutOff: 96.4660034
