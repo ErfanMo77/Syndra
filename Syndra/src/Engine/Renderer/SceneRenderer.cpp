@@ -241,18 +241,19 @@ namespace Syndra {
 		//-------------------------------------------------post-processing pass---------------------------------------------------//
 
 		s_Data->postProcFB->Bind();
-		RenderCommand::SetState(RenderState::SRGB, true);
+		//RenderCommand::SetState(RenderState::SRGB, true);
 		RenderCommand::Clear();
 		s_Data->screenVao->Bind();
 		RenderCommand::SetState(RenderState::DEPTH_TEST, false);
 		s_Data->aa->Bind();
 		s_Data->aa->SetFloat("pc.exposure", s_Data->exposure);
+		s_Data->aa->SetFloat("pc.gamma", s_Data->gamma);
 		Texture2D::BindTexture(s_Data->mainFB->GetColorAttachmentRendererID(), 0);
 
 		Renderer::Submit(s_Data->aa, s_Data->screenVao);
 
 		s_Data->aa->Unbind();
-		RenderCommand::SetState(RenderState::SRGB, false);
+		//RenderCommand::SetState(RenderState::SRGB, false);
 		s_Data->postProcFB->Unbind();
 		
 		Renderer::EndScene();

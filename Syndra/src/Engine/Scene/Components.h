@@ -86,7 +86,27 @@ namespace Syndra {
 			light = CreateRef<DirectionalLight>();
 		};
 
-		LightComponent(const LightComponent&) = default;
+		LightComponent(const LightComponent& other) {
+			type = other.type;
+			switch (type)
+			{
+			case Syndra::LightType::Directional:
+				light = CreateRef<DirectionalLight>(other.light->GetColor(), other.light->GetIntensity());
+				break;
+			case Syndra::LightType::Point:
+				light = CreateRef<PointLight>(other.light->GetColor(), other.light->GetIntensity());
+				break;
+			case Syndra::LightType::Spot:
+				light = CreateRef<SpotLight>(other.light->GetColor(),other.light->GetIntensity());
+				break;
+			case Syndra::LightType::Area:
+				break;
+			default:
+				break;
+			}
+			
+
+		};
 	};
 
 	struct MaterialComponent

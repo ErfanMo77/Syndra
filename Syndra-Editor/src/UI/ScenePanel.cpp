@@ -419,7 +419,7 @@ namespace Syndra {
 				float oCut = p->GetOuterCutOff();
 				ImGui::Text("Cutoff\0",10);
 				ImGui::SameLine();
-				ImGui::DragFloat("##Inner Cutoff", &iCut, 0.5f, 0, 180);
+				ImGui::DragFloat("##Inner Cutoff", &iCut, 0.5f, 0, p->GetOuterCutOff() - 0.01f);
 
 				ImGui::Text("Outer Cutoff\0");
 				ImGui::SameLine();
@@ -454,7 +454,7 @@ namespace Syndra {
 			ImGui::PopStyleVar();
 			ImGui::NextColumn();
 			ImGui::PushItemWidth(ImGui::GetContentRegionAvailWidth());
-			static int item_current_idx = 0;                    // Here our selection data is an index.
+			static int item_current_idx = 0;												// Here our selection data is an index.
 			const char* combo_label = component.m_Shader->GetName().c_str();				// Label to preview before opening the combo (technically it could be anything)
 			if (ImGui::BeginCombo("##Shaders", combo_label))
 			{
@@ -501,7 +501,8 @@ namespace Syndra {
 
 					auto path = FileDialogs::OpenFile("Syndra Texture (*.*)\0*.*\0");
 					if (path) {
-						materialTextures[sampler.binding] = Texture2D::Create(*path);
+						//Add texture as sRGB color space if it is binded to 0 (diffuse texture binding)
+						materialTextures[sampler.binding] = Texture2D::Create(*path,sampler.binding==0);
 					}
 				}
 				ImGui::PopID();
