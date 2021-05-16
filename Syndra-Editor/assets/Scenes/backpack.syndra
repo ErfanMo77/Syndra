@@ -1,0 +1,42 @@
+Scene: backpack
+Camera:
+  Yaw: 0.631201386
+  Pitch: 0.549599528
+  distance: 5.71755219
+  FOV: 45
+  Near: 0.100000001
+  Far: 1000
+Entities:
+  - Entity: 0
+    TagComponent:
+      Tag: Entity
+    TransformComponent:
+      Translation: [0, 0, 0]
+      Rotation: [0, 0, 0]
+      Scale: [1, 1, 1]
+    MeshComponent:
+      Path: \assets\Models\backpack\backpack.obj
+  - Entity: 1
+    TagComponent:
+      Tag: Entity
+    TransformComponent:
+      Translation: [-7.71130753, 4.88712978, -1.39132416]
+      Rotation: [0, 0, 0]
+      Scale: [1, 1, 1]
+    LightComponent:
+      Type: Point
+      Color: [0.997650027, 1, 0.983122349]
+      Intensity: 6.80000019
+      Range: 10
+  - Entity: 1048578
+    TagComponent:
+      Tag: Entity
+    TransformComponent:
+      Translation: [0, 0, 0]
+      Rotation: [0, 0, 0]
+      Scale: [1, 1, 1]
+    LightComponent:
+      Type: Directional
+      Color: [1, 1, 1]
+      Intensity: 10.1999998
+      Direction: [6.28299999, -6.28299999, -6.28299999]

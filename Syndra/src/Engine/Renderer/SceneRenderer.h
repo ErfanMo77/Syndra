@@ -35,6 +35,7 @@ namespace Syndra {
 		static void OnViewPortResize(uint32_t width, uint32_t height);
 
 		static void SetExposure(float exposure) { s_Data->exposure = exposure; }
+		static void SetGamma(float gamma) { s_Data->gamma = gamma; }
 
 		static uint32_t GetTextureID(int index) { return s_Data->postProcFB->GetColorAttachmentRendererID(index); }
 
@@ -93,6 +94,7 @@ namespace Syndra {
 			ShaderData ShaderBuffer;
 			//Light
 			float exposure;
+			float gamma;
 			Transform TransformBuffer;
 			directionalLight dirLight;
 			pointLight pointLights[4];

@@ -139,7 +139,7 @@ vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir,ve
     float diff = max(dot(normal, lightDir), 0.0);
 
     float distance = length(light.position.rgb - fragPos);
-    float attenuation = 1.0 / (constant + linear * distance + quadratic * (distance * distance));  
+    float attenuation = 1.0 / (constant + quadratic * (distance * distance));  
 	if(distance > light.dist){
 		attenuation = 0;
 	}
@@ -161,7 +161,7 @@ vec3 CalcSpotLight(SpotLight light, vec3 normal, vec3 fragPos, vec3 viewDir, vec
     float diff = max(dot(normal, lightDir), 0.0);
 
     float distance = length(light.position.rgb - fragPos);
-    float attenuation = 1.0 / (constant + linear * distance + quadratic * (distance * distance));  
+    float attenuation = 1.0 / (constant + quadratic * (distance * distance));  
 
 	vec3 color;
 	if(col == vec3(0)){

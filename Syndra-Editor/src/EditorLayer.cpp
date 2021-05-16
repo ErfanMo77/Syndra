@@ -177,8 +177,12 @@ namespace Syndra {
 			Application::Get().GetWindow().SetVSync(vSync);
 
 			static float exposure = 1.f;
-			ImGui::DragFloat("exposure", &exposure, 0.01f, 0, 1);
+			ImGui::DragFloat("exposure", &exposure, 0.01f, -2, 4);
 			SceneRenderer::SetExposure(exposure);
+
+			static float gamma = 1.f;
+			ImGui::DragFloat("gamma", &gamma, 0.01f, 0, 4);
+			SceneRenderer::SetGamma(gamma);
 
 			ImGui::End();
 		}

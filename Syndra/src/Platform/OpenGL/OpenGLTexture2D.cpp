@@ -21,7 +21,7 @@ namespace Syndra {
 		glTextureParameteri(m_RendererID, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	}
 
-	OpenGLTexture2D::OpenGLTexture2D(const std::string& path)
+	OpenGLTexture2D::OpenGLTexture2D(const std::string& path, bool sRGB)
 		: m_Path(path)
 	{
 		int width, height, channels;
@@ -38,12 +38,12 @@ namespace Syndra {
 		GLenum internalFormat = 0, dataFormat = 0;
 		if (channels == 4)
 		{
-			internalFormat = GL_RGBA8;
+			internalFormat = sRGB ? GL_SRGB8_ALPHA8 : GL_RGBA8;
 			dataFormat = GL_RGBA;
 		}
 		else if (channels == 3)
 		{
-			internalFormat = GL_RGB8;
+			internalFormat = sRGB ? GL_SRGB8 : GL_RGB8;
 			dataFormat = GL_RGB;
 		}
 
@@ -70,7 +70,7 @@ namespace Syndra {
 		stbi_image_free(data);
 	}
 
-	OpenGLTexture2D::OpenGLTexture2D(uint32_t mWidth, uint32_t mHeight,const unsigned char* data)
+	OpenGLTexture2D::OpenGLTexture2D(uint32_t mWidth, uint32_t mHeight,const unsigned char* data, bool sRGB)
 	{
 		int width, height, channels;
 		stbi_set_flip_vertically_on_load(1);
@@ -91,12 +91,12 @@ namespace Syndra {
 		GLenum internalFormat = 0, dataFormat = 0;
 		if (channels == 4)
 		{
-			internalFormat = GL_RGBA8;
+			internalFormat = sRGB ? GL_SRGB8_ALPHA8 : GL_RGBA8;
 			dataFormat = GL_RGBA;
 		}
 		else if (channels == 3)
 		{
-			internalFormat = GL_RGB8;
+			internalFormat = sRGB ? GL_SRGB8 : GL_RGB8;
 			dataFormat = GL_RGB;
 		}
 
