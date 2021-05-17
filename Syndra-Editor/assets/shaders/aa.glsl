@@ -43,6 +43,6 @@ void main()
     vec3 mapped = vec3(1.0) - exp(-hdrColor * pc.exposure);
     // gamma correction 
 	mapped = pow(mapped, vec3(1.0 / pc.gamma));
-	
+
 	fragColor = vec4(mapped, 1.0);
 }

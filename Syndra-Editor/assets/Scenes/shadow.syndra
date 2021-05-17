@@ -1,0 +1,39 @@
+Scene: shadow
+Camera:
+  Yaw: 3.33599973
+  Pitch: 0.633599401
+  distance: 13.6118546
+  FOV: 45
+  Near: 0.100000001
+  Far: 1000
+Entities:
+  - Entity: 0
+    TagComponent:
+      Tag: Entity
+    TransformComponent:
+      Translation: [0, 0, 0]
+      Rotation: [0, 0, 0]
+      Scale: [1, 1, 1]
+    MeshComponent:
+      Path: \assets\Models\cube\cube.obj
+  - Entity: 1
+    TagComponent:
+      Tag: Entity
+    TransformComponent:
+      Translation: [0, -2.82631421, 0]
+      Rotation: [0, 0, 0]
+      Scale: [7.95689964, 0.327062756, 7.95689964]
+    MeshComponent:
+      Path: \assets\Models\cube\cube.obj
+  - Entity: 2
+    TagComponent:
+      Tag: Entity
+    TransformComponent:
+      Translation: [0, 0, 0]
+      Rotation: [0, 0, 0]
+      Scale: [1, 1, 1]
+    LightComponent:
+      Type: Directional
+      Color: [1, 1, 1]
+      Intensity: 1
+      Direction: [0.5, -6.28299999, 0]

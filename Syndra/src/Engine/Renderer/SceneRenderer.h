@@ -23,7 +23,7 @@ namespace Syndra {
 
 		static void RenderScene(Scene& scene);
 
-		static void RenderEntityColor(const entt::entity& entity, TransformComponent& tc, MeshComponent& mc);
+		static void RenderEntityColor(const entt::entity& entity, TransformComponent& tc, MeshComponent& mc, const Ref<Shader>& shader);
 		static void RenderEntityColor(const entt::entity& entity, TransformComponent& tc, MeshComponent& mc, MaterialComponent& mat);
 
 		static void RenderEntityID(const entt::entity& entity, TransformComponent& tc, MeshComponent& mc);
@@ -88,6 +88,10 @@ namespace Syndra {
 			glm::vec4 col;
 		};
 
+		struct ShadowData {
+			glm::mat4 lightViewProj;
+		};
+
 		struct SceneData
 		{
 			CameraData CameraBuffer;
@@ -99,10 +103,15 @@ namespace Syndra {
 			directionalLight dirLight;
 			pointLight pointLights[4];
 			spotLight spotLights[4];
-			Ref<UniformBuffer> CameraUniformBuffer, TransformUniformBuffer, LightsBuffer;
+			Ref<UniformBuffer> CameraUniformBuffer, TransformUniformBuffer, LightsBuffer, ShadowBuffer;
+			//Shadow
+			Ref<FrameBuffer> shadowFB;
+			glm::mat4 lightProj;
+			glm::mat4 lightView;
+			ShadowData shadowData;
 			//shaders
 			ShaderLibrary shaders;
-			Ref<Shader> diffuse,outline,mouseShader,aa, main;
+			Ref<Shader> diffuse,outline,mouseShader,aa, main, depth;
 			//FrameBuffers
 			Ref<FrameBuffer> mainFB, mouseFB, postProcFB;
 			//Scene quad VBO, VAO, EBO

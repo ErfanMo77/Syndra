@@ -1,8 +1,8 @@
 Scene: sponza
 Camera:
-  Yaw: 1.40401042
-  Pitch: -0.076801993
-  distance: 101.475342
+  Yaw: -1.8191905
+  Pitch: -0.0288026743
+  distance: 12.0480709
   FOV: 45
   Near: 0.100000001
   Far: 4165.13281
@@ -13,44 +13,18 @@ Entities:
     TransformComponent:
       Translation: [0, 0, 0]
       Rotation: [0, 0, 0]
-      Scale: [0.0500000007, 0.0500000007, 0.0500000007]
+      Scale: [0.00999999978, 0.00999999978, 0.00999999978]
     MeshComponent:
       Path: C:\Users\MSI\Desktop\crytek-sponza-huge-vray.fbx
   - Entity: 1
     TagComponent:
       Tag: Dir light
     TransformComponent:
-      Translation: [-21.0002346, 170.663559, 38.01968]
+      Translation: [0, 21.9475098, 0]
       Rotation: [0, 0, 0]
       Scale: [1, 1, 1]
     LightComponent:
       Type: Directional
-      Color: [0.294117659, 0.403921574, 1.01176476]
-      Intensity: 5
-      Direction: [6.28299999, -6.28299999, -6.28299999]
-  - Entity: 2
-    TagComponent:
-      Tag: point
-    TransformComponent:
-      Translation: [30.4799995, 15.4447393, -4.14296913]
-      Rotation: [0, 0, 0]
-      Scale: [0.999939263, 0.999914944, 0.999994636]
-    LightComponent:
-      Type: Point
-      Color: [1, 0.970036566, 0.784810126]
-      Intensity: 4.19999981
-      Range: 47
-  - Entity: 2097155
-    TagComponent:
-      Tag: point
-    TransformComponent:
-      Translation: [13.6800003, 20.9468803, 2.06767082]
-      Rotation: [0, 0, 0]
-      Scale: [0.999939263, 0.999914944, 0.999994636]
-    LightComponent:
-      Type: Spot
-      Color: [1, 0.970036566, 0.784810126]
-      Intensity: 20.7000008
-      Direction: [-6.28299999, 0, -6.28299999]
-      InnerCutOff: 18.4899998
-      OuterCutOff: 75.5
+      Color: [1.23921573, 0.90196079, 0.564705908]
+      Intensity: 5.69999981
+      Direction: [0, -6.28299999, 1.12800002]
