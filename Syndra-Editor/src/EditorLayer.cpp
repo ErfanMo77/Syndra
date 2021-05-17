@@ -203,6 +203,8 @@ namespace Syndra {
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{ 0, 0 });
 		static bool viewOpen = true;
 		ImGui::Begin("Viewport", &viewOpen);
+		ImGuiWindow* window = ImGui::GetCurrentWindow();
+		const ImGuiID id = window->GetID("Viewport");
 
 		ImGui::Dummy({ 0,3 });
 		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, { 0,5 });
@@ -220,13 +222,13 @@ namespace Syndra {
 
 		m_ViewportFocused = ImGui::IsWindowFocused();
 		m_ViewportHovered = ImGui::IsWindowHovered();
+
 		Application::Get().GetImGuiLayer()->SetBlockEvents(!m_ViewportFocused && !m_ViewportHovered);
 
 		ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
 
 		m_ViewportSize = { viewportPanelSize.x, viewportPanelSize.y };
 		uint64_t textureID = m_ActiveScene->GetMainTextureID();
-
 		ImGui::Image(reinterpret_cast<void*>(textureID), ImVec2{ m_ViewportSize.x, m_ViewportSize.y }, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
 		
 		ImGuizmo::SetOrthographic(false);

@@ -81,6 +81,7 @@ namespace Syndra {
 		switch (format)
 		{
 			case FramebufferTextureFormat::DEPTH24STENCIL8:  return true;
+			case FramebufferTextureFormat::DEPTH32:			 return true;
 		}
 
 		return false;
@@ -159,6 +160,9 @@ namespace Syndra {
 			case FramebufferTextureFormat::DEPTH24STENCIL8:
 				AttachDepthTexture(m_DepthAttachment, m_Specification.Samples, GL_DEPTH24_STENCIL8, GL_DEPTH_STENCIL_ATTACHMENT, m_Specification.Width, m_Specification.Height);
 				break;
+			case FramebufferTextureFormat::DEPTH32:
+				AttachDepthTexture(m_DepthAttachment, m_Specification.Samples, GL_DEPTH_COMPONENT32, GL_DEPTH_ATTACHMENT, m_Specification.Width, m_Specification.Height);
+				break;
 			}
 		}
 
@@ -172,6 +176,7 @@ namespace Syndra {
 		{
 			// Only depth-pass
 			glDrawBuffer(GL_NONE);
+			glReadBuffer(GL_NONE);
 		}
 
 		SN_CORE_ASSERT(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE, "Framebuffer is incomplete!");
@@ -180,8 +185,8 @@ namespace Syndra {
 
 	void OpenGLFrameBuffer::Bind()
 	{
-		glBindFramebuffer(GL_FRAMEBUFFER, m_RendererID);
 		glViewport(0, 0, m_Specification.Width, m_Specification.Height);
+		glBindFramebuffer(GL_FRAMEBUFFER, m_RendererID);
 	}
 
 	void OpenGLFrameBuffer::Unbind()

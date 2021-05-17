@@ -15,6 +15,7 @@ namespace Syndra {
 
 		// Depth/stencil
 		DEPTH24STENCIL8,
+		DEPTH32,
 
 		// Defaults
 		Depth = DEPTH24STENCIL8
@@ -62,6 +63,7 @@ namespace Syndra {
 		virtual void ClearAttachment(uint32_t attachmentIndex, int value) = 0;
 
 		virtual uint32_t GetColorAttachmentRendererID(uint32_t index = 0) const = 0;
+		virtual uint32_t GetDepthAttachmentRendererID() const = 0;
 
 		virtual const FramebufferSpecification& GetSpecification() const = 0;
 		static Ref<FrameBuffer> Create(const FramebufferSpecification& spec);

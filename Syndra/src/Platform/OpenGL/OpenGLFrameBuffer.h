@@ -21,6 +21,7 @@ namespace Syndra {
 			SN_CORE_ASSERT(index < m_ColorAttachments.size(),"Framebuffer color attachment index should be less than attachments' size");
 			return m_ColorAttachments[index];
 		}
+		virtual uint32_t GetDepthAttachmentRendererID() const override { return m_DepthAttachment; }
 
 		virtual const FramebufferSpecification& GetSpecification() const override { return m_Specification; }
 

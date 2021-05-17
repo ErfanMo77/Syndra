@@ -22,6 +22,14 @@ namespace Syndra {
 		s_Data->postProcFB = FrameBuffer::Create(fbSpec);
 		fbSpec.Attachments = { FramebufferTextureFormat::RED_INTEGER , FramebufferTextureFormat::DEPTH24STENCIL8 };
 		s_Data->mouseFB = FrameBuffer::Create(fbSpec);
+		
+		//Shadow frameBuffer
+		FramebufferSpecification shadowSpec;
+		shadowSpec.Attachments = { FramebufferTextureFormat::DEPTH32 };
+		shadowSpec.Width = 1024;
+		shadowSpec.Height = 1024;
+		shadowSpec.Samples = 1;
+		s_Data->shadowFB = FrameBuffer::Create(shadowSpec);
 
 		if (!s_Data->aa) {
 			s_Data->shaders.Load("assets/shaders/diffuse.glsl");
@@ -30,6 +38,8 @@ namespace Syndra {
 			//s_Data->shaders.Load("assets/shaders/outline.glsl");
 		}
 		s_Data->aa = Shader::Create("assets/shaders/aa.glsl");
+		s_Data->depth = Shader::Create("assets/shaders/depth.glsl");
+
 		s_Data->diffuse = s_Data->shaders.Get("diffuse");
 		s_Data->main = s_Data->shaders.Get("main");
 
@@ -67,6 +77,9 @@ namespace Syndra {
 		s_Data->exposure = 0.2f;
 		//Light uniform Buffer layout: -- point lights -- spotlights -- directional light--
 		s_Data->LightsBuffer = UniformBuffer::Create(sizeof(s_Data->pointLights) + sizeof(s_Data->spotLights) + sizeof(s_Data->dirLight), 2);
+		
+		s_Data->lightProj = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, 1.0f, 1000.0f);
+		s_Data->ShadowBuffer = UniformBuffer::Create(sizeof(glm::mat4), 3);
 	}
 
 	void SceneRenderer::BeginScene(const PerspectiveCamera& camera)
@@ -123,6 +136,10 @@ namespace Syndra {
 				s_Data->dirLight.color = glm::vec4(lc.light->GetColor(), 0) * p->GetIntensity();
 				s_Data->dirLight.direction = glm::vec4(p->GetDirection(),0);
 				s_Data->dirLight.position = glm::vec4(tc.Translation, 0);
+				//shadow
+				s_Data->lightView = glm::lookAt(-(glm::vec3(s_Data->dirLight.direction) * 5.0f), glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+				s_Data->shadowData.lightViewProj = s_Data->lightProj * s_Data->lightView;
+				s_Data->ShadowBuffer->SetData(&s_Data->shadowData, sizeof(glm::mat4));
 				p = nullptr;
 			}
 			if (lc.type == LightType::Point) {
@@ -155,7 +172,26 @@ namespace Syndra {
 		s_Data->LightsBuffer->SetData(&s_Data->dirLight, sizeof(s_Data->dirLight), sizeof(s_Data->pointLights) + sizeof(s_Data->spotLights));
 
 		auto view = scene.m_Registry.view<TransformComponent, MeshComponent>();
+		//shadow pass
+		s_Data->shadowFB->Bind();
+		RenderCommand::SetState(RenderState::DEPTH_TEST, true);
+		glClear(GL_DEPTH_BUFFER_BIT);
+		for (auto ent : view)
+		{
+			auto& tc = view.get<TransformComponent>(ent);
+			auto& mc = view.get<MeshComponent>(ent);
+			if (!mc.path.empty()) {
+				s_Data->depth->Bind();
+				s_Data->depth->SetMat4("transform.u_trans", tc.GetTransform());
+				SceneRenderer::RenderEntityColor(ent, tc, mc, s_Data->depth);
+			}
+		}
+		s_Data->shadowFB->Unbind();
+
+		//color pass
 		s_Data->mainFB->Bind();
+		RenderCommand::SetState(RenderState::DEPTH_TEST, true);
+		RenderCommand::Clear();
 		for (auto ent : view)
 		{
 			auto& tc = view.get<TransformComponent>(ent);
@@ -170,7 +206,9 @@ namespace Syndra {
 				}
 				else 
 				{
-					SceneRenderer::RenderEntityColor(ent, tc, mc);
+					s_Data->diffuse->Bind();
+					Texture2D::BindTexture(s_Data->shadowFB->GetDepthAttachmentRendererID(), 3);
+					SceneRenderer::RenderEntityColor(ent, tc, mc, s_Data->diffuse);
 				}
 			}
 		}
@@ -192,7 +230,7 @@ namespace Syndra {
 		//s_Data->mouseFB->Unbind();
 	}
 
-	void SceneRenderer::RenderEntityColor(const entt::entity& entity, TransformComponent& tc, MeshComponent& mc)
+	void SceneRenderer::RenderEntityColor(const entt::entity& entity, TransformComponent& tc, MeshComponent& mc,const Ref<Shader>& shader)
 	{
 		//--------------------------------------------------color and outline pass------------------------------------------------//
 
@@ -217,7 +255,7 @@ namespace Syndra {
 		//}
 		//glEnable(GL_DEPTH_TEST);
 		RenderCommand::SetState(RenderState::CULL, false);
-		Renderer::Submit(s_Data->diffuse, mc.model);
+		Renderer::Submit(shader, mc.model);
 		RenderCommand::SetState(RenderState::CULL, true);
 	}
 
@@ -241,7 +279,6 @@ namespace Syndra {
 		//-------------------------------------------------post-processing pass---------------------------------------------------//
 
 		s_Data->postProcFB->Bind();
-		//RenderCommand::SetState(RenderState::SRGB, true);
 		RenderCommand::Clear();
 		s_Data->screenVao->Bind();
 		RenderCommand::SetState(RenderState::DEPTH_TEST, false);
@@ -249,11 +286,9 @@ namespace Syndra {
 		s_Data->aa->SetFloat("pc.exposure", s_Data->exposure);
 		s_Data->aa->SetFloat("pc.gamma", s_Data->gamma);
 		Texture2D::BindTexture(s_Data->mainFB->GetColorAttachmentRendererID(), 0);
-
 		Renderer::Submit(s_Data->aa, s_Data->screenVao);
 
 		s_Data->aa->Unbind();
-		//RenderCommand::SetState(RenderState::SRGB, false);
 		s_Data->postProcFB->Unbind();
 		
 		Renderer::EndScene();
