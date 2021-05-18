@@ -1,4 +1,7 @@
 #include "lpch.h"
+#include "imgui.h"
+
+#include "Engine/Core/Application.h"
 #include "Engine/Renderer/SceneRenderer.h"
 #include "Engine/Scene/Entity.h"
 #include "Engine/Scene/Scene.h"
@@ -26,8 +29,8 @@ namespace Syndra {
 		//Shadow frameBuffer
 		FramebufferSpecification shadowSpec;
 		shadowSpec.Attachments = { FramebufferTextureFormat::DEPTH32 };
-		shadowSpec.Width = 1024;
-		shadowSpec.Height = 1024;
+		shadowSpec.Width = 2048;
+		shadowSpec.Height = 2048;
 		shadowSpec.Samples = 1;
 		s_Data->shadowFB = FrameBuffer::Create(shadowSpec);
 
@@ -74,11 +77,12 @@ namespace Syndra {
 		SN_CORE_TRACE("SIZE OF POINT LIGHTS : {0}", sizeof(s_Data->pointLights));
 		SN_CORE_TRACE("SIZE OF SPOT LIGHTS : {0}", sizeof(s_Data->spotLights));
 		SN_CORE_TRACE("SIZE OF DIRECTIONAL LIGHT : {0}", sizeof(s_Data->dirLight));
-		s_Data->exposure = 0.2f;
+		s_Data->exposure = 0.5f;
+		s_Data->gamma = 1.9f;
 		//Light uniform Buffer layout: -- point lights -- spotlights -- directional light--
 		s_Data->LightsBuffer = UniformBuffer::Create(sizeof(s_Data->pointLights) + sizeof(s_Data->spotLights) + sizeof(s_Data->dirLight), 2);
 		
-		s_Data->lightProj = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, 1.0f, 1000.0f);
+		s_Data->lightProj = glm::ortho(-20.0f, 20.0f, -20.0f, 20.0f, 1.0f, 500.0f);
 		s_Data->ShadowBuffer = UniformBuffer::Create(sizeof(glm::mat4), 3);
 	}
 
@@ -137,7 +141,7 @@ namespace Syndra {
 				s_Data->dirLight.direction = glm::vec4(p->GetDirection(),0);
 				s_Data->dirLight.position = glm::vec4(tc.Translation, 0);
 				//shadow
-				s_Data->lightView = glm::lookAt(-(glm::vec3(s_Data->dirLight.direction) * 5.0f), glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+				s_Data->lightView = glm::lookAt(-(glm::vec3(s_Data->dirLight.direction) * 20.0f), glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 				s_Data->shadowData.lightViewProj = s_Data->lightProj * s_Data->lightView;
 				s_Data->ShadowBuffer->SetData(&s_Data->shadowData, sizeof(glm::mat4));
 				p = nullptr;
@@ -305,6 +309,37 @@ namespace Syndra {
 		s_Data->mainFB->Resize(width, height);
 		s_Data->postProcFB->Resize(width, height);
 		s_Data->mouseFB->Resize(width, height);
+	}
+
+	void SceneRenderer::OnImGuiUpdate()
+	{
+		ImGui::Begin("Renderer settings");
+
+		//V-Sync
+		static bool vSync = true;
+		ImGui::Checkbox("V-Sync", &vSync);
+		Application::Get().GetWindow().SetVSync(vSync);
+
+		//Exposure
+		ImGui::DragFloat("exposure", &s_Data->exposure, 0.01f, -2, 4);
+
+		//Gamma
+		ImGui::DragFloat("gamma", &s_Data->gamma, 0.01f, 0, 4);
+
+		//DepthMap
+		static bool showDepth = false;
+		if (ImGui::Button("depth map"))
+		{
+			showDepth = !showDepth;
+		}
+		ImGui::End();
+
+		if (showDepth) {
+			ImGui::Begin("Depth map");
+			ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
+			ImGui::Image(reinterpret_cast<void*>(s_Data->shadowFB->GetDepthAttachmentRendererID()), viewportPanelSize);
+			ImGui::End();
+		}
 	}
 
 }

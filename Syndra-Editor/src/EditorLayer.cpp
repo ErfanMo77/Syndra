@@ -172,23 +172,13 @@ namespace Syndra {
 			if (ImGui::Button("Reload shader")) {
 				m_ActiveScene->ReloadShader();
 			}
-			static bool vSync = true;
-			ImGui::Checkbox("V-Sync", &vSync);
-			Application::Get().GetWindow().SetVSync(vSync);
-
-			static float exposure = 1.f;
-			ImGui::DragFloat("exposure", &exposure, 0.01f, -2, 4);
-			SceneRenderer::SetExposure(exposure);
-
-			static float gamma = 1.f;
-			ImGui::DragFloat("gamma", &gamma, 0.01f, 0, 4);
-			SceneRenderer::SetGamma(gamma);
-
 			ImGui::End();
 		}
 		
-
-
+		//------------------------Renderer settings
+		if (!m_FullScreen) {
+			SceneRenderer::OnImGuiUpdate();
+		}
 		//----------------------------------------------Renderer info-----------------------------------//
 		ImGui::Begin("Renderer info");
 		ImGui::Text(m_Info.c_str());

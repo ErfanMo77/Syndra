@@ -76,37 +76,31 @@ namespace Syndra {
 
 	std::string LightTypeToLightName(LightType type);
 
-	struct LightComponent 
+	struct LightComponent
 	{
 		LightType type;
 		Ref<Light> light;
 
 		LightComponent() {
-			type = LightType::Directional;
-			light = CreateRef<DirectionalLight>();
-		};
+			type = LightType::Point;
+			light = CreateRef<PointLight>();
+		}
 
 		LightComponent(const LightComponent& other) {
-			type = other.type;
-			switch (type)
-			{
-			case Syndra::LightType::Directional:
-				light = CreateRef<DirectionalLight>(other.light->GetColor(), other.light->GetIntensity());
-				break;
-			case Syndra::LightType::Point:
-				light = CreateRef<PointLight>(other.light->GetColor(), other.light->GetIntensity());
-				break;
-			case Syndra::LightType::Spot:
-				light = CreateRef<SpotLight>(other.light->GetColor(),other.light->GetIntensity());
-				break;
-			case Syndra::LightType::Area:
-				break;
-			default:
-				break;
+			this->type = other.type;
+			if (type == LightType::Directional) {
+				auto p = reinterpret_cast<DirectionalLight*>(other.light.get());
+				this->light = CreateRef<DirectionalLight>(p->GetColor(), p->GetIntensity(), p->GetDirection());
 			}
-			
-
-		};
+			if (type == LightType::Point) {
+				auto p = reinterpret_cast<PointLight*>(other.light.get());
+				this->light = CreateRef<PointLight>(p->GetColor(), p->GetIntensity());
+			}
+			if (type == LightType::Spot) {
+				auto p = reinterpret_cast<SpotLight*>(other.light.get());
+				this->light = CreateRef<SpotLight>(p->GetColor(), p->GetIntensity());
+			}
+		}
 	};
 
 	struct MaterialComponent
