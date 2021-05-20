@@ -5,11 +5,34 @@
 #include "Engine/Renderer/SceneRenderer.h"
 #include "Engine/Scene/Entity.h"
 #include "Engine/Scene/Scene.h"
+#include "Engine/Utils/PoissonGenerator.h"
 #include <glad/glad.h>
 
 namespace Syndra {
 
 	SceneRenderer::SceneData* SceneRenderer::s_Data;
+
+	void GeneratePoissonDisk(Ref<Texture1D>& sampler, size_t numSamples) {
+		PoissonGenerator::DefaultPRNG PRNG;
+		size_t attempts = 0;
+		auto points = PoissonGenerator::generatePoissonPoints(numSamples * 2, PRNG);
+		while (points.size() < numSamples && ++attempts < 100)
+			auto points = PoissonGenerator::generatePoissonPoints(numSamples * 2, PRNG);
+		if (attempts == 100)
+		{
+			SN_CORE_ERROR("couldn't generate Poisson-disc distribution with {0} samples", numSamples);
+			numSamples = points.size();
+		}
+		std::vector<float> data(numSamples * 2);
+		for (auto i = 0, j = 0; i < numSamples; i++, j += 2)
+		{
+			auto& point = points[i];
+			data[j] = point.x;
+			data[j + 1] = point.y;
+		}
+
+		sampler = Texture1D::Create(numSamples, &data[0]);
+	}
 
 	void SceneRenderer::Initialize()
 	{
@@ -72,17 +95,20 @@ namespace Syndra {
 		s_Data->screenEbo = IndexBuffer::Create(quadIndices, sizeof(quadIndices) / sizeof(uint32_t));
 		s_Data->screenVao->SetIndexBuffer(s_Data->screenEbo);
 		s_Data->CameraUniformBuffer = UniformBuffer::Create(sizeof(CameraData), 0);
-		s_Data->TransformUniformBuffer = UniformBuffer::Create(sizeof(Transform), 1);
 
 		SN_CORE_TRACE("SIZE OF POINT LIGHTS : {0}", sizeof(s_Data->pointLights));
 		SN_CORE_TRACE("SIZE OF SPOT LIGHTS : {0}", sizeof(s_Data->spotLights));
 		SN_CORE_TRACE("SIZE OF DIRECTIONAL LIGHT : {0}", sizeof(s_Data->dirLight));
 		s_Data->exposure = 0.5f;
 		s_Data->gamma = 1.9f;
+		s_Data->lightSize = 0.001f;
 		//Light uniform Buffer layout: -- point lights -- spotlights -- directional light--
 		s_Data->LightsBuffer = UniformBuffer::Create(sizeof(s_Data->pointLights) + sizeof(s_Data->spotLights) + sizeof(s_Data->dirLight), 2);
 		
-		s_Data->lightProj = glm::ortho(-20.0f, 20.0f, -20.0f, 20.0f, 1.0f, 500.0f);
+		GeneratePoissonDisk(s_Data->distributionSampler0, 32);
+		GeneratePoissonDisk(s_Data->distributionSampler1, 32);
+		float dSize = 10.0f;
+		s_Data->lightProj = glm::ortho(-dSize, dSize, -dSize, dSize, 1.0f, 500.0f);
 		s_Data->ShadowBuffer = UniformBuffer::Create(sizeof(glm::mat4), 3);
 	}
 
@@ -141,7 +167,7 @@ namespace Syndra {
 				s_Data->dirLight.direction = glm::vec4(p->GetDirection(),0);
 				s_Data->dirLight.position = glm::vec4(tc.Translation, 0);
 				//shadow
-				s_Data->lightView = glm::lookAt(-(glm::vec3(s_Data->dirLight.direction) * 20.0f), glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+				s_Data->lightView = glm::lookAt(-(glm::vec3(s_Data->dirLight.direction) * 5.0f), glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 				s_Data->shadowData.lightViewProj = s_Data->lightProj * s_Data->lightView;
 				s_Data->ShadowBuffer->SetData(&s_Data->shadowData, sizeof(glm::mat4));
 				p = nullptr;
@@ -196,13 +222,17 @@ namespace Syndra {
 		s_Data->mainFB->Bind();
 		RenderCommand::SetState(RenderState::DEPTH_TEST, true);
 		RenderCommand::Clear();
+
+		s_Data->diffuse->Bind();
+		Texture2D::BindTexture(s_Data->shadowFB->GetDepthAttachmentRendererID(), 3);
+		Texture1D::BindTexture(s_Data->distributionSampler0->GetRendererID(), 4);
+		Texture1D::BindTexture(s_Data->distributionSampler1->GetRendererID(), 5);
+		s_Data->diffuse->SetFloat("push.size", s_Data->lightSize);
 		for (auto ent : view)
 		{
 			auto& tc = view.get<TransformComponent>(ent);
 			auto& mc = view.get<MeshComponent>(ent);
 			if (!mc.path.empty()) {
-				s_Data->TransformBuffer.transform = tc.GetTransform();
-				s_Data->TransformUniformBuffer->SetData(&s_Data->TransformBuffer, sizeof(Transform));
 				s_Data->ShaderBuffer.col = glm::vec4(0.5f);
 				if (scene.m_Registry.has<MaterialComponent>(ent)){
 					auto& mat = scene.m_Registry.get<MaterialComponent>(ent);
@@ -211,7 +241,8 @@ namespace Syndra {
 				else 
 				{
 					s_Data->diffuse->Bind();
-					Texture2D::BindTexture(s_Data->shadowFB->GetDepthAttachmentRendererID(), 3);
+
+					s_Data->diffuse->SetMat4("transform.u_trans", tc.GetTransform());
 					SceneRenderer::RenderEntityColor(ent, tc, mc, s_Data->diffuse);
 				}
 			}
@@ -283,7 +314,7 @@ namespace Syndra {
 		//-------------------------------------------------post-processing pass---------------------------------------------------//
 
 		s_Data->postProcFB->Bind();
-		RenderCommand::Clear();
+		//RenderCommand::Clear();
 		s_Data->screenVao->Bind();
 		RenderCommand::SetState(RenderState::DEPTH_TEST, false);
 		s_Data->aa->Bind();
@@ -325,7 +356,7 @@ namespace Syndra {
 
 		//Gamma
 		ImGui::DragFloat("gamma", &s_Data->gamma, 0.01f, 0, 4);
-
+		ImGui::DragFloat("Size", &s_Data->lightSize,0.0001,0,100);
 		//DepthMap
 		static bool showDepth = false;
 		if (ImGui::Button("depth map"))
@@ -334,12 +365,12 @@ namespace Syndra {
 		}
 		ImGui::End();
 
-		if (showDepth) {
-			ImGui::Begin("Depth map");
-			ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
-			ImGui::Image(reinterpret_cast<void*>(s_Data->shadowFB->GetDepthAttachmentRendererID()), viewportPanelSize);
-			ImGui::End();
-		}
+		//if (showDepth) {
+		//	ImGui::Begin("Depth map");
+		//	ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
+		//	ImGui::Image(reinterpret_cast<void*>(s_Data->shadowFB->GetDepthAttachmentRendererID()), viewportPanelSize);
+		//	ImGui::End();
+		//}
 	}
 
 }

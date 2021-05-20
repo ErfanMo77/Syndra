@@ -26,6 +26,13 @@ namespace Syndra{
 		static void BindTexture(uint32_t rendererID, uint32_t slot);
 	};
 
+	class Texture1D : public Texture
+	{
+	public:
+		static Ref<Texture1D> Create(uint32_t size);
+		static Ref<Texture1D> Create(uint32_t size, void* data);
+	};
+
 	class Texture2D : public Texture
 	{
 	public:

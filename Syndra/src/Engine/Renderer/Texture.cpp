@@ -2,10 +2,9 @@
 #include "Engine/Renderer/Texture.h"
 #include "Engine/Renderer/Renderer.h"
 #include "Platform/OpenGL/OpenGLTexture2D.h"
+#include "Platform/OpenGL/OpenGLTexture1D.h"
 
 namespace Syndra {
-
-
 
 	Ref<Texture2D> Texture2D::Create(uint32_t width, uint32_t height)
 	{
@@ -49,6 +48,24 @@ namespace Syndra {
 		{
 		case RendererAPI::API::NONE:    SN_CORE_ASSERT(false, "RendererAPI::None is currently not supported!");
 		case RendererAPI::API::OpenGL:	OpenGLTexture2D::BindTexture(rendererID,slot);
+		}
+	}
+
+	Ref<Texture1D> Texture1D::Create(uint32_t size)
+	{
+		switch (Renderer::GetAPI())
+		{
+		case RendererAPI::API::NONE:    SN_CORE_ASSERT(false, "RendererAPI::None is currently not supported!"); return nullptr;
+		case RendererAPI::API::OpenGL:  return CreateRef<OpenGLTexture1D>(size);
+		}
+	}
+
+	Ref<Syndra::Texture1D> Texture1D::Create(uint32_t size, void* data)
+	{
+		switch (Renderer::GetAPI())
+		{
+		case RendererAPI::API::NONE:    SN_CORE_ASSERT(false, "RendererAPI::None is currently not supported!"); return nullptr;
+		case RendererAPI::API::OpenGL:  return CreateRef<OpenGLTexture1D>(size,data);
 		}
 	}
 
