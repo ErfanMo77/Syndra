@@ -4,10 +4,11 @@
 namespace Syndra {
 
 	OpenGLTexture1D::OpenGLTexture1D(uint32_t size)
+		:m_Size(size)
 	{
 		glCreateTextures(GL_TEXTURE_1D, 1, &m_RendererID);
 		glBindTexture(GL_TEXTURE_1D, m_RendererID);
-		glTextureStorage1D(m_RendererID, 0, GL_RG, size);
+		glTextureStorage1D(m_RendererID, 1, GL_RG32F, size);
 
 		glTextureParameteri(m_RendererID, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		glTextureParameteri(m_RendererID, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
@@ -17,10 +18,11 @@ namespace Syndra {
 	}
 
 	OpenGLTexture1D::OpenGLTexture1D(uint32_t size, void* data)
+		:m_Size(size)
 	{
 		glCreateTextures(GL_TEXTURE_1D, 1, &m_RendererID);
 		glBindTexture(GL_TEXTURE_1D, m_RendererID);
-		glTextureStorage1D(m_RendererID, 0, GL_RG, size);
+		glTextureStorage1D(m_RendererID, 1, GL_RG32F, size);
 
 		glTextureParameteri(m_RendererID, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		glTextureParameteri(m_RendererID, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);

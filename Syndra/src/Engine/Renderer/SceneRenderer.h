@@ -98,18 +98,19 @@ namespace Syndra {
 			//Light
 			float exposure;
 			float gamma;
+			float lightSize;
 			Transform TransformBuffer;
 			directionalLight dirLight;
 			pointLight pointLights[4];
 			spotLight spotLights[4];
-			Ref<UniformBuffer> CameraUniformBuffer, TransformUniformBuffer, LightsBuffer, ShadowBuffer;
+			Ref<UniformBuffer> CameraUniformBuffer, LightsBuffer, ShadowBuffer;
 			//Shadow
 			Ref<FrameBuffer> shadowFB;
 			glm::mat4 lightProj;
 			glm::mat4 lightView;
 			ShadowData shadowData;
 			//Poisson
-			Ref<Texture1D> distributionSampler;
+			Ref<Texture1D> distributionSampler0, distributionSampler1;
 			//shaders
 			ShaderLibrary shaders;
 			Ref<Shader> diffuse,outline,mouseShader,aa, main, depth;

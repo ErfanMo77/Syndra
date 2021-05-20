@@ -26,7 +26,6 @@ namespace Syndra {
 	private:
 		uint32_t m_Size;
 		uint32_t m_RendererID;
-		GLenum m_InternalFormat, m_DataFormat;
 	};
 
 }
