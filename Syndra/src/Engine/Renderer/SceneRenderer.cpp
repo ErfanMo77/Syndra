@@ -5,6 +5,7 @@
 #include "Engine/Renderer/SceneRenderer.h"
 #include "Engine/Scene/Entity.h"
 #include "Engine/Scene/Scene.h"
+#include "Engine/Utils/PoissonGenerator.h"
 #include <glad/glad.h>
 
 namespace Syndra {
@@ -82,7 +83,27 @@ namespace Syndra {
 		//Light uniform Buffer layout: -- point lights -- spotlights -- directional light--
 		s_Data->LightsBuffer = UniformBuffer::Create(sizeof(s_Data->pointLights) + sizeof(s_Data->spotLights) + sizeof(s_Data->dirLight), 2);
 		
-		s_Data->lightProj = glm::ortho(-20.0f, 20.0f, -20.0f, 20.0f, 1.0f, 500.0f);
+		PoissonGenerator::DefaultPRNG PRNG;
+		size_t numSamples = 64;
+		size_t attempts = 0;
+		auto points = PoissonGenerator::generatePoissonPoints(numSamples * 2, PRNG);
+		while (points.size() < numSamples && ++attempts < 100)
+			auto points = PoissonGenerator::generatePoissonPoints(numSamples * 2, PRNG);
+		if (attempts == 100)
+		{
+			SN_CORE_ERROR("couldn't generate Poisson-disc distribution with {0} samples", numSamples);
+			numSamples = points.size();
+		}
+		std::vector<float> data(numSamples*2);
+		for (auto i = 0, j = 0; i < numSamples; i++, j += 2)
+		{
+			auto& point = points[i];
+			data[j] = point.x;
+			data[j + 1] = point.y;
+		}
+		s_Data->distributionSampler = Texture1D::Create(numSamples, &data[0]);
+
+		s_Data->lightProj = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, 1.0f, 500.0f);
 		s_Data->ShadowBuffer = UniformBuffer::Create(sizeof(glm::mat4), 3);
 	}
 

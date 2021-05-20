@@ -108,6 +108,8 @@ namespace Syndra {
 			glm::mat4 lightProj;
 			glm::mat4 lightView;
 			ShadowData shadowData;
+			//Poisson
+			Ref<Texture1D> distributionSampler;
 			//shaders
 			ShaderLibrary shaders;
 			Ref<Shader> diffuse,outline,mouseShader,aa, main, depth;
