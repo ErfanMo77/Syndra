@@ -39,6 +39,9 @@ namespace Syndra {
 		virtual std::vector<PushConstant> GetPushConstants() override { return m_PushConstants; };
 		virtual std::vector<Sampler> GetSamplers() override { return m_Samplers; };
 
+
+		virtual void Reload() override;
+
 	private:
 		std::string ReadFile(const std::string& filepath);
 		std::unordered_map<GLenum, std::string> PreProcess(const std::string& source);

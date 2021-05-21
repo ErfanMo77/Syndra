@@ -101,12 +101,12 @@ namespace Syndra {
 		SN_CORE_TRACE("SIZE OF DIRECTIONAL LIGHT : {0}", sizeof(s_Data->dirLight));
 		s_Data->exposure = 0.5f;
 		s_Data->gamma = 1.9f;
-		s_Data->lightSize = 0.001f;
+		s_Data->lightSize = 0.002f;
 		//Light uniform Buffer layout: -- point lights -- spotlights -- directional light--
 		s_Data->LightsBuffer = UniformBuffer::Create(sizeof(s_Data->pointLights) + sizeof(s_Data->spotLights) + sizeof(s_Data->dirLight), 2);
 		
-		GeneratePoissonDisk(s_Data->distributionSampler0, 32);
-		GeneratePoissonDisk(s_Data->distributionSampler1, 32);
+		GeneratePoissonDisk(s_Data->distributionSampler0, 64);
+		GeneratePoissonDisk(s_Data->distributionSampler1, 64);
 		float dSize = 10.0f;
 		s_Data->lightProj = glm::ortho(-dSize, dSize, -dSize, dSize, 1.0f, 500.0f);
 		s_Data->ShadowBuffer = UniformBuffer::Create(sizeof(glm::mat4), 3);
@@ -228,6 +228,9 @@ namespace Syndra {
 		Texture1D::BindTexture(s_Data->distributionSampler0->GetRendererID(), 4);
 		Texture1D::BindTexture(s_Data->distributionSampler1->GetRendererID(), 5);
 		s_Data->diffuse->SetFloat("push.size", s_Data->lightSize);
+		s_Data->diffuse->SetInt("push.numPCFSamples", s_Data->numPCF);
+		s_Data->diffuse->SetInt("push.numBlockerSearchSamples", s_Data->numBlocker);
+		s_Data->diffuse->SetInt("push.softShadow", (int)s_Data->softShadow);
 		for (auto ent : view)
 		{
 			auto& tc = view.get<TransformComponent>(ent);
@@ -331,8 +334,7 @@ namespace Syndra {
 
 	void SceneRenderer::Reload()
 	{
-		s_Data->shaders.DeleteShader(s_Data->diffuse);
-		s_Data->diffuse = s_Data->shaders.Load("assets/shaders/diffuse.glsl");
+		s_Data->diffuse->Reload();
 	}
 
 	void SceneRenderer::OnViewPortResize(uint32_t width, uint32_t height)
@@ -357,6 +359,13 @@ namespace Syndra {
 		//Gamma
 		ImGui::DragFloat("gamma", &s_Data->gamma, 0.01f, 0, 4);
 		ImGui::DragFloat("Size", &s_Data->lightSize,0.0001,0,100);
+
+
+		//shadow
+		ImGui::Checkbox("Soft Shadow", &s_Data->softShadow);
+		ImGui::DragFloat("PCF samples", &s_Data->numPCF,1,1,64);
+		ImGui::DragFloat("blocker samples", &s_Data->numBlocker,1,1,64);
+
 		//DepthMap
 		static bool showDepth = false;
 		if (ImGui::Button("depth map"))

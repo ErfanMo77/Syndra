@@ -1,8 +1,8 @@
 Scene: shadow
 Camera:
-  Yaw: 3.06239891
-  Pitch: 0.71039933
-  distance: 8.19493103
+  Yaw: -0.751198888
+  Pitch: 0.643199265
+  distance: 13.863801
   FOV: 45
   Near: 0.100000001
   Far: 1000
@@ -27,7 +27,7 @@ Entities:
       Path: \assets\Models\cube\cube.obj
   - Entity: 2
     TagComponent:
-      Tag: Entity
+      Tag: Dirlight
     TransformComponent:
       Translation: [-1.79824376, 0, 0]
       Rotation: [0, 0, 0]
@@ -36,13 +36,22 @@ Entities:
       Type: Directional
       Color: [1, 1, 1]
       Intensity: 1
-      Direction: [-6.28299999, -6.28299999, -0.103]
+      Direction: [-4.88700008, -6.28299999, 2.74900007]
   - Entity: 3
     TagComponent:
       Tag: Entity
     TransformComponent:
-      Translation: [-0.199248672, 0, 0]
-      Rotation: [0, 0, 0]
+      Translation: [-0.199248672, -0.470879436, 0]
+      Rotation: [-0.0899822861, 0, 0]
       Scale: [1, 1, 1]
     MeshComponent:
       Path: \assets\Models\cube\cube.obj
+  - Entity: 4
+    TagComponent:
+      Tag: Entity
+    TransformComponent:
+      Translation: [1.43394446, 0.364735276, 2.06201768]
+      Rotation: [2.17234408e-09, -0.0834946632, -2.72890315e-08]
+      Scale: [0.0386224464, 0.0386224575, 0.0386224464]
+    MeshComponent:
+      Path: D:\Bridge stuff\Downloaded\3d\container_barrel_udlmcdhqx\udlmcdhqx_LOD0.fbx
