@@ -34,7 +34,7 @@ namespace Syndra {
 		fbSpec.Attachments = { FramebufferTextureFormat::RGBA8 , FramebufferTextureFormat::DEPTH24STENCIL8 };
 		fbSpec.Width = 1280;
 		fbSpec.Height = 720;
-		fbSpec.Samples = 4;
+		fbSpec.Samples =1;
 
 		m_ViewportSize = { fbSpec.Width,fbSpec.Height };
 		RenderCommand::Init();

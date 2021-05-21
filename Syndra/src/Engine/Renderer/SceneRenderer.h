@@ -105,6 +105,9 @@ namespace Syndra {
 			spotLight spotLights[4];
 			Ref<UniformBuffer> CameraUniformBuffer, LightsBuffer, ShadowBuffer;
 			//Shadow
+			bool softShadow = false;
+			float numPCF=8;
+			float numBlocker=3;
 			Ref<FrameBuffer> shadowFB;
 			glm::mat4 lightProj;
 			glm::mat4 lightView;
