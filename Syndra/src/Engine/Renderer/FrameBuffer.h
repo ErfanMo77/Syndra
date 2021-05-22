@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Engine/Core/Core.h"
+#include "glm/glm.hpp"
 
 namespace Syndra {
 
@@ -45,6 +46,7 @@ namespace Syndra {
 		uint32_t Width = 0, Height = 0;
 		FramebufferAttachmentSpecification Attachments;
 		uint32_t Samples = 1;
+		glm::vec4 ClearColor;
 
 		bool SwapChainTarget = false;
 	};
