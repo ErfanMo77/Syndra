@@ -4,6 +4,7 @@
 #include "Engine/Renderer/Renderer.h"
 #include "Engine/Renderer/FrameBuffer.h"
 #include "Engine/Renderer/UniformBuffer.h"
+#include "Engine/Renderer/RenderPass.h"
 #include "entt.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
@@ -20,7 +21,7 @@ namespace Syndra {
 		static void Initialize();
 
 		static void BeginScene(const PerspectiveCamera& camera);
-
+		static void UpdateLights(Scene& scene);
 		static void RenderScene(Scene& scene);
 
 		static void RenderEntityColor(const entt::entity& entity, TransformComponent& tc, MeshComponent& mc, const Ref<Shader>& shader);
@@ -36,15 +37,14 @@ namespace Syndra {
 
 		static void OnImGuiUpdate();
 
-		static uint32_t GetTextureID(int index) { return s_Data->postProcFB->GetColorAttachmentRendererID(index); }
+		static uint32_t GetTextureID(int index);
 
-		static Ref<FrameBuffer> GetMouseFrameBuffer() { return s_Data->mouseFB; }
+		static FramebufferSpecification GetMainFrameSpec();
 
-		static FramebufferSpecification GetMainFrameSpec() { return s_Data->mainFB->GetSpecification(); }
+		static ShaderLibrary& GetShaderLibrary();
+	
 
-		static ShaderLibrary& GetShaderLibrary() { return s_Data->shaders; }
-
-	private:
+	public:
 
 		struct CameraData
 		{
@@ -90,6 +90,12 @@ namespace Syndra {
 		struct ShadowData {
 			glm::mat4 lightViewProj;
 		};
+		
+		struct DrawCall {
+			entt::entity id;
+			TransformComponent tc;
+			MeshComponent mc;
+		};
 
 		struct SceneData
 		{
@@ -99,7 +105,6 @@ namespace Syndra {
 			float exposure;
 			float gamma;
 			float lightSize;
-			Transform TransformBuffer;
 			directionalLight dirLight;
 			pointLight pointLights[4];
 			spotLight spotLights[4];
@@ -108,7 +113,6 @@ namespace Syndra {
 			bool softShadow = false;
 			float numPCF=8;
 			float numBlocker=3;
-			Ref<FrameBuffer> shadowFB;
 			glm::mat4 lightProj;
 			glm::mat4 lightView;
 			ShadowData shadowData;
@@ -118,16 +122,13 @@ namespace Syndra {
 			ShaderLibrary shaders;
 			Ref<Shader> diffuse,outline,mouseShader,aa, main, depth;
 			//FrameBuffers
-			Ref<FrameBuffer> mainFB, mouseFB, postProcFB;
+			Ref<RenderPass> mainPass, shadowPass, aaPass;
 			//Scene quad VBO, VAO, EBO
 			Ref<VertexArray> screenVao;
 			Ref<VertexBuffer> screenVbo;
 			Ref<IndexBuffer> screenEbo;
-			//Clear color
-			glm::vec3 clearColor;
 		};
 
-		static SceneData* s_Data;
 	};
 
 }
