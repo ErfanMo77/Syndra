@@ -1,0 +1,18 @@
+Scene: sponzaOBJ
+Camera:
+  Yaw: -1.78560054
+  Pitch: 0.158400312
+  distance: 394.92569
+  FOV: 45
+  Near: 0.100000001
+  Far: 1000
+Entities:
+  - Entity: 0
+    TagComponent:
+      Tag: Sponza
+    TransformComponent:
+      Translation: [0, 0, 0]
+      Rotation: [0, 0, 0]
+      Scale: [0.300000012, 0.300000012, 0.300000012]
+    MeshComponent:
+      Path: C:\Users\MSI\source\repos\OpenGL\OpenGL\Models\Sponza\sponza.obj

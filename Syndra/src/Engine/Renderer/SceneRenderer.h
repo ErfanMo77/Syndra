@@ -15,7 +15,7 @@ namespace Syndra {
 	class Entity;
 	class Scene;
 
-	class SceneRenderer 
+	class SceneRenderer
 	{
 	public:
 		static void Initialize();
@@ -26,8 +26,6 @@ namespace Syndra {
 
 		static void RenderEntityColor(const entt::entity& entity, TransformComponent& tc, MeshComponent& mc, const Ref<Shader>& shader);
 		static void RenderEntityColor(const entt::entity& entity, TransformComponent& tc, MeshComponent& mc, MaterialComponent& mat);
-
-		static void RenderEntityID(const entt::entity& entity, TransformComponent& tc, MeshComponent& mc);
 
 		static void EndScene();
 
@@ -42,7 +40,7 @@ namespace Syndra {
 		static FramebufferSpecification GetMainFrameSpec();
 
 		static ShaderLibrary& GetShaderLibrary();
-	
+
 
 	public:
 
@@ -52,12 +50,6 @@ namespace Syndra {
 			glm::vec4 position;
 		};
 
-		struct Transform
-		{
-			glm::mat4 transform;
-			glm::vec4 lightPos;
-		};
-
 		struct pointLight
 		{
 			glm::vec4 position;
@@ -65,7 +57,7 @@ namespace Syndra {
 			float dist;
 			glm::vec3 dummy;
 		};
-		
+
 		struct spotLight {
 			glm::vec4 position;
 			glm::vec4 color;
@@ -82,15 +74,10 @@ namespace Syndra {
 			glm::vec4 color;
 		};
 
-		struct ShaderData
-		{
-			glm::vec4 col;
-		};
-
 		struct ShadowData {
 			glm::mat4 lightViewProj;
 		};
-		
+
 		struct DrawCall {
 			entt::entity id;
 			TransformComponent tc;
@@ -100,7 +87,6 @@ namespace Syndra {
 		struct SceneData
 		{
 			CameraData CameraBuffer;
-			ShaderData ShaderBuffer;
 			//Light
 			float exposure;
 			float gamma;
@@ -111,8 +97,8 @@ namespace Syndra {
 			Ref<UniformBuffer> CameraUniformBuffer, LightsBuffer, ShadowBuffer;
 			//Shadow
 			bool softShadow = false;
-			float numPCF=8;
-			float numBlocker=3;
+			float numPCF = 8;
+			float numBlocker = 3;
 			glm::mat4 lightProj;
 			glm::mat4 lightView;
 			ShadowData shadowData;
@@ -120,9 +106,10 @@ namespace Syndra {
 			Ref<Texture1D> distributionSampler0, distributionSampler1;
 			//shaders
 			ShaderLibrary shaders;
-			Ref<Shader> diffuse,outline,mouseShader,aa, main, depth;
+			Ref<Shader> diffuse, geoShader, outline, mouseShader, aa, main, depth;
 			//FrameBuffers
-			Ref<RenderPass> mainPass, shadowPass, aaPass;
+			int textureRenderSlot=2;
+			Ref<RenderPass> geoPass, mainPass, shadowPass, aaPass;
 			//Scene quad VBO, VAO, EBO
 			Ref<VertexArray> screenVao;
 			Ref<VertexBuffer> screenVbo;
