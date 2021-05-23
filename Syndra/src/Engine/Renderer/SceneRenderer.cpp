@@ -49,7 +49,7 @@ namespace Syndra {
 		GeoFbSpec.Width = 1280;
 		GeoFbSpec.Height = 720;
 		GeoFbSpec.Samples = 1;
-		GeoFbSpec.ClearColor = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+		GeoFbSpec.ClearColor = glm::vec4(0.196f, 0.196f, 0.196f, 1.0f);
 
 		RenderPassSpecification GeoPassSpec;
 		GeoPassSpec.TargetFrameBuffer = FrameBuffer::Create(GeoFbSpec);
@@ -242,7 +242,7 @@ namespace Syndra {
 	void SceneRenderer::RenderScene(Scene& scene)
 	{
 
-		UpdateLights(scene);
+		//UpdateLights(scene);
 
 
 		auto view = scene.m_Registry.view<TransformComponent, MeshComponent>();
@@ -335,7 +335,7 @@ namespace Syndra {
 		s_Data.aa->Bind();
 		s_Data.aa->SetFloat("pc.exposure", s_Data.exposure);
 		s_Data.aa->SetFloat("pc.gamma", s_Data.gamma);
-		Texture2D::BindTexture(s_Data.geoPass->GetFrameBufferTextureID(2), 0);
+		Texture2D::BindTexture(s_Data.geoPass->GetFrameBufferTextureID(s_Data.textureRenderSlot), 0);
 		Renderer::Submit(s_Data.aa, s_Data.screenVao);
 
 		s_Data.aa->Unbind();
@@ -361,6 +361,20 @@ namespace Syndra {
 	{
 		ImGui::Begin("Renderer settings");
 
+		ImGui::Text("Geometry pass debugger");
+		if (ImGui::Button("Albedo")) {
+			s_Data.textureRenderSlot = 2;
+		}
+		ImGui::SameLine();
+		if (ImGui::Button("Normal")) {
+			s_Data.textureRenderSlot = 1;
+		}
+		ImGui::SameLine();
+		if (ImGui::Button("Position")) {
+			s_Data.textureRenderSlot = 0;
+		}
+
+		ImGui::NewLine();
 		//V-Sync
 		static bool vSync = true;
 		ImGui::Checkbox("V-Sync", &vSync);

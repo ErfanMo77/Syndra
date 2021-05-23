@@ -40,6 +40,8 @@ void main()
 	T = normalize(T - dot(T, N) * N);
     vec3 B = cross(N, T);
 
+	vs_out.v_normal = N;
+
 	vs_out.TBN = mat3(T, B, N);
 
 	vs_out.v_uv = a_uv;
@@ -78,7 +80,9 @@ void main()
 
 	vec3 normal = texture(NormalMap, fs_in.v_uv).rgb;
 	normal = normalize(normal * 2.0 - 1.0);
-	normal = normalize(fs_in.TBN * normal); 
+	normal = normalize(fs_in.TBN * normal);
+	
+	normal = fs_in.v_normal;
 	
 
 	gNormal = normal; 
