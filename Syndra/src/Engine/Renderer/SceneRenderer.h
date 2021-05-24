@@ -109,7 +109,7 @@ namespace Syndra {
 			Ref<Shader> diffuse, geoShader, outline, mouseShader, aa, main, depth, deferredLighting;
 			//FrameBuffers
 			int textureRenderSlot=2;
-			Ref<RenderPass> geoPass, mainPass, shadowPass, aaPass;
+			Ref<RenderPass> geoPass, shadowPass, lightingPass;
 			//Scene quad VBO, VAO, EBO
 			Ref<VertexArray> screenVao;
 			Ref<VertexBuffer> screenVbo;
