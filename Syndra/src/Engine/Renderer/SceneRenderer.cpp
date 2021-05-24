@@ -55,19 +55,7 @@ namespace Syndra {
 		GeoPassSpec.TargetFrameBuffer = FrameBuffer::Create(GeoFbSpec);
 		s_Data.geoPass = RenderPass::Create(GeoPassSpec);
 
-		//------------------------------------------------Main Render Pass----------------------------------------//
-		FramebufferSpecification mainFbSpec;
-		mainFbSpec.Attachments = { FramebufferTextureFormat::RGBA16F , FramebufferTextureFormat::DEPTH24STENCIL8 };
-		mainFbSpec.Width = 1280;
-		mainFbSpec.Height = 720;
-		mainFbSpec.Samples = 4;
-		mainFbSpec.ClearColor = glm::vec4(0.196f, 0.196f, 0.196f, 1.0f);
-
-		RenderPassSpecification mainPassSpec;
-		mainPassSpec.TargetFrameBuffer = FrameBuffer::Create(mainFbSpec);
-		s_Data.mainPass = RenderPass::Create(mainPassSpec);
-
-		//-----------------------------------------------Post Processing Pass-------------------------------------//
+		//-------------------------------------------Lighting and Post Processing Pass---------------------------//
 		FramebufferSpecification postProcFB;
 		postProcFB.Attachments = { FramebufferTextureFormat::RGBA8 , FramebufferTextureFormat::DEPTH24STENCIL8 };
 		postProcFB.Width = 1280;
@@ -77,7 +65,7 @@ namespace Syndra {
 
 		RenderPassSpecification finalPassSpec;
 		finalPassSpec.TargetFrameBuffer = FrameBuffer::Create(postProcFB);
-		s_Data.aaPass = RenderPass::Create(finalPassSpec);
+		s_Data.lightingPass = RenderPass::Create(finalPassSpec);
 		
 		//-----------------------------------------------Shadow Pass---------------------------------------------//
 		FramebufferSpecification shadowSpec;
@@ -85,7 +73,7 @@ namespace Syndra {
 		shadowSpec.Width = 2048;
 		shadowSpec.Height = 2048;
 		shadowSpec.Samples = 1;
-		shadowSpec.ClearColor = {1.0f, 1.0f, 1.0f, 1.0f};
+		shadowSpec.ClearColor = {0.0f, 0.0f, 0.0f, 1.0f};
 
 		RenderPassSpecification shadowPassSpec;
 		shadowPassSpec.TargetFrameBuffer = FrameBuffer::Create(shadowSpec);
@@ -95,20 +83,23 @@ namespace Syndra {
 		if (!s_Data.aa) {
 			s_Data.shaders.Load("assets/shaders/diffuse.glsl");
 			s_Data.shaders.Load("assets/shaders/main.glsl");
+			s_Data.shaders.Load("assets/shaders/DeferredLighting.glsl");
+			s_Data.shaders.Load("assets/shaders/GeometryPass.glsl");
 			//s_Data.shaders.Load("assets/shaders/mouse.glsl");
 			//s_Data.shaders.Load("assets/shaders/outline.glsl");
 		}
 		s_Data.aa = Shader::Create("assets/shaders/aa.glsl");
 		s_Data.depth = Shader::Create("assets/shaders/depth.glsl");
-		s_Data.geoShader = Shader::Create("assets/shaders/GeometryPass.glsl");
+		s_Data.geoShader = s_Data.shaders.Get("GeometryPass");
 
 		s_Data.diffuse = s_Data.shaders.Get("diffuse");
 		s_Data.main = s_Data.shaders.Get("main");
+		s_Data.deferredLighting = s_Data.shaders.Get("DeferredLighting");
 
 		//s_Data.mouseShader = s_Data.shaders.Get("mouse");
 		//s_Data.outline = s_Data.shaders.Get("outline");
 
-
+		//----------------------------------------------SCREEN QUAD---------------------------------------------//
 		s_Data.screenVao = VertexArray::Create();
 		float quad[] = {
 			 1.0f,  1.0f, 0.0f,    1.0f, 1.0f,   // top right
@@ -180,8 +171,6 @@ namespace Syndra {
 		s_Data.dirLight.direction = glm::vec4(0);
 
 		Renderer::BeginScene(camera);
-		s_Data.mainPass->GetSpecification().TargetFrameBuffer->Bind();
-		RenderCommand::Clear();
 	}
 
 	void SceneRenderer::UpdateLights(Scene& scene) 
@@ -242,11 +231,10 @@ namespace Syndra {
 	void SceneRenderer::RenderScene(Scene& scene)
 	{
 
-		//UpdateLights(scene);
-
+		UpdateLights(scene);
 
 		auto view = scene.m_Registry.view<TransformComponent, MeshComponent>();
-		//shadow pass
+		//---------------------------------------------------------SHADOW PASS------------------------------------------//
 		s_Data.shadowPass->BindTargetFrameBuffer();
 		RenderCommand::SetState(RenderState::DEPTH_TEST, true);
 		RenderCommand::SetClearColor(s_Data.shadowPass->GetSpecification().TargetFrameBuffer->GetSpecification().ClearColor);
@@ -256,14 +244,15 @@ namespace Syndra {
 		{
 			auto& tc = view.get<TransformComponent>(ent);
 			auto& mc = view.get<MeshComponent>(ent);
-			if (!mc.path.empty()) {
+			if (!mc.path.empty()) 
+			{
 				s_Data.depth->SetMat4("transform.u_trans", tc.GetTransform());
 				SceneRenderer::RenderEntityColor(ent, tc, mc, s_Data.depth);
 			}
 		}
 		s_Data.shadowPass->UnbindTargetFrameBuffer();
 
-
+		//--------------------------------------------------GEOMETRY PASS----------------------------------------------//
 		s_Data.geoPass->BindTargetFrameBuffer();
 		RenderCommand::SetState(RenderState::DEPTH_TEST, true);
 		RenderCommand::SetClearColor(s_Data.geoPass->GetSpecification().TargetFrameBuffer->GetSpecification().ClearColor);
@@ -273,47 +262,25 @@ namespace Syndra {
 		{
 			auto& tc = view.get<TransformComponent>(ent);
 			auto& mc = view.get<MeshComponent>(ent);
-			if (!mc.path.empty()) {
-				s_Data.geoShader->SetMat4("transform.u_trans", tc.GetTransform());
-				SceneRenderer::RenderEntityColor(ent, tc, mc, s_Data.geoShader);
+			if (!mc.path.empty()) 
+			{
+				if (scene.m_Registry.has<MaterialComponent>(ent)) {
+					auto& mat = scene.m_Registry.get<MaterialComponent>(ent);
+					SceneRenderer::RenderEntityColor(ent, tc, mc, mat);
+				}
+				else
+				{
+					s_Data.geoShader->SetMat4("transform.u_trans", tc.GetTransform());
+					SceneRenderer::RenderEntityColor(ent, tc, mc, s_Data.geoShader);
+				}
 			}
 		}
 		s_Data.geoShader->Unbind();
 		s_Data.geoPass->UnbindTargetFrameBuffer();
-
-		//color pass
-		//s_Data.mainPass->BindTargetFrameBuffer();
-		//RenderCommand::SetState(RenderState::DEPTH_TEST, true);
-		//RenderCommand::Clear();
-
-		//s_Data.diffuse->Bind();
-		//Texture2D::BindTexture(s_Data.shadowPass->GetSpecification().TargetFrameBuffer->GetDepthAttachmentRendererID(), 3);
-		//s_Data.diffuse->SetFloat("push.size", s_Data.lightSize);
-		//s_Data.diffuse->SetInt("push.numPCFSamples", s_Data.numPCF);
-		//s_Data.diffuse->SetInt("push.numBlockerSearchSamples", s_Data.numBlocker);
-		//s_Data.diffuse->SetInt("push.softShadow", (int)s_Data.softShadow);
-		//for (auto ent : view)
-		//{
-		//	auto& tc = view.get<TransformComponent>(ent);
-		//	auto& mc = view.get<MeshComponent>(ent);
-		//	if (!mc.path.empty()) {
-		//		if (scene.m_Registry.has<MaterialComponent>(ent)){
-		//			auto& mat = scene.m_Registry.get<MaterialComponent>(ent);
-		//			SceneRenderer::RenderEntityColor(ent, tc, mc, mat);
-		//		}
-		//		else 
-		//		{
-		//			s_Data.diffuse->SetMat4("transform.u_trans", tc.GetTransform());
-		//			SceneRenderer::RenderEntityColor(ent, tc, mc, s_Data.diffuse);
-		//		}
-		//	}
-		//}
-		//s_Data.mainPass->UnbindTargetFrameBuffer();
 	}
 
 	void SceneRenderer::RenderEntityColor(const entt::entity& entity, TransformComponent& tc, MeshComponent& mc,const Ref<Shader>& shader)
 	{
-		//--------------------------------------------------color and outline pass------------------------------------------------//
 		RenderCommand::SetState(RenderState::CULL, false);
 		Renderer::Submit(shader, mc.model);
 		RenderCommand::SetState(RenderState::CULL, true);
@@ -326,20 +293,34 @@ namespace Syndra {
 
 	void SceneRenderer::EndScene()
 	{
-		//-------------------------------------------------post-processing pass---------------------------------------------------//
+		//-------------------------------------------------Lighting and post-processing pass---------------------------------------------------//
 
-		s_Data.aaPass->BindTargetFrameBuffer();
-		//RenderCommand::Clear();
+		s_Data.lightingPass->BindTargetFrameBuffer();
 		s_Data.screenVao->Bind();
 		RenderCommand::SetState(RenderState::DEPTH_TEST, false);
-		s_Data.aa->Bind();
-		s_Data.aa->SetFloat("pc.exposure", s_Data.exposure);
-		s_Data.aa->SetFloat("pc.gamma", s_Data.gamma);
-		Texture2D::BindTexture(s_Data.geoPass->GetFrameBufferTextureID(s_Data.textureRenderSlot), 0);
-		Renderer::Submit(s_Data.aa, s_Data.screenVao);
 
-		s_Data.aa->Unbind();
-		s_Data.aaPass->UnbindTargetFrameBuffer();
+		s_Data.deferredLighting->Bind();
+		//shadow map samplers
+		Texture2D::BindTexture(s_Data.shadowPass->GetSpecification().TargetFrameBuffer->GetDepthAttachmentRendererID(), 3);
+		Texture1D::BindTexture(s_Data.distributionSampler0->GetRendererID(), 4);
+		Texture1D::BindTexture(s_Data.distributionSampler1->GetRendererID(), 5);
+
+		//Push constant variables
+		s_Data.deferredLighting->SetFloat("pc.size", s_Data.lightSize);
+		s_Data.deferredLighting->SetInt("pc.numPCFSamples", s_Data.numPCF);
+		s_Data.deferredLighting->SetInt("pc.numBlockerSearchSamples", s_Data.numBlocker);
+		s_Data.deferredLighting->SetInt("pc.softShadow", (int)s_Data.softShadow);
+		s_Data.deferredLighting->SetFloat("pc.exposure", s_Data.exposure);
+		s_Data.deferredLighting->SetFloat("pc.gamma", s_Data.gamma);
+		//GBuffer samplers
+		Texture2D::BindTexture(s_Data.geoPass->GetFrameBufferTextureID(0), 0);
+		Texture2D::BindTexture(s_Data.geoPass->GetFrameBufferTextureID(1), 1);
+		Texture2D::BindTexture(s_Data.geoPass->GetFrameBufferTextureID(2), 2);
+
+		Renderer::Submit(s_Data.deferredLighting, s_Data.screenVao);
+
+		s_Data.deferredLighting->Unbind();
+		s_Data.lightingPass->UnbindTargetFrameBuffer();
 		
 		Renderer::EndScene();
 	}
@@ -351,9 +332,8 @@ namespace Syndra {
 
 	void SceneRenderer::OnViewPortResize(uint32_t width, uint32_t height)
 	{
-		s_Data.mainPass->GetSpecification().TargetFrameBuffer->Resize(width, height);
 		s_Data.geoPass->GetSpecification().TargetFrameBuffer->Resize(width, height);
-		s_Data.aaPass->GetSpecification().TargetFrameBuffer->Resize(width, height);
+		s_Data.lightingPass->GetSpecification().TargetFrameBuffer->Resize(width, height);
 		//s_Data.mouseFB->Resize(width, height);
 	}
 
@@ -387,31 +367,17 @@ namespace Syndra {
 		ImGui::DragFloat("gamma", &s_Data.gamma, 0.01f, 0, 4);
 		ImGui::DragFloat("Size", &s_Data.lightSize,0.0001,0,100);
 
-
 		//shadow
 		ImGui::Checkbox("Soft Shadow", &s_Data.softShadow);
 		ImGui::DragFloat("PCF samples", &s_Data.numPCF,1,1,64);
 		ImGui::DragFloat("blocker samples", &s_Data.numBlocker,1,1,64);
 
-		//DepthMap
-		static bool showDepth = false;
-		if (ImGui::Button("depth map"))
-		{
-			showDepth = !showDepth;
-		}
 		ImGui::End();
-
-		//if (showDepth) {
-		//	ImGui::Begin("Depth map");
-		//	ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
-		//	ImGui::Image(reinterpret_cast<void*>(s_Data.shadowFB->GetDepthAttachmentRendererID()), viewportPanelSize);
-		//	ImGui::End();
-		//}
 	}
 
 	uint32_t SceneRenderer::GetTextureID(int index)
 	{
-		return s_Data.aaPass->GetSpecification().TargetFrameBuffer->GetColorAttachmentRendererID(index);
+		return s_Data.lightingPass->GetSpecification().TargetFrameBuffer->GetColorAttachmentRendererID(index);
 	}
 
 	Syndra::FramebufferSpecification SceneRenderer::GetMainFrameSpec()

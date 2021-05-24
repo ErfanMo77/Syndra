@@ -83,8 +83,6 @@ void main()
 	normal = normalize(fs_in.TBN * normal);
 	
 	normal = fs_in.v_normal;
-	
 
 	gNormal = normal; 
-
 }
