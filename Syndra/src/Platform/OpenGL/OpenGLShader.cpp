@@ -240,7 +240,9 @@ namespace Syndra {
 			glsl.set_common_options(options);
 
 			m_OpenGLSourceCode[stage] = glsl.compile();
+			//SN_CORE_TRACE(m_OpenGLSourceCode[stage]);
 		}
+		
 		Compile(m_OpenGLSourceCode);
 	}
 
