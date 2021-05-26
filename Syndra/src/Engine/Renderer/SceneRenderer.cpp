@@ -139,6 +139,7 @@ namespace Syndra {
 		Texture1D::BindTexture(s_Data.distributionSampler1->GetRendererID(), 5);
 		s_Data.diffuse->Unbind();
 
+
 		float dSize = 10.0f;
 		s_Data.lightProj = glm::ortho(-dSize, dSize, -dSize, dSize, 1.0f, 500.0f);
 		s_Data.ShadowBuffer = UniformBuffer::Create(sizeof(glm::mat4), 3);
@@ -281,9 +282,9 @@ namespace Syndra {
 
 	void SceneRenderer::RenderEntityColor(const entt::entity& entity, TransformComponent& tc, MeshComponent& mc,const Ref<Shader>& shader)
 	{
-		RenderCommand::SetState(RenderState::CULL, false);
+		//RenderCommand::SetState(RenderState::CULL, false);
 		Renderer::Submit(shader, mc.model);
-		RenderCommand::SetState(RenderState::CULL, true);
+		//RenderCommand::SetState(RenderState::CULL, true);
 	}
 
 	void SceneRenderer::RenderEntityColor(const entt::entity& entity, TransformComponent& tc, MeshComponent& mc, MaterialComponent& mat)
@@ -342,16 +343,39 @@ namespace Syndra {
 		ImGui::Begin("Renderer settings");
 
 		ImGui::Text("Geometry pass debugger");
+		static bool showAlbedo = false;
+		static bool showNormal = false;
+		static bool showPosition = false;
 		if (ImGui::Button("Albedo")) {
-			s_Data.textureRenderSlot = 2;
+			showAlbedo = !showAlbedo;
 		}
 		ImGui::SameLine();
 		if (ImGui::Button("Normal")) {
-			s_Data.textureRenderSlot = 1;
+			showNormal = !showNormal;
 		}
 		ImGui::SameLine();
 		if (ImGui::Button("Position")) {
-			s_Data.textureRenderSlot = 0;
+			showPosition = !showPosition;
+		}
+		auto width = s_Data.geoPass->GetSpecification().TargetFrameBuffer->GetSpecification().Width * 0.5f;
+		auto height = s_Data.geoPass->GetSpecification().TargetFrameBuffer->GetSpecification().Height * 0.5f;
+		ImVec2 frameSize = ImVec2{ width,height };
+		if (showAlbedo) {
+			ImGui::Begin("Albedo");
+			ImGui::Image(reinterpret_cast<void*>(s_Data.geoPass->GetFrameBufferTextureID(2)), frameSize, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
+			ImGui::End();
+		}
+
+		if (showNormal) {
+			ImGui::Begin("Normal");
+			ImGui::Image(reinterpret_cast<void*>(s_Data.geoPass->GetFrameBufferTextureID(1)), frameSize, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
+			ImGui::End();
+		}
+
+		if (showPosition) {
+			ImGui::Begin("Position");
+			ImGui::Image(reinterpret_cast<void*>(s_Data.geoPass->GetFrameBufferTextureID(0)), frameSize, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
+			ImGui::End();
 		}
 
 		ImGui::NewLine();
