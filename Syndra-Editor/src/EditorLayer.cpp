@@ -17,13 +17,12 @@ namespace Syndra {
 	EditorLayer::EditorLayer()
 		:Layer("Editor Layer")
 	{
-		m_Camera = new PerspectiveCamera(45.0f, 1.66f, 0.1f, 1000.0f);
+		
 		m_Info = RenderCommand::GetInfo();
 	}
 
 	EditorLayer::~EditorLayer()
 	{
-		delete m_Camera;
 	}
 
 	void EditorLayer::OnAttach()
@@ -35,15 +34,13 @@ namespace Syndra {
 		fbSpec.Attachments = { FramebufferTextureFormat::RGBA8 , FramebufferTextureFormat::DEPTH24STENCIL8 };
 		fbSpec.Width = 1280;
 		fbSpec.Height = 720;
-		fbSpec.Samples = 4;
+		fbSpec.Samples =1;
 
 		m_ViewportSize = { fbSpec.Width,fbSpec.Height };
-
-
 		RenderCommand::Init();
 
 		auto& app = Application::Get();
-		m_Camera->SetViewportSize((float)app.GetWindow().GetWidth(), (float)app.GetWindow().GetHeight());
+		m_ActiveScene->m_Camera->SetViewportSize((float)app.GetWindow().GetWidth(), (float)app.GetWindow().GetHeight());
 	}
 
 	void EditorLayer::OnDetach()
@@ -57,19 +54,19 @@ namespace Syndra {
 			m_ViewportSize.x > 0.0f && m_ViewportSize.y > 0.0f && // zero sized framebuffer is invalid
 			(spec.Width != (uint32_t)m_ViewportSize.x || spec.Height != (uint32_t)m_ViewportSize.y))
 		{	
-			m_Camera->SetViewportSize(m_ViewportSize.x, m_ViewportSize.y);
 			m_ActiveScene->OnViewportResize((uint32_t)m_ViewportSize.x, (uint32_t)m_ViewportSize.y);
 		}
 
 		if (Input::IsKeyPressed(Key::Escape)) {
 			Application::Get().Close();
 		}
-
-		m_ActiveScene->OnUpdateEditor(ts, *m_Camera);
-
 		if (m_ViewportFocused && m_ViewportHovered) {
-			m_Camera->OnUpdate(ts);
+			m_ActiveScene->OnCameraUpdate(ts);
 		}
+
+		m_ActiveScene->OnUpdateEditor(ts);
+
+
 	}
 
 	void EditorLayer::OnImGuiRender()
@@ -98,16 +95,9 @@ namespace Syndra {
 			dockspace_flags &= ~ImGuiDockNodeFlags_PassthruCentralNode;
 		}
 
-		// When using ImGuiDockNodeFlags_PassthruCentralNode, DockSpace() will render our background
-		// and handle the pass-thru hole, so we ask Begin() to not render a background.
 		if (dockspace_flags & ImGuiDockNodeFlags_PassthruCentralNode)
 			window_flags |= ImGuiWindowFlags_NoBackground;
 
-		// Important: note that we proceed even if Begin() returns false (aka window is collapsed).
-		// This is because we want to keep our DockSpace() active. If a DockSpace() is inactive,
-		// all active windows docked into it will lose their parent and become undocked.
-		// We cannot preserve the docking relationship between an active window and an inactive docking, otherwise
-		// any change of dockspace/settings would lead to windows being stuck in limbo and never being visible.
 		if (!opt_padding)
 			ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
 		ImGui::Begin("DockSpace Demo", &open, window_flags);
@@ -168,24 +158,27 @@ namespace Syndra {
 				}
 				ImGui::EndMenu();
 			}
-
-
-
 			ImGui::EndMenuBar();
 		}
 
-		m_ScenePanel->OnImGuiRender();
-
-		ImGui::Begin("Scene settings");
-		ImGui::ColorEdit3("cube color", glm::value_ptr(m_CubeColor));
-		ImGui::ColorEdit3("clear color", glm::value_ptr(m_ClearColor));
-		if (ImGui::Button("Reload shader")) {
-			m_ActiveScene->ReloadShader();
+		if (!m_FullScreen) {
+			m_ScenePanel->OnImGuiRender();
+		}
+		//----------------------------------------------Scene Settings-----------------------------------//
+		if (!m_FullScreen) {
+			ImGui::Begin("Scene settings");
+			ImGui::ColorEdit3("cube color", glm::value_ptr(m_CubeColor));
+			ImGui::ColorEdit3("clear color", glm::value_ptr(m_ClearColor));
+			if (ImGui::Button("Reload shader")) {
+				m_ActiveScene->ReloadShader();
+			}
+			ImGui::End();
 		}
 		
-
-		ImGui::End();
-
+		//------------------------Renderer settings
+		if (!m_FullScreen) {
+			SceneRenderer::OnImGuiUpdate();
+		}
 		//----------------------------------------------Renderer info-----------------------------------//
 		ImGui::Begin("Renderer info");
 		ImGui::Text(m_Info.c_str());
@@ -195,9 +188,22 @@ namespace Syndra {
 		ImGui::Text("%d active allocations", io.MetricsActiveAllocations);
 		ImGui::End();
 
+
 		//----------------------------------------------Viewport----------------------------------------//
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{ 0, 0 });
-		ImGui::Begin("Viewport");
+		static bool viewOpen = true;
+		ImGui::Begin("Viewport", &viewOpen);
+		ImGuiWindow* window = ImGui::GetCurrentWindow();
+		const ImGuiID id = window->GetID("Viewport");
+
+		ImGui::Dummy({ 0,3 });
+		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, { 0,5 });
+		if (ImGui::ImageButton(io.Fonts->TexID, { 20,20 })) {
+			m_FullScreen = !m_FullScreen;
+		}
+		ImGui::PopStyleVar();
+
+
 		auto viewportMinRegion = ImGui::GetWindowContentRegionMin();
 		auto viewportMaxRegion = ImGui::GetWindowContentRegionMax();
 		auto viewportOffset = ImGui::GetWindowPos();
@@ -206,21 +212,21 @@ namespace Syndra {
 
 		m_ViewportFocused = ImGui::IsWindowFocused();
 		m_ViewportHovered = ImGui::IsWindowHovered();
+
 		Application::Get().GetImGuiLayer()->SetBlockEvents(!m_ViewportFocused && !m_ViewportHovered);
 
 		ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
 
 		m_ViewportSize = { viewportPanelSize.x, viewportPanelSize.y };
 		uint64_t textureID = m_ActiveScene->GetMainTextureID();
-
 		ImGui::Image(reinterpret_cast<void*>(textureID), ImVec2{ m_ViewportSize.x, m_ViewportSize.y }, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
 		
 		ImGuizmo::SetOrthographic(false);
 		ImGuizmo::SetDrawlist();
 
 		ImGuizmo::SetRect(m_ViewportBounds[0].x, m_ViewportBounds[0].y, m_ViewportBounds[1].x - m_ViewportBounds[0].x, m_ViewportBounds[1].y - m_ViewportBounds[0].y);
-		const glm::mat4& cameraProjection = m_Camera->GetProjection();
-		glm::mat4 cameraView = m_Camera->GetViewMatrix();
+		const glm::mat4& cameraProjection = m_ActiveScene->m_Camera->GetProjection();
+		glm::mat4 cameraView = m_ActiveScene->m_Camera->GetViewMatrix();
 
 		/*ImGuizmo::DrawGrid(glm::value_ptr(cameraView), glm::value_ptr(cameraProjection), glm::value_ptr(glm::mat4(1.0f)), 10);*/
 		
@@ -266,31 +272,33 @@ namespace Syndra {
 
 		//-----------------------------------------------Editor camera settings-------------------------------------//
 		static bool camerSettings = true;
-		if (camerSettings) {
-			ImGui::Begin("Camera settings", &camerSettings);
-			//FOV
-			float fov = m_Camera->GetFOV();
-			if (ImGui::SliderFloat("Fov", &fov, 10, 180)) {
-				m_Camera->SetFov(fov);
+		if (!m_FullScreen) {
+			if (camerSettings) {
+				ImGui::Begin("Camera settings", &camerSettings);
+				//FOV
+				float fov = m_ActiveScene->m_Camera->GetFOV();
+				if (ImGui::SliderFloat("Fov", &fov, 10, 180)) {
+					m_ActiveScene->m_Camera->SetFov(fov);
+				}
+				ImGui::Separator();
+				//near-far clip
+				float nearClip = m_ActiveScene->m_Camera->GetNear();
+				float farClip = m_ActiveScene->m_Camera->GetFar();
+				if (ImGui::SliderFloat("Far clip", &farClip, 10, 10000)) {
+					m_ActiveScene->m_Camera->SetFarClip(farClip);
+				}
+				ImGui::Separator();
+				if (ImGui::SliderFloat("Near clip", &nearClip, 0.0001f, 1)) {
+					m_ActiveScene->m_Camera->SetNearClip(nearClip);
+				}
+				ImGui::End();
 			}
-			ImGui::Separator();
-			//near-far clip
-			float nearClip = m_Camera->GetNear();
-			float farClip = m_Camera->GetFar();
-			if (ImGui::SliderFloat("Far clip", &farClip , 10, 10000)) {
-				m_Camera->SetFarClip(farClip);
-			}
-			ImGui::Separator();
-			if (ImGui::SliderFloat("Near clip", &nearClip, 0.0001f, 1)) {
-				m_Camera->SetNearClip(nearClip);
-			}
-			ImGui::End();
 		}
 	}
 
 	void EditorLayer::OnEvent(Event& event)
 	{
-		m_Camera->OnEvent(event);
+		m_ActiveScene->m_Camera->OnEvent(event);
 		EventDispatcher dispatcher(event);
 		dispatcher.Dispatch<KeyPressedEvent>(SN_BIND_EVENT_FN(EditorLayer::OnKeyPressed));
 		dispatcher.Dispatch<MouseButtonPressedEvent>(SN_BIND_EVENT_FN(EditorLayer::OnMouseButtonPressed));
@@ -358,7 +366,7 @@ namespace Syndra {
 		case Key::F:
 		{
 			if (m_ScenePanel->GetSelectedEntity()) {
-				m_Camera->SetFocalPoint(m_ScenePanel->GetSelectedEntity().GetComponent<TransformComponent>().Translation);
+				m_ActiveScene->m_Camera->SetFocalPoint(m_ScenePanel->GetSelectedEntity().GetComponent<TransformComponent>().Translation);
 			}
 			break;
 		}
@@ -379,18 +387,18 @@ namespace Syndra {
 		altIsDown = Input::IsKeyPressed(Key::LeftAlt);
 		if (mouseX >= 0 && mouseY >= 0 && mouseX < (int)viewportSize.x && mouseY < (int)viewportSize.y && !altIsDown && m_ViewportHovered && !ImGuizmo::IsOver())
 		{
-			auto& mousePickFB = m_ActiveScene->GetMouseFrameBuffer();
-			mousePickFB->Bind();
-			int pixelData = mousePickFB->ReadPixel(0, mouseX, mouseY);
-			if (pixelData != -1) {
-				m_ScenePanel->SetSelectedEntity(m_ActiveScene->FindEntity(pixelData));
-			}
-			else
-			{
-				m_ScenePanel->SetSelectedEntity({});
-			}
-			//SN_CORE_WARN("pixel data: {0}", pixelData);
-			mousePickFB->Unbind();
+			//auto& mousePickFB = m_ActiveScene->GetMouseFrameBuffer();
+			//mousePickFB->Bind();
+			//int pixelData = mousePickFB->ReadPixel(0, mouseX, mouseY);
+			//if (pixelData != -1) {
+			//	m_ScenePanel->SetSelectedEntity(m_ActiveScene->FindEntity(pixelData));
+			//}
+			//else
+			//{
+			//	m_ScenePanel->SetSelectedEntity({});
+			//}
+			////SN_CORE_WARN("pixel data: {0}", pixelData);
+			//mousePickFB->Unbind();
 		}
 		return false;
 	}
@@ -410,9 +418,10 @@ namespace Syndra {
 			m_ActiveScene = CreateRef<Scene>();
 			m_ActiveScene->OnViewportResize((uint32_t)m_ViewportSize.x, (uint32_t)m_ViewportSize.y);
 			m_ScenePanel->SetContext(m_ActiveScene);
-
+			
 			SceneSerializer serializer(m_ActiveScene);
 			serializer.Deserialize(*filepath);
+			Application::Get().GetWindow().SetTitle("Syndra Editor "+m_ActiveScene->m_Name+ " scene");
 		}
 	}
 

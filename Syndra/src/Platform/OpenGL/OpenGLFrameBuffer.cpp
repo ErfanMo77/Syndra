@@ -26,6 +26,7 @@ namespace Syndra {
 		switch (format)
 		{
 		case FramebufferTextureFormat::RGBA8:       return GL_RGBA8;
+		case FramebufferTextureFormat::RGBA16F:       return GL_RGB16F;
 		case FramebufferTextureFormat::RED_INTEGER: return GL_RED_INTEGER;
 		}
 
@@ -42,8 +43,7 @@ namespace Syndra {
 		}
 		else
 		{
-
-			glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, format, GL_UNSIGNED_BYTE, nullptr);
+			glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, format, internalFormat==GL_RGBA16F ? GL_FLOAT : GL_UNSIGNED_BYTE, nullptr);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
@@ -65,12 +65,18 @@ namespace Syndra {
 		else
 		{
 			glTexStorage2D(GL_TEXTURE_2D, 1, format, width, height);
+			//if (format == GL_DEPTH_COMPONENT32F) {
+			//	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
+			//	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
+			//}
+			
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_REPEAT);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
 		}
 
 		glFramebufferTexture2D(GL_FRAMEBUFFER, attachmentType, TextureTarget(multisampled), id, 0);
@@ -81,6 +87,7 @@ namespace Syndra {
 		switch (format)
 		{
 			case FramebufferTextureFormat::DEPTH24STENCIL8:  return true;
+			case FramebufferTextureFormat::DEPTH32:			 return true;
 		}
 
 		return false;
@@ -140,6 +147,9 @@ namespace Syndra {
 				case FramebufferTextureFormat::RGBA8:
 					AttachColorTexture(m_ColorAttachments[i], m_Specification.Samples, GL_RGBA8, GL_RGBA, m_Specification.Width, m_Specification.Height, i);
 					break;
+				case FramebufferTextureFormat::RGBA16F:
+					AttachColorTexture(m_ColorAttachments[i], m_Specification.Samples, GL_RGB16F, GL_RGBA, m_Specification.Width, m_Specification.Height, i);
+					break;
 				case FramebufferTextureFormat::RED_INTEGER:
 					AttachColorTexture(m_ColorAttachments[i], m_Specification.Samples, GL_R32I, GL_RED_INTEGER, m_Specification.Width, m_Specification.Height, i);
 					break;
@@ -156,6 +166,9 @@ namespace Syndra {
 			case FramebufferTextureFormat::DEPTH24STENCIL8:
 				AttachDepthTexture(m_DepthAttachment, m_Specification.Samples, GL_DEPTH24_STENCIL8, GL_DEPTH_STENCIL_ATTACHMENT, m_Specification.Width, m_Specification.Height);
 				break;
+			case FramebufferTextureFormat::DEPTH32:
+				AttachDepthTexture(m_DepthAttachment, m_Specification.Samples, GL_DEPTH_COMPONENT32F, GL_DEPTH_ATTACHMENT, m_Specification.Width, m_Specification.Height);
+				break;
 			}
 		}
 
@@ -169,6 +182,7 @@ namespace Syndra {
 		{
 			// Only depth-pass
 			glDrawBuffer(GL_NONE);
+			glReadBuffer(GL_NONE);
 		}
 
 		SN_CORE_ASSERT(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE, "Framebuffer is incomplete!");
@@ -177,8 +191,8 @@ namespace Syndra {
 
 	void OpenGLFrameBuffer::Bind()
 	{
-		glBindFramebuffer(GL_FRAMEBUFFER, m_RendererID);
 		glViewport(0, 0, m_Specification.Width, m_Specification.Height);
+		glBindFramebuffer(GL_FRAMEBUFFER, m_RendererID);
 	}
 
 	void OpenGLFrameBuffer::Unbind()

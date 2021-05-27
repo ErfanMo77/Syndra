@@ -4,6 +4,7 @@
 #include "Engine/Renderer/Renderer.h"
 #include "Engine/Renderer/FrameBuffer.h"
 #include "Engine/Renderer/UniformBuffer.h"
+#include "Engine/Renderer/RenderPass.h"
 #include "entt.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
@@ -14,18 +15,17 @@ namespace Syndra {
 	class Entity;
 	class Scene;
 
-	class SceneRenderer 
+	class SceneRenderer
 	{
 	public:
 		static void Initialize();
 
 		static void BeginScene(const PerspectiveCamera& camera);
-
+		static void UpdateLights(Scene& scene);
 		static void RenderScene(Scene& scene);
 
-		static void RenderEntityColor(const entt::entity& entity, TransformComponent& tc, MeshComponent& mc);
-
-		static void RenderEntityID(const entt::entity& entity, TransformComponent& tc, MeshComponent& mc);
+		static void RenderEntityColor(const entt::entity& entity, TransformComponent& tc, MeshComponent& mc, const Ref<Shader>& shader);
+		static void RenderEntityColor(const entt::entity& entity, TransformComponent& tc, MeshComponent& mc, MaterialComponent& mat);
 
 		static void EndScene();
 
@@ -33,13 +33,16 @@ namespace Syndra {
 
 		static void OnViewPortResize(uint32_t width, uint32_t height);
 
-		static uint32_t GetTextureID(int index) { return s_Data->postProcFB->GetColorAttachmentRendererID(index); }
+		static void OnImGuiUpdate();
 
-		static Ref<FrameBuffer> GetMouseFrameBuffer() { return s_Data->mouseFB; }
+		static uint32_t GetTextureID(int index);
 
-		static FramebufferSpecification GetMainFrameSpec() { return s_Data->mainFB->GetSpecification(); }
+		static FramebufferSpecification GetMainFrameSpec();
 
-	private:
+		static ShaderLibrary& GetShaderLibrary();
+
+
+	public:
 
 		struct CameraData
 		{
@@ -47,33 +50,72 @@ namespace Syndra {
 			glm::vec4 position;
 		};
 
-		struct Transform
+		struct pointLight
 		{
-			glm::mat4 transform;
-			glm::vec4 lightPos;
+			glm::vec4 position;
+			glm::vec4 color;
+			float dist;
+			glm::vec3 dummy;
 		};
 
-		struct ShaderData
+		struct spotLight {
+			glm::vec4 position;
+			glm::vec4 color;
+			glm::vec4 direction;
+			float innerCutOff;
+			float outerCutOff;
+			glm::vec2 dummy;
+		};
+
+		struct directionalLight
 		{
-			glm::vec4 col;
+			glm::vec4 position;
+			glm::vec4 direction;
+			glm::vec4 color;
+		};
+
+		struct ShadowData {
+			glm::mat4 lightViewProj;
+		};
+
+		struct DrawCall {
+			entt::entity id;
+			TransformComponent tc;
+			MeshComponent mc;
 		};
 
 		struct SceneData
 		{
 			CameraData CameraBuffer;
-			ShaderData ShaderBuffer;
-			Transform TransformBuffer;
-			Ref<UniformBuffer> CameraUniformBuffer, TransformUniformBuffer;
+			//Light
+			float exposure;
+			float gamma;
+			float lightSize;
+			directionalLight dirLight;
+			pointLight pointLights[4];
+			spotLight spotLights[4];
+			Ref<UniformBuffer> CameraUniformBuffer, LightsBuffer, ShadowBuffer;
+			//Shadow
+			bool softShadow = false;
+			float numPCF = 8;
+			float numBlocker = 3;
+			glm::mat4 lightProj;
+			glm::mat4 lightView;
+			ShadowData shadowData;
+			//Poisson
+			Ref<Texture1D> distributionSampler0, distributionSampler1;
+			//shaders
 			ShaderLibrary shaders;
-			Ref<Shader> diffuse,outline,mouseShader,aa;
-			Ref<FrameBuffer> mainFB, mouseFB, postProcFB;
+			Ref<Shader> diffuse, geoShader, outline, mouseShader, aa, main, depth, deferredLighting;
+			//FrameBuffers
+			int textureRenderSlot=2;
+			Ref<RenderPass> geoPass, shadowPass, lightingPass;
+			//Scene quad VBO, VAO, EBO
 			Ref<VertexArray> screenVao;
 			Ref<VertexBuffer> screenVbo;
 			Ref<IndexBuffer> screenEbo;
-			glm::vec3 clearColor;
 		};
 
-		static SceneData* s_Data;
 	};
 
 }

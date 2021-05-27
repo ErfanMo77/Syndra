@@ -175,4 +175,11 @@ namespace Syndra{
 		return glm::quat(glm::vec3(-m_Pitch, -m_Yaw, 0.0f));
 	}
 
+	void PerspectiveCamera::SetYawPitch(float yaw, float pitch)
+	{
+		m_Yaw = yaw;
+		m_Pitch = pitch;
+		UpdateView();
+	}
+
 }

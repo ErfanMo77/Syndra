@@ -6,14 +6,22 @@
 
 namespace Syndra {
 
-	Scene::Scene()
+	Scene::Scene(const std::string& name)
+		:m_Name(name)
 	{
 		Entity::s_Scene = this;
 		SceneRenderer::Initialize();
+		m_Shaders = SceneRenderer::GetShaderLibrary();
+		m_Camera = new PerspectiveCamera(45.0f, 1.66f, 0.1f, 1000.0f);
+		auto ent = CreateEntity("Directional Light");
+		auto& comp = ent->AddComponent<LightComponent>();
+		comp.type = LightType::Directional;
+		comp.light = CreateRef<DirectionalLight>();
 	}
 
 	Scene::~Scene()
 	{
+		delete m_Camera;
 	}
 
 	Ref<Entity> Scene::CreateEntity(const std::string& name)
@@ -38,6 +46,12 @@ namespace Syndra {
 		}
 		if (other.HasComponent<MeshComponent>()) {
 			ent->AddComponent<MeshComponent>(other.GetComponent<MeshComponent>());
+		}
+		if (other.HasComponent<MaterialComponent>()) {
+			ent->AddComponent<MaterialComponent>(other.GetComponent<MaterialComponent>());
+		}
+		if (other.HasComponent<LightComponent>()) {
+			ent->AddComponent<LightComponent>(other.GetComponent<LightComponent>());
 		}
 		m_Entities.push_back(ent);
 		return ent;
@@ -73,9 +87,9 @@ namespace Syndra {
 
 	}
 
-	void Scene::OnUpdateEditor(Timestep ts, PerspectiveCamera& camera)
+	void Scene::OnUpdateEditor(Timestep ts)
 	{
-		SceneRenderer::BeginScene(camera);
+		SceneRenderer::BeginScene(*m_Camera);
 		SceneRenderer::RenderScene(*this);
 		SceneRenderer::EndScene();
 	}
@@ -84,6 +98,7 @@ namespace Syndra {
 	{
 		m_ViewportWidth = width;
 		m_ViewportHeight = height;
+		m_Camera->SetViewportSize(width, height);
 		SceneRenderer::OnViewPortResize(width, height);
 		// Resize our non-FixedAspectRatio cameras
 		auto view = m_Registry.view<CameraComponent>();
@@ -93,6 +108,18 @@ namespace Syndra {
 			if (!cameraComponent.FixedAspectRatio)
 				cameraComponent.Camera.SetViewportSize(width, height);
 		}
+	}
+
+	std::string LightTypeToLightName(LightType type) {
+		if (type == LightType::Directional)
+			return "Directional";
+		if (type == LightType::Point)
+			return "Point";
+		if (type == LightType::Spot)
+			return "Spot";
+		if (type == LightType::Area)
+			return "Area";
+		return "";
 	}
 
 	template<typename T>
@@ -119,6 +146,16 @@ namespace Syndra {
 
 	template<>
 	void Scene::OnComponentAdded<MeshComponent>(Entity entity, MeshComponent& component)
+	{
+	}
+
+	template<>
+	void Scene::OnComponentAdded<MaterialComponent>(Entity entity, MaterialComponent& component)
+	{
+	}
+
+	template<>
+	void Scene::OnComponentAdded<LightComponent>(Entity entity, LightComponent& component)
 	{
 	}
 

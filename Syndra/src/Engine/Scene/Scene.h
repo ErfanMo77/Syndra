@@ -12,7 +12,7 @@ namespace Syndra {
 	class Scene
 	{
 	public:
-		Scene();
+		Scene(const std::string& name = "Untitled");
 		Scene(const Scene& other) = default;
 		~Scene();
 
@@ -23,13 +23,16 @@ namespace Syndra {
 		Entity FindEntity(uint32_t id);
 
 		void OnUpdateRuntime(Timestep ts);
-		void OnUpdateEditor(Timestep ts, PerspectiveCamera& camera);
+		void OnUpdateEditor(Timestep ts);
 		void OnViewportResize(uint32_t width, uint32_t height);
+		void OnCameraUpdate(Timestep ts) { m_Camera->OnUpdate(ts); }
 		void ReloadShader() { SceneRenderer::Reload(); }
 
 		uint32_t GetMainTextureID() { return SceneRenderer::GetTextureID(0); }
-		Ref<FrameBuffer> GetMouseFrameBuffer() { return SceneRenderer::GetMouseFrameBuffer(); }
 		FramebufferSpecification GetSpec() { return SceneRenderer::GetMainFrameSpec(); }
+
+		ShaderLibrary& GetShaderLibrary() { return m_Shaders; }
+		void SetShaderLibrary(const ShaderLibrary& shaders) { m_Shaders = shaders; }
 
 	private:
 		template<typename T>
@@ -39,11 +42,17 @@ namespace Syndra {
 		entt::registry m_Registry;
 
 		std::vector<Ref<Entity>> m_Entities;
+		
+		std::string m_Name;
+
+		PerspectiveCamera* m_Camera;
+		ShaderLibrary m_Shaders;
 
 		uint32_t m_ViewportWidth = 0;
 		uint32_t m_ViewportHeight = 0;
 
 		friend class Entity;
+		friend class EditorLayer;
 		friend class ScenePanel;
 		friend class SceneSerializer;
 		friend class SceneRenderer;

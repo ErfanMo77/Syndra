@@ -21,14 +21,24 @@ namespace Syndra{
 
 		virtual bool operator==(const Texture& other) const = 0;
 
+		virtual std::string GetPath() const = 0;
+
 		static void BindTexture(uint32_t rendererID, uint32_t slot);
+	};
+
+	class Texture1D : public Texture
+	{
+	public:
+		static Ref<Texture1D> Create(uint32_t size);
+		static Ref<Texture1D> Create(uint32_t size, void* data);
 	};
 
 	class Texture2D : public Texture
 	{
 	public:
 		static Ref<Texture2D> Create(uint32_t width, uint32_t height);
-		static Ref<Texture2D> Create(const std::string& path);
+		static Ref<Texture2D> Create(const std::string& path, bool sRGB = false);
+		static Ref<Texture2D> Create(uint32_t width, uint32_t height, const unsigned char* data, bool sRGB = false);
 	};
 
 }

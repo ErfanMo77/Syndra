@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Engine/Core/Core.h"
+#include "glm/glm.hpp"
 
 namespace Syndra {
 
@@ -11,9 +12,11 @@ namespace Syndra {
 		// Color
 		RGBA8,
 		RED_INTEGER,
+		RGBA16F,
 
 		// Depth/stencil
 		DEPTH24STENCIL8,
+		DEPTH32,
 
 		// Defaults
 		Depth = DEPTH24STENCIL8
@@ -43,6 +46,7 @@ namespace Syndra {
 		uint32_t Width = 0, Height = 0;
 		FramebufferAttachmentSpecification Attachments;
 		uint32_t Samples = 1;
+		glm::vec4 ClearColor;
 
 		bool SwapChainTarget = false;
 	};
@@ -61,6 +65,7 @@ namespace Syndra {
 		virtual void ClearAttachment(uint32_t attachmentIndex, int value) = 0;
 
 		virtual uint32_t GetColorAttachmentRendererID(uint32_t index = 0) const = 0;
+		virtual uint32_t GetDepthAttachmentRendererID() const = 0;
 
 		virtual const FramebufferSpecification& GetSpecification() const = 0;
 		static Ref<FrameBuffer> Create(const FramebufferSpecification& spec);

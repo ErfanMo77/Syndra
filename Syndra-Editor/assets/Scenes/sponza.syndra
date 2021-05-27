@@ -1,4 +1,11 @@
-Scene: Untitled
+Scene: sponza
+Camera:
+  Yaw: -1.8191905
+  Pitch: -0.0288026743
+  distance: 12.0480709
+  FOV: 45
+  Near: 0.100000001
+  Far: 4165.13281
 Entities:
   - Entity: 0
     TagComponent:
@@ -8,4 +15,16 @@ Entities:
       Rotation: [0, 0, 0]
       Scale: [0.00999999978, 0.00999999978, 0.00999999978]
     MeshComponent:
-      Path: C:\Users\MSI\source\repos\OpenGL\OpenGL\Models\Sponza\sponza.obj
+      Path: C:\Users\MSI\Desktop\crytek-sponza-huge-vray.fbx
+  - Entity: 1
+    TagComponent:
+      Tag: Dir light
+    TransformComponent:
+      Translation: [0, 21.9475098, 0]
+      Rotation: [0, 0, 0]
+      Scale: [1, 1, 1]
+    LightComponent:
+      Type: Directional
+      Color: [1.23921573, 0.90196079, 0.564705908]
+      Intensity: 5.69999981
+      Direction: [0, -6.28299999, 1.12800002]

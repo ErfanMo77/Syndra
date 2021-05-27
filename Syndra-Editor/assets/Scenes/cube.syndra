@@ -1,4 +1,11 @@
-Scene: Untitled
+Scene: cube
+Camera:
+  Yaw: 0.561599791
+  Pitch: 0.484799802
+  distance: 6.22776699
+  FOV: 45
+  Near: 0.100000001
+  Far: 1000
 Entities:
   - Entity: 0
     TagComponent:

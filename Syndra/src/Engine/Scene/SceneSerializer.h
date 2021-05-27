@@ -15,6 +15,7 @@ namespace Syndra {
 
 	private:
 		Ref<Scene> m_Scene;
+		ShaderLibrary m_Shaders;
 	};
 
 }

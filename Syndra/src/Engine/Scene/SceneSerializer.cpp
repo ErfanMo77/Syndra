@@ -80,9 +80,27 @@ namespace Syndra {
 		return out;
 	}
 
+	YAML::Emitter& operator<<(YAML::Emitter& out, const std::unordered_map<uint32_t, Ref<Texture2D>>& textures)
+	{
+
+		for (auto&& [binding, texture] : textures)
+		{
+			std::string path = "";
+			if (texture) {
+				path = texture->GetPath();
+			}
+			out << YAML::Flow;
+			out << YAML::BeginMap;
+			out << YAML::Key << "binding" << YAML::Value << binding;
+			out << YAML::Key << "path" << YAML::Value << path << YAML::EndMap;
+		}
+		return out;
+	}
+
 	SceneSerializer::SceneSerializer(const Ref<Scene>& scene)
 		: m_Scene(scene)
 	{
+		m_Shaders = scene->GetShaderLibrary();
 	}
 
 	static void SerializeEntity(YAML::Emitter& out, Entity entity)
@@ -150,14 +168,71 @@ namespace Syndra {
 			out << YAML::EndMap; // MeshComponent
 		}
 
+		if (entity.HasComponent<LightComponent>())
+		{
+			out << YAML::Key << "LightComponent";
+			out << YAML::BeginMap; // LightComponent
+
+			auto& pl = entity.GetComponent<LightComponent>();
+			out << YAML::Key << "Type" << YAML::Value << LightTypeToLightName(pl.type);
+			out << YAML::Key << "Color" << YAML::Value << pl.light->GetColor();
+			out << YAML::Key << "Intensity" << YAML::Value << pl.light->GetIntensity();
+			switch (pl.type)
+			{
+			case LightType::Point:
+				out << YAML::Key << "Range" << YAML::Value << dynamic_cast<PointLight*>(pl.light.get())->GetRange();
+				break;
+			case LightType::Directional:
+				out << YAML::Key << "Direction" << YAML::Value << dynamic_cast<DirectionalLight*>(pl.light.get())->GetDirection();
+				break;
+			case LightType::Spot:
+				out << YAML::Key << "Direction" << YAML::Value << dynamic_cast<SpotLight*>(pl.light.get())->GetDirection();
+				out << YAML::Key << "InnerCutOff" << YAML::Value << dynamic_cast<SpotLight*>(pl.light.get())->GetInnerCutOff();
+				out << YAML::Key << "OuterCutOff" << YAML::Value << dynamic_cast<SpotLight*>(pl.light.get())->GetOuterCutOff();
+			default:
+				break;
+			}
+			out << YAML::EndMap; // LightComponent
+		}
+
+		if (entity.HasComponent<MaterialComponent>())
+		{
+			out << YAML::Key << "MaterialComponent";
+			out << YAML::BeginMap; // MaterialComponent
+			auto& material = entity.GetComponent<MaterialComponent>();
+			auto& shader = material.m_Shader;
+			out << YAML::Key << "shader" << YAML::Value << shader->GetName();
+
+			out << YAML::Key << "Textures" << YAML::Value << YAML::BeginSeq;
+			out << material.material->GetTextures();
+			out << YAML::EndSeq;
+
+			out << YAML::EndMap; // MaterialComponent
+		}
+
 		out << YAML::EndMap; // Entity
 	}
 
 	void SceneSerializer::Serialize(const std::string& filepath)
 	{
 		YAML::Emitter out;
+
+		auto nameWithPost = filepath.substr(filepath.find_last_of("\\")+1);
+		auto name = nameWithPost.substr(0,nameWithPost.find("."));
+
 		out << YAML::BeginMap;
-		out << YAML::Key << "Scene" << YAML::Value << "Untitled";
+		out << YAML::Key << "Scene" << YAML::Value << name;
+
+		//camera
+		out << YAML::Key << "Camera"   <<   YAML::Value << YAML::BeginMap;
+		out << YAML::Key << "Yaw"      <<   YAML::Value << m_Scene->m_Camera->GetYaw();
+		out << YAML::Key << "Pitch"    <<   YAML::Value << m_Scene->m_Camera->GetPitch();
+		out << YAML::Key << "distance" <<   YAML::Value << m_Scene->m_Camera->GetDistance();
+		out << YAML::Key << "FOV"      <<   YAML::Value << m_Scene->m_Camera->GetFOV();
+		out << YAML::Key << "Near"     <<   YAML::Value << m_Scene->m_Camera->GetNear();
+		out << YAML::Key << "Far"      <<   YAML::Value << m_Scene->m_Camera->GetFar();
+		out << YAML::EndMap; // Camera
+
 		out << YAML::Key << "Entities" << YAML::Value << YAML::BeginSeq;
 		for (auto& entity : m_Scene->m_Entities)
 		{
@@ -177,7 +252,23 @@ namespace Syndra {
 			return false;
 
 		std::string sceneName = data["Scene"].as<std::string>();
+		m_Scene->m_Name = sceneName;
 		SN_CORE_TRACE("Deserializing scene '{0}'", sceneName);
+
+		auto camera = data["Camera"];
+		auto yaw = camera["Yaw"].as<float>();
+		auto pitch = camera["Pitch"].as<float>();
+		auto distance = camera["distance"].as<float>();
+		auto fov = camera["FOV"].as <float> ();
+		auto nearClip = camera["Near"].as<float>();
+		auto farClip = camera["Far"].as<float>();
+
+		m_Scene->m_Camera->SetFarClip(farClip);
+		m_Scene->m_Camera->SetNearClip(nearClip);
+		m_Scene->m_Camera->SetFov(fov);
+		m_Scene->m_Camera->SetDistance(distance);
+		m_Scene->m_Camera->SetYawPitch(yaw,pitch);
+
 
 		auto entities = data["Entities"];
 		if (entities)
@@ -235,8 +326,71 @@ namespace Syndra {
 					if (mc.path.find("\\") == 0) {
 						filepath = dir.string() + mc.path;
 					}
-					mc.model = Model(filepath);
+					if (!filepath.empty())
+						mc.model = Model(filepath);
 				}
+
+				auto lightComponent = entity["LightComponent"];
+				if (lightComponent)
+				{
+					auto& pl = deserializedEntity->AddComponent<LightComponent>();
+					pl.light->SetColor(lightComponent["Color"].as<glm::vec3>());
+					auto strType = lightComponent["Type"].as<std::string>();
+					auto intensity = lightComponent["Intensity"].as<float>();
+					pl.light->SetIntensity(intensity);
+					if (strType == "Directional") {
+						pl.type = LightType::Directional;
+						pl.light = CreateRef<DirectionalLight>(pl.light->GetColor(), intensity, lightComponent["Direction"].as<glm::vec3>());
+					}
+					if (strType == "Point") {
+						pl.type = LightType::Point;
+						auto pos = transformComponent["Translation"].as<glm::vec3>();
+						pl.light = CreateRef<PointLight>(pl.light->GetColor(), intensity, pos, lightComponent["Range"].as<float>());
+					}
+					if (strType == "Spot") {
+						pl.type = LightType::Spot;
+						auto dir = lightComponent["Direction"].as<glm::vec3>();
+						auto pos = transformComponent["Translation"].as<glm::vec3>();
+						auto iCutOff = lightComponent["InnerCutOff"].as<float>();
+						auto oCutOff = lightComponent["OuterCutOff"].as<float>();
+						pl.light = CreateRef<SpotLight>(pl.light->GetColor(), intensity, pos, dir, iCutOff, oCutOff);
+					}
+					//TODO Area light
+
+				}
+
+				auto materialComponent = entity["MaterialComponent"];
+				if (materialComponent)
+				{
+					auto dir = std::filesystem::current_path();
+					auto shaderName = materialComponent["shader"].as<std::string>();
+					auto shader = m_Shaders.Get(shaderName);
+
+					auto material = Material::Create(shader);
+					auto& materialTextures = material->GetTextures();
+
+					auto textures = materialComponent["Textures"];
+					if (textures) {
+						for (auto texture : textures)
+						{
+							auto binding = texture["binding"].as<uint32_t>();
+							auto texturePath = texture["path"].as<std::string>();
+							if (!texturePath.empty()) {
+								materialTextures[binding] = Texture2D::Create(texturePath);
+							}
+						}
+					}
+
+					deserializedEntity->AddComponent<MaterialComponent>(material,shader);
+
+					//mc.path = materialComponent["Path"].as<std::string>();
+					//auto filepath = mc.path;
+					//if (mc.path.find("\\") == 0) {
+					//	filepath = dir.string() + mc.path;
+					//}
+					//mc.model = Model(filepath);
+				}
+
 			}
 		}
 
