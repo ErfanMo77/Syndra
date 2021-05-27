@@ -60,6 +60,17 @@ layout(binding = 0) uniform sampler2D DiffuseMap;
 layout(binding = 1) uniform sampler2D SpecularMap;
 layout(binding = 2) uniform sampler2D NormalMap;
 
+struct Material
+{
+	vec4 Color;
+};
+
+layout(push_constant) uniform push{
+	Material material;
+	int HasDiffuseMap;
+	int HasNormalMap;
+}pc;
+
 struct VS_OUT
 {
 	vec3 v_pos;
@@ -74,15 +85,20 @@ void main()
 {
 	gPosistion = fs_in.v_pos;
 
-	gAlbedoSpec.rgb = texture(DiffuseMap, fs_in.v_uv).rgb;
-
+	if(HasDiffuseMap==1){
+		gAlbedoSpec.rgb = texture(DiffuseMap, fs_in.v_uv).rgb;
+	}else {
+		gAlbedoSpec.rgb = material.color.rgb;
+	}
 	gAlbedoSpec.a = texture(SpecularMap, fs_in.v_uv).r;
-
-	vec3 normal = texture(NormalMap, fs_in.v_uv).rgb;
-	normal = normalize(normal * 2.0 - 1.0);
-	normal = normalize(fs_in.TBN * normal);
 	
-	normal = fs_in.v_normal;
+	if(HasNormalMap==1){
+		vec3 normal = texture(NormalMap, fs_in.v_uv).rgb;
+		normal = normalize(normal * 2.0 - 1.0);
+		gNormal = normalize(fs_in.TBN * normal);
+	}
+	else{
+		gNormal = fs_in.v_normal;
+	}
 
-	gNormal = normal; 
 }

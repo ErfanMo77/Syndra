@@ -267,6 +267,7 @@ namespace Syndra {
 			{
 				if (scene.m_Registry.has<MaterialComponent>(ent)) {
 					auto& mat = scene.m_Registry.get<MaterialComponent>(ent);
+					s_Data.geoShader->SetMat4("transform.u_trans", tc.GetTransform());
 					SceneRenderer::RenderEntityColor(ent, tc, mc, mat);
 				}
 				else

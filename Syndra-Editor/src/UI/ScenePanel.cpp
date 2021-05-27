@@ -449,32 +449,12 @@ namespace Syndra {
 			ImGui::Columns(2);
 			ImGui::SetColumnWidth(0, 80);
 			ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{ 0, 0 });
-			ImGui::Text("Shaders\0");
+			ImGui::Text("Shader\0");
 
 			ImGui::PopStyleVar();
 			ImGui::NextColumn();
 			ImGui::PushItemWidth(ImGui::GetContentRegionAvailWidth());
-			static int item_current_idx = 0;												// Here our selection data is an index.
-			const char* combo_label = component.m_Shader->GetName().c_str();				// Label to preview before opening the combo (technically it could be anything)
-			if (ImGui::BeginCombo("##Shaders", combo_label))
-			{
-				for (int n = 0; n < m_ShaderNames.size(); n++)
-				{
-					const bool is_selected = (item_current_idx == n);
-
-					if (ImGui::Selectable(m_ShaderNames[n].c_str(), is_selected)) {
-						item_current_idx = n;
-						m_SelectedShader = m_ShaderNames[n];
-						component.material = Material::Create(m_Shaders.Get(m_SelectedShader));
-						component.m_Shader = m_Shaders.Get(m_SelectedShader);
-					}
-
-					// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
-					if (is_selected)
-						ImGui::SetItemDefaultFocus();
-				}
-				ImGui::EndCombo();
-			}
+			ImGui::Text("PBR shader\0");
 			ImGui::PopItemWidth();
 			ImGui::Columns(1);
 			ImGui::Separator();
@@ -621,7 +601,7 @@ namespace Syndra {
 			if (ImGui::MenuItem("Material"))
 			{
 				if (!m_SelectionContext.HasComponent<MaterialComponent>())
-					m_SelectionContext.AddComponent<MaterialComponent>(m_Shaders.Get("diffuse"));
+					m_SelectionContext.AddComponent<MaterialComponent>(m_Shaders.Get("GeometryPass"));
 				else
 					SN_CORE_WARN("This entity already has the Camera Component!");
 				ImGui::CloseCurrentPopup();
