@@ -454,16 +454,16 @@ namespace Syndra {
 			ImGui::PopStyleVar();
 			ImGui::NextColumn();
 			ImGui::PushItemWidth(ImGui::GetContentRegionAvailWidth());
-			ImGui::Text("PBR shader\0");
+			ImGui::TextColored({0.2f,0.8f,0.3f,1.0f}, "PBR shader\0");
 			ImGui::PopItemWidth();
 			ImGui::Columns(1);
-			ImGui::Separator();
 			ImGuiIO& io = ImGui::GetIO();
 			std::vector<Sampler>& samplers = component.material->GetSamplers();
 			auto& materialTextures = component.material->GetTextures();
 			for (auto& sampler : samplers)
-			{			
+			{	
 				ImGui::PushID(sampler.name.c_str());
+				ImGui::Separator();
 				int frame_padding = -1 + 0;                             // -1 == uses default padding (style.FramePadding)
 				ImVec2 size = ImVec2(64.0f,64.0f);                     // Size of the image we want to make visible
 				ImGui::Text(sampler.name.c_str());
@@ -479,7 +479,7 @@ namespace Syndra {
 				//Diffuse
 				if (sampler.binding == 0) {
 					static glm::vec4 color;
-					ImGui::ColorEdit4("Color", glm::value_ptr(color));
+					ImGui::ColorEdit4("Albedo", glm::value_ptr(color), ImGuiColorEditFlags_NoInputs);
 					component.m_Shader->Bind();
 					component.m_Shader->SetFloat4("push.material.color", color);
 					component.m_Shader->Unbind();
@@ -493,8 +493,6 @@ namespace Syndra {
 					}
 				}
 				ImGui::PopID();
-				
-
 			}
 			ImGui::TreePop();
 

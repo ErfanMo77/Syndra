@@ -1,5 +1,6 @@
 #include "lpch.h"
 #include "imgui.h"
+#include "imgui_internal.h"
 
 #include "Engine/Core/Application.h"
 #include "Engine/Renderer/SceneRenderer.h"
@@ -128,7 +129,10 @@ namespace Syndra {
 		//SN_CORE_TRACE("SIZE OF DIRECTIONAL LIGHT : {0}", sizeof(s_Data.dirLight));
 		s_Data.exposure = 0.5f;
 		s_Data.gamma = 1.9f;
-		s_Data.lightSize = 0.002f;
+		s_Data.lightSize = 2.0f;
+		s_Data.orthoSize = 10.0f;
+		s_Data.lightNear = 1.0f;
+		s_Data.lightFar = 500.0f;
 		//Light uniform Buffer layout: -- point lights -- spotlights -- directional light--
 		s_Data.LightsBuffer = UniformBuffer::Create(sizeof(s_Data.pointLights) + sizeof(s_Data.spotLights) + sizeof(s_Data.dirLight), 2);
 		
@@ -140,9 +144,8 @@ namespace Syndra {
 		Texture1D::BindTexture(s_Data.distributionSampler1->GetRendererID(), 5);
 		s_Data.diffuse->Unbind();
 
-
-		float dSize = 10.0f;
-		s_Data.lightProj = glm::ortho(-dSize, dSize, -dSize, dSize, 1.0f, 500.0f);
+		float dSize = s_Data.orthoSize;
+		s_Data.lightProj = glm::ortho(-dSize, dSize, -dSize, dSize, s_Data.lightNear, s_Data.lightFar);
 		s_Data.ShadowBuffer = UniformBuffer::Create(sizeof(glm::mat4), 3);
 	}
 
@@ -194,7 +197,7 @@ namespace Syndra {
 				s_Data.dirLight.direction = glm::vec4(p->GetDirection(), 0);
 				s_Data.dirLight.position = glm::vec4(tc.Translation, 0);
 				//shadow
-				s_Data.lightView = glm::lookAt(-(glm::vec3(s_Data.dirLight.direction) * 5.0f), glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+				s_Data.lightView = glm::lookAt(-(glm::vec3(glm::normalize(s_Data.dirLight.direction)) * 10.0f), glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 				s_Data.shadowData.lightViewProj = s_Data.lightProj * s_Data.lightView;
 				s_Data.ShadowBuffer->SetData(&s_Data.shadowData, sizeof(glm::mat4));
 				p = nullptr;
@@ -314,12 +317,13 @@ namespace Syndra {
 		Texture1D::BindTexture(s_Data.distributionSampler1->GetRendererID(), 5);
 
 		//Push constant variables
-		s_Data.deferredLighting->SetFloat("pc.size", s_Data.lightSize);
+		s_Data.deferredLighting->SetFloat("pc.size", s_Data.lightSize*0.0001f);
 		s_Data.deferredLighting->SetInt("pc.numPCFSamples", s_Data.numPCF);
 		s_Data.deferredLighting->SetInt("pc.numBlockerSearchSamples", s_Data.numBlocker);
 		s_Data.deferredLighting->SetInt("pc.softShadow", (int)s_Data.softShadow);
 		s_Data.deferredLighting->SetFloat("pc.exposure", s_Data.exposure);
 		s_Data.deferredLighting->SetFloat("pc.gamma", s_Data.gamma);
+		s_Data.deferredLighting->SetFloat("pc.near", s_Data.lightNear);
 		//GBuffer samplers
 		Texture2D::BindTexture(s_Data.geoPass->GetFrameBufferTextureID(0), 0);
 		Texture2D::BindTexture(s_Data.geoPass->GetFrameBufferTextureID(1), 1);
@@ -395,12 +399,29 @@ namespace Syndra {
 
 		//Gamma
 		ImGui::DragFloat("gamma", &s_Data.gamma, 0.01f, 0, 4);
-		ImGui::DragFloat("Size", &s_Data.lightSize,0.0001,0,100);
+
 
 		//shadow
 		ImGui::Checkbox("Soft Shadow", &s_Data.softShadow);
 		ImGui::DragFloat("PCF samples", &s_Data.numPCF,1,1,64);
 		ImGui::DragFloat("blocker samples", &s_Data.numBlocker,1,1,64);
+		ImGui::DragFloat("Size", &s_Data.lightSize, 0.01f, 0, 100);
+		
+		ImGui::PushMultiItemsWidths(3, ImGui::CalcItemWidth());
+		if (ImGui::DragFloat("near", &s_Data.lightNear, 0.01f, 0.1f, 100.0f)) {
+			s_Data.lightProj = glm::ortho(-s_Data.orthoSize, s_Data.orthoSize, -s_Data.orthoSize, s_Data.orthoSize, s_Data.lightNear, s_Data.lightFar);
+		}
+		ImGui::PopItemWidth();
+		ImGui::SameLine();
+		if (ImGui::DragFloat("far", &s_Data.lightFar, 0.1f, 100.0f, 10000.0f)) {
+			s_Data.lightProj = glm::ortho(-s_Data.orthoSize, s_Data.orthoSize, -s_Data.orthoSize, s_Data.orthoSize, s_Data.lightNear, s_Data.lightFar);
+		}
+		ImGui::PopItemWidth();
+		ImGui::SameLine();
+		if (ImGui::DragFloat("camera size", &s_Data.orthoSize, 0.1f, 1, 50)) {
+			s_Data.lightProj = glm::ortho(-s_Data.orthoSize, s_Data.orthoSize, -s_Data.orthoSize, s_Data.orthoSize, s_Data.lightNear, s_Data.lightFar);
+		}
+		ImGui::PopItemWidth();
 
 		ImGui::End();
 	}

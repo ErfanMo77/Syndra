@@ -92,6 +92,9 @@ namespace Syndra {
 			float exposure;
 			float gamma;
 			float lightSize;
+			float orthoSize;
+			float lightNear;
+			float lightFar;
 			directionalLight dirLight;
 			pointLight pointLights[4];
 			spotLight spotLights[4];
