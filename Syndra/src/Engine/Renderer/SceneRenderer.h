@@ -38,6 +38,7 @@ namespace Syndra {
 		static uint32_t GetTextureID(int index);
 
 		static FramebufferSpecification GetMainFrameSpec();
+		static Ref<FrameBuffer> GetGeoFrameBuffer();
 
 		static ShaderLibrary& GetShaderLibrary();
 

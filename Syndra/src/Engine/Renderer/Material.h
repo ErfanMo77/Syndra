@@ -7,6 +7,17 @@ namespace Syndra {
 
 	class Material {
 
+		struct ShaderMaterial
+		{
+			glm::vec4 color;
+		};
+
+		struct CBuffer{
+			ShaderMaterial mat;
+			int HasDiffuseMap;
+			int HasNormalMap;
+		};
+
 	public:
 
 		Material() = default;
@@ -25,15 +36,19 @@ namespace Syndra {
 		
 		void AddTexture(const Sampler& sampler, Ref<Texture2D>& texture);
 
-
 		Ref<Texture2D> GetTexture(const Sampler& sampler);
 
+		void Set(const std::string& name, float value);
+		void Set(const std::string& name, int value);
+		void Set(const std::string& name, const glm::vec4& value);
+		void Set(const std::string& name, const glm::vec3& value);
 
 		static Ref<Material> Create(Ref<Shader>& shader);
 
 	private:
-		Ref<Shader> m_Shader;
 
+		Ref<Shader> m_Shader;
+		CBuffer m_Cbuffer;
 		std::unordered_map<uint32_t, Ref<Texture2D>> m_Textures;
 
 		std::vector<PushConstant> m_PushConstants;

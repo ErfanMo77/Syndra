@@ -476,7 +476,14 @@ namespace Syndra {
 
 				ImGui::SameLine();
 				ImGui::Checkbox("Use", &sampler.isUsed);
-
+				//Diffuse
+				if (sampler.binding == 0) {
+					static glm::vec4 color;
+					ImGui::ColorEdit4("Color", glm::value_ptr(color));
+					component.m_Shader->Bind();
+					component.m_Shader->SetFloat4("push.material.color", color);
+					component.m_Shader->Unbind();
+				}
 				if (ImGui::ImageButton(m_TextureId, size, ImVec2{ 0, 1 }, ImVec2{ 1, 0 })) {
 
 					auto path = FileDialogs::OpenFile("Syndra Texture (*.*)\0*.*\0");

@@ -44,6 +44,7 @@ namespace Syndra {
 			FramebufferTextureFormat::RGBA16F,			// Position texture attachment
 			FramebufferTextureFormat::RGBA16F,			// Normal texture attachment
 			FramebufferTextureFormat::RGBA16F,			// Albedo-specular texture attachment
+			FramebufferTextureFormat::RED_INTEGER,		// Entities ID texture attachment
 			FramebufferTextureFormat::DEPTH24STENCIL8	// default depth map
 		};
 		GeoFbSpec.Width = 1280;
@@ -257,6 +258,7 @@ namespace Syndra {
 		s_Data.geoPass->BindTargetFrameBuffer();
 		RenderCommand::SetState(RenderState::DEPTH_TEST, true);
 		RenderCommand::SetClearColor(s_Data.geoPass->GetSpecification().TargetFrameBuffer->GetSpecification().ClearColor);
+		s_Data.geoPass->GetSpecification().TargetFrameBuffer->ClearAttachment(3, -1);
 		s_Data.geoShader->Bind();
 		RenderCommand::Clear();
 		for (auto ent : view)
@@ -267,12 +269,16 @@ namespace Syndra {
 			{
 				if (scene.m_Registry.has<MaterialComponent>(ent)) {
 					auto& mat = scene.m_Registry.get<MaterialComponent>(ent);
+					s_Data.geoShader->SetInt("transform.id", (uint32_t)ent);
 					s_Data.geoShader->SetMat4("transform.u_trans", tc.GetTransform());
 					SceneRenderer::RenderEntityColor(ent, tc, mc, mat);
 				}
 				else
 				{
+					s_Data.geoShader->SetInt("push.HasDiffuseMap", 1);
+					s_Data.geoShader->SetInt("push.HasNormalMap", 0);
 					s_Data.geoShader->SetMat4("transform.u_trans", tc.GetTransform());
+					s_Data.geoShader->SetInt("transform.id", (uint32_t)ent);
 					SceneRenderer::RenderEntityColor(ent, tc, mc, s_Data.geoShader);
 				}
 			}
@@ -336,7 +342,6 @@ namespace Syndra {
 	{
 		s_Data.geoPass->GetSpecification().TargetFrameBuffer->Resize(width, height);
 		s_Data.lightingPass->GetSpecification().TargetFrameBuffer->Resize(width, height);
-		//s_Data.mouseFB->Resize(width, height);
 	}
 
 	void SceneRenderer::OnImGuiUpdate()
@@ -408,6 +413,11 @@ namespace Syndra {
 	Syndra::FramebufferSpecification SceneRenderer::GetMainFrameSpec()
 	{
 		return s_Data.geoPass->GetSpecification().TargetFrameBuffer->GetSpecification();
+	}
+
+	Syndra::Ref<Syndra::FrameBuffer> SceneRenderer::GetGeoFrameBuffer()
+	{
+		return s_Data.geoPass->GetSpecification().TargetFrameBuffer;
 	}
 
 	Syndra::ShaderLibrary& SceneRenderer::GetShaderLibrary()
