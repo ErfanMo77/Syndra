@@ -12,6 +12,7 @@ layout(location = 4) in vec3 a_bitangent;
 layout(push_constant) uniform Transform
 {
 	mat4 u_trans;
+	int id;
 }transform;
 
 layout(binding = 0) uniform camera
@@ -19,6 +20,7 @@ layout(binding = 0) uniform camera
 	mat4 u_ViewProjection;
 	vec4 cameraPos;
 } cam;
+
 
 struct VS_OUT
 {
@@ -29,6 +31,7 @@ struct VS_OUT
 };
 
 layout(location = 0) out VS_OUT vs_out;
+layout(location = 8) out flat int id;
 
 void main()
 {
@@ -46,6 +49,8 @@ void main()
 
 	vs_out.v_uv = a_uv;
 
+	id = transform.id;
+
 	gl_Position = cam.u_ViewProjection * transform.u_trans * vec4(a_pos, 1.0);
 }
 
@@ -55,10 +60,23 @@ void main()
 layout(location = 0) out vec3 gPosistion;	
 layout(location = 1) out vec3 gNormal;	
 layout(location = 2) out vec4 gAlbedoSpec;
+layout(location = 3) out int gEntityID;
 
 layout(binding = 0) uniform sampler2D DiffuseMap;
 layout(binding = 1) uniform sampler2D SpecularMap;
 layout(binding = 2) uniform sampler2D NormalMap;
+
+struct Material
+{
+	vec4 color;
+};
+
+layout(push_constant) uniform Push{
+	Material material;
+	int id;
+	int HasDiffuseMap;
+	int HasNormalMap;
+}push;
 
 struct VS_OUT
 {
@@ -69,20 +87,26 @@ struct VS_OUT
 };
 
 layout(location = 0) in VS_OUT fs_in;
+layout(location = 8) in	flat int id;
 
 void main()
 {
 	gPosistion = fs_in.v_pos;
 
-	gAlbedoSpec.rgb = texture(DiffuseMap, fs_in.v_uv).rgb;
-
+	if(push.HasDiffuseMap==1){
+		gAlbedoSpec.rgb = texture(DiffuseMap, fs_in.v_uv).rgb;
+	}else {
+		gAlbedoSpec.rgb = push.material.color.rgb;
+	}
 	gAlbedoSpec.a = texture(SpecularMap, fs_in.v_uv).r;
-
-	vec3 normal = texture(NormalMap, fs_in.v_uv).rgb;
-	normal = normalize(normal * 2.0 - 1.0);
-	normal = normalize(fs_in.TBN * normal);
 	
-	normal = fs_in.v_normal;
-
-	gNormal = normal; 
+	if(push.HasNormalMap==1){
+		vec3 normal = texture(NormalMap, fs_in.v_uv).rgb;
+		normal = normalize(normal * 2.0 - 1.0);
+		gNormal = normalize(fs_in.TBN * normal);
+	}
+	else{
+		gNormal = fs_in.v_normal;
+	}
+	gEntityID = id;
 }

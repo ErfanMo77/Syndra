@@ -38,6 +38,7 @@ namespace Syndra {
 		static uint32_t GetTextureID(int index);
 
 		static FramebufferSpecification GetMainFrameSpec();
+		static Ref<FrameBuffer> GetGeoFrameBuffer();
 
 		static ShaderLibrary& GetShaderLibrary();
 
@@ -91,6 +92,9 @@ namespace Syndra {
 			float exposure;
 			float gamma;
 			float lightSize;
+			float orthoSize;
+			float lightNear;
+			float lightFar;
 			directionalLight dirLight;
 			pointLight pointLights[4];
 			spotLight spotLights[4];

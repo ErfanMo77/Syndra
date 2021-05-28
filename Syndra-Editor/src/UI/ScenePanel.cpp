@@ -449,41 +449,21 @@ namespace Syndra {
 			ImGui::Columns(2);
 			ImGui::SetColumnWidth(0, 80);
 			ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{ 0, 0 });
-			ImGui::Text("Shaders\0");
+			ImGui::Text("Shader\0");
 
 			ImGui::PopStyleVar();
 			ImGui::NextColumn();
 			ImGui::PushItemWidth(ImGui::GetContentRegionAvailWidth());
-			static int item_current_idx = 0;												// Here our selection data is an index.
-			const char* combo_label = component.m_Shader->GetName().c_str();				// Label to preview before opening the combo (technically it could be anything)
-			if (ImGui::BeginCombo("##Shaders", combo_label))
-			{
-				for (int n = 0; n < m_ShaderNames.size(); n++)
-				{
-					const bool is_selected = (item_current_idx == n);
-
-					if (ImGui::Selectable(m_ShaderNames[n].c_str(), is_selected)) {
-						item_current_idx = n;
-						m_SelectedShader = m_ShaderNames[n];
-						component.material = Material::Create(m_Shaders.Get(m_SelectedShader));
-						component.m_Shader = m_Shaders.Get(m_SelectedShader);
-					}
-
-					// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
-					if (is_selected)
-						ImGui::SetItemDefaultFocus();
-				}
-				ImGui::EndCombo();
-			}
+			ImGui::TextColored({0.2f,0.8f,0.3f,1.0f}, "PBR shader\0");
 			ImGui::PopItemWidth();
 			ImGui::Columns(1);
-			ImGui::Separator();
 			ImGuiIO& io = ImGui::GetIO();
 			std::vector<Sampler>& samplers = component.material->GetSamplers();
 			auto& materialTextures = component.material->GetTextures();
 			for (auto& sampler : samplers)
-			{			
+			{	
 				ImGui::PushID(sampler.name.c_str());
+				ImGui::Separator();
 				int frame_padding = -1 + 0;                             // -1 == uses default padding (style.FramePadding)
 				ImVec2 size = ImVec2(64.0f,64.0f);                     // Size of the image we want to make visible
 				ImGui::Text(sampler.name.c_str());
@@ -496,7 +476,14 @@ namespace Syndra {
 
 				ImGui::SameLine();
 				ImGui::Checkbox("Use", &sampler.isUsed);
-
+				//Diffuse
+				if (sampler.binding == 0) {
+					static glm::vec4 color;
+					ImGui::ColorEdit4("Albedo", glm::value_ptr(color), ImGuiColorEditFlags_NoInputs);
+					component.m_Shader->Bind();
+					component.m_Shader->SetFloat4("push.material.color", color);
+					component.m_Shader->Unbind();
+				}
 				if (ImGui::ImageButton(m_TextureId, size, ImVec2{ 0, 1 }, ImVec2{ 1, 0 })) {
 
 					auto path = FileDialogs::OpenFile("Syndra Texture (*.*)\0*.*\0");
@@ -506,8 +493,6 @@ namespace Syndra {
 					}
 				}
 				ImGui::PopID();
-				
-
 			}
 			ImGui::TreePop();
 
@@ -621,7 +606,7 @@ namespace Syndra {
 			if (ImGui::MenuItem("Material"))
 			{
 				if (!m_SelectionContext.HasComponent<MaterialComponent>())
-					m_SelectionContext.AddComponent<MaterialComponent>(m_Shaders.Get("diffuse"));
+					m_SelectionContext.AddComponent<MaterialComponent>(m_Shaders.Get("GeometryPass"));
 				else
 					SN_CORE_WARN("This entity already has the Camera Component!");
 				ImGui::CloseCurrentPopup();

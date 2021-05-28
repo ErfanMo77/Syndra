@@ -44,7 +44,7 @@ namespace Syndra {
 		glm::vec3 GetDirection() const { return m_Direction; }
 
 	private:
-		glm::vec3 m_Direction = {0.0f,-6.28f,0.0f};
+		glm::vec3 m_Direction = {-4.0f,-6.28f,0.0f};
 	};
 
 

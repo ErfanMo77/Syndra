@@ -44,7 +44,6 @@ layout(binding = 3) uniform ShadowData
 #define constant 1.0
 #define linear 0.022
 #define quadratic 0.0019
-const int NEAR = 2;
 
 struct PointLight {
     vec4 position;
@@ -78,6 +77,7 @@ layout(push_constant) uniform pushConstants{
 	float exposure;
 	float gamma;
 	float size;
+	float near;
 	int numPCFSamples;
 	int numBlockerSearchSamples;
 	int softShadow;
@@ -93,7 +93,7 @@ vec2 RandomDirection(sampler1D distribution, float u)
 //////////////////////////////////////////////////////////////////////////
 float SearchWidth(float uvLightSize, float receiverDistance)
 {
-	return uvLightSize * (receiverDistance - NEAR) / receiverDistance;
+	return uvLightSize * (receiverDistance - pc.near) / receiverDistance;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -104,14 +104,6 @@ float FindBlockerDistance_DirectionalLight(vec3 shadowCoords, sampler2D shadowMa
 	float searchWidth = SearchWidth(uvLightSize, shadowCoords.z);
 	for (int i = 0; i < pc.numBlockerSearchSamples; i++)
 	{
-		//vec3 uvc =  vec3(shadowCoords.xy + RandomDirection(distribution0, i / float(numPCFSamples)) * uvLightSize,(shadowCoords.z - bias));
-		//float z = texture(shadowMap, uvc);
-		//if (z>0.5)
-		//{
-		//	blockers++;
-			//avgBlockerDistance += z;
-		//}
-
 		float z = texture(shadowMap, shadowCoords.xy + RandomDirection(distribution0, i / float(pc.numBlockerSearchSamples)) * searchWidth).r;
 		if (z < (shadowCoords.z - bias))
 		{
@@ -133,10 +125,6 @@ float PCF_DirectionalLight(vec3 shadowCoords, sampler2D shadowMap, float uvRadiu
 	{
 		float z = texture(shadowMap, shadowCoords.xy + RandomDirection(distribution1, i / float(pc.numPCFSamples)) * uvRadius).r;
 		sum += (z < (shadowCoords.z - bias)) ? 1 : 0;
-
-		//vec3 uvc =  vec3(shadowCoords.xy + RandomDirection(distribution1, i / float(numPCFSamples)) * uvRadius,(shadowCoords.z - bias));
-		//float z = texture(shadowMap, uvc);
-		//sum += z;
 	}
 	return sum / pc.numPCFSamples;
 }
@@ -153,7 +141,7 @@ float PCSS_DirectionalLight(vec3 shadowCoords, sampler2D shadowMap, float uvLigh
 	float penumbraWidth = (shadowCoords.z - blockerDistance) / blockerDistance;
 
 	// percentage-close filtering
-	float uvRadius = penumbraWidth * uvLightSize * NEAR / shadowCoords.z;
+	float uvRadius = penumbraWidth * uvLightSize * pc.near / shadowCoords.z;
 	return PCF_DirectionalLight(shadowCoords, shadowMap, uvRadius, bias);
 }
 

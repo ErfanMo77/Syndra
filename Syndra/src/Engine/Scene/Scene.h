@@ -29,6 +29,7 @@ namespace Syndra {
 		void ReloadShader() { SceneRenderer::Reload(); }
 
 		uint32_t GetMainTextureID() { return SceneRenderer::GetTextureID(0); }
+		Ref<FrameBuffer> GetMainFrameBuffer() { return SceneRenderer::GetGeoFrameBuffer(); }
 		FramebufferSpecification GetSpec() { return SceneRenderer::GetMainFrameSpec(); }
 
 		ShaderLibrary& GetShaderLibrary() { return m_Shaders; }
