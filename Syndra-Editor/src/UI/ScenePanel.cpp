@@ -486,6 +486,10 @@ namespace Syndra {
 				//Albedo color
 				if (sampler.binding == 0) {
 					glm::vec4 color = buffer.material.color;
+					float tiling = buffer.tiling;
+					if (ImGui::DragFloat("Tiling", &tiling, 0.05f, 0.001f, 100)) {
+						component.material->Set("tiling", tiling);
+					}
 					if (ImGui::ColorEdit4("Albedo", glm::value_ptr(color), ImGuiColorEditFlags_NoInputs)) {
 						component.material->Set("push.material.color", color);
 					}

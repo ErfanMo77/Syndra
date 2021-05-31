@@ -280,6 +280,7 @@ namespace Syndra {
 				else
 				{
 					s_Data.geoShader->SetInt("push.HasAlbedoMap", 1);
+					s_Data.geoShader->SetFloat("push.tiling", 1.0f);
 					s_Data.geoShader->SetInt("push.HasNormalMap", 0);
 					s_Data.geoShader->SetInt("push.HasMetallicMap", 0);
 					s_Data.geoShader->SetInt("push.HasRoughnessMap", 0);

@@ -19,6 +19,7 @@ namespace Syndra {
 		struct CBuffer {
 			ShaderMaterial material;
 			int id;
+			float tiling;
 			int HasAlbedoMap;
 			int HasNormalMap;
 			int HasRoughnessMap;
@@ -26,7 +27,7 @@ namespace Syndra {
 			int HasAOMap;
 
 			CBuffer() :
-				id(-1), HasAOMap(0), HasNormalMap(0), HasRoughnessMap(0), HasAlbedoMap(0) {}
+				id(-1), HasAOMap(0), HasNormalMap(0), HasRoughnessMap(0), HasAlbedoMap(0), tiling(1) {}
 		};
 
 		Material() = default;
