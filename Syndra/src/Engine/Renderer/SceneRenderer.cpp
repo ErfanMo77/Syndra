@@ -281,6 +281,9 @@ namespace Syndra {
 				{
 					s_Data.geoShader->SetInt("push.HasAlbedoMap", 1);
 					s_Data.geoShader->SetInt("push.HasNormalMap", 0);
+					s_Data.geoShader->SetInt("push.HasMetallicMap", 0);
+					s_Data.geoShader->SetInt("push.HasRoughnessMap", 0);
+					s_Data.geoShader->SetInt("push.HasAOMap", 0);
 					s_Data.geoShader->SetFloat("push.material.MetallicFactor", 0);
 					s_Data.geoShader->SetFloat("push.material.RoughnessFactor", 1);
 					s_Data.geoShader->SetFloat("push.material.AO", 1);

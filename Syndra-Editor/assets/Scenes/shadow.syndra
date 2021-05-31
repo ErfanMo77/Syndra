@@ -1,13 +1,25 @@
 Scene: shadow
 Camera:
-  Yaw: -6.51839638
-  Pitch: 0.364799052
-  distance: 13.1310825
+  Yaw: -6.62159729
+  Pitch: 0.472799331
+  distance: 9.92256069
   FOV: 45
   Near: 0.100000001
   Far: 1000
 Entities:
   - Entity: 0
+    TagComponent:
+      Tag: Directional Light
+    TransformComponent:
+      Translation: [0, 0, 0]
+      Rotation: [0, 0, 0]
+      Scale: [1, 1, 1]
+    LightComponent:
+      Type: Directional
+      Color: [1, 0.999997318, 0.999989986]
+      Intensity: 14.8000002
+      Direction: [-4, -6.28000021, 0]
+  - Entity: 1
     TagComponent:
       Tag: Entity
     TransformComponent:
@@ -16,7 +28,7 @@ Entities:
       Scale: [2.27999973, 2.27999997, 2.27999973]
     MeshComponent:
       Path: \assets\Models\cube\cube.obj
-  - Entity: 1
+  - Entity: 2
     TagComponent:
       Tag: Entity
     TransformComponent:
@@ -25,19 +37,15 @@ Entities:
       Scale: [11.5375051, 0.474241018, 11.5375051]
     MeshComponent:
       Path: \assets\Models\cube\cube.obj
-  - Entity: 2
-    TagComponent:
-      Tag: Dirlight
-    TransformComponent:
-      Translation: [-1.79824376, 0, 0]
-      Rotation: [0, 0, 0]
-      Scale: [1, 1, 1]
-    LightComponent:
-      Type: Directional
-      Color: [1, 1, 1]
-      Intensity: 1.79999995
-      Direction: [-4.88700008, -6.28299999, 2.74900007]
-  - Entity: 3
+    MaterialComponent:
+      shader: GeometryPass
+      Textures:
+        - {binding: 0, path: ""}
+        - {binding: 1, path: ""}
+        - {binding: 2, path: ""}
+        - {binding: 3, path: ""}
+        - {binding: 4, path: ""}
+  - Entity: 4
     TagComponent:
       Tag: Entity
     TransformComponent:
@@ -46,12 +54,37 @@ Entities:
       Scale: [1, 1, 1]
     MeshComponent:
       Path: \assets\Models\cube\cube.obj
-  - Entity: 4
+  - Entity: 5
     TagComponent:
       Tag: Entity
     TransformComponent:
-      Translation: [1.43394446, 0.364735276, 2.06201768]
+      Translation: [-1.0584929, 0.364730865, -3.12650275]
       Rotation: [2.17234408e-09, -0.0834946632, -2.72890315e-08]
       Scale: [0.0386224464, 0.0386224575, 0.0386224464]
     MeshComponent:
       Path: D:\Bridge stuff\Downloaded\3d\container_barrel_udlmcdhqx\udlmcdhqx_LOD0.fbx
+    MaterialComponent:
+      shader: GeometryPass
+      Textures:
+        - {binding: 0, path: D:\Bridge stuff\Downloaded\3d\container_barrel_udlmcdhqx\udlmcdhqx_2K_Albedo.jpg}
+        - {binding: 1, path: ""}
+        - {binding: 2, path: D:\Bridge stuff\Downloaded\3d\container_barrel_udlmcdhqx\udlmcdhqx_2K_Normal_LOD0.jpg}
+        - {binding: 3, path: D:\Bridge stuff\Downloaded\3d\container_barrel_udlmcdhqx\udlmcdhqx_2K_Roughness.jpg}
+        - {binding: 4, path: ""}
+  - Entity: 1048579
+    TagComponent:
+      Tag: Entity
+    TransformComponent:
+      Translation: [-2.73542619, 0, -1.42880309]
+      Rotation: [0, 0, 0]
+      Scale: [0.120000005, 0.120000005, 0.120000005]
+    MeshComponent:
+      Path: D:\Bridge stuff\Downloaded\3d\stone_sculpture_uffkcc1va\uffkcc1va_LOD0.fbx
+    MaterialComponent:
+      shader: GeometryPass
+      Textures:
+        - {binding: 0, path: D:\Bridge stuff\Downloaded\3d\stone_sculpture_uffkcc1va\uffkcc1va_4K_Albedo.jpg}
+        - {binding: 1, path: ""}
+        - {binding: 2, path: D:\Bridge stuff\Downloaded\3d\stone_sculpture_uffkcc1va\uffkcc1va_4K_Normal_LOD0.jpg}
+        - {binding: 3, path: D:\Bridge stuff\Downloaded\3d\stone_sculpture_uffkcc1va\uffkcc1va_4K_Roughness.jpg}
+        - {binding: 4, path: D:\Bridge stuff\Downloaded\3d\stone_sculpture_uffkcc1va\uffkcc1va_4K_AO.jpg}

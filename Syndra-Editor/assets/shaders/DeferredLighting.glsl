@@ -289,6 +289,15 @@ void main()
 
 	Lo += CalculateLo(lightDir, N, V, lights.dLight.color.rgb, F0, Roughness, Metallic, Albedo);
 
+	for(int i = 0; i < 4; i++)
+	{
+		vec3 L = normalize(lights.pLight[i].position.rgb - fragPos);
+		float distance = length(lights.pLight[i].position.rgb - fragPos);
+		float attenuation = 1.0/(distance * distance);
+		vec3 Ra = lights.pLight[i].color.rgb * attenuation;
+		Lo += CalculateLo(L, N, V, Ra, F0, Roughness, Metallic, Albedo);
+	}
+
 	float shadow =0;
 	if(pc.softShadow == 1){
 		shadow = SoftShadow(FragPosLightSpace, bias);

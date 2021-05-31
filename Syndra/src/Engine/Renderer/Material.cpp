@@ -13,21 +13,42 @@ namespace Syndra {
 
 	void Material::Set(const std::string& name, float value)
 	{
-
+		if (name == "push.material.MetallicFactor") {
+			m_Cbuffer.material.MetallicFactor = value;
+		}
+		else if (name == "push.material.RoughnessFactor") {
+			m_Cbuffer.material.RoughnessFactor = value;
+		}
+		else if(name == "push.material.AO")
+		{
+			m_Cbuffer.material.AO = value;
+		}
 	}
 
 	void Material::Set(const std::string& name, int value)
 	{
-		for (auto& item : m_PushConstants[0].members) {
-			if (name == item.name) {
-				
-			}
+		if (name == "HasAlbedoMap") {
+			m_Cbuffer.HasAlbedoMap = value;
+		}
+		else if (name == "HasNormalMap") {
+			m_Cbuffer.HasNormalMap = value;
+		}
+		else if (name == "HasRoughnessMap") {
+			m_Cbuffer.HasRoughnessMap = value;
+		}
+		else if (name == "HasMetallicMap") {
+			m_Cbuffer.HasMetallicMap = value;
+		}
+		else if (name == "HasAOMap") {
+			m_Cbuffer.HasAOMap = value;
 		}
 	}
 
 	void Material::Set(const std::string& name, const glm::vec4& value)
 	{
-
+		if (name == "push.material.color") {
+			m_Cbuffer.material.color = value;
+		}
 	}
 
 	void Material::Set(const std::string& name, const glm::vec3& value)
@@ -78,9 +99,14 @@ namespace Syndra {
 		}
 
 		//Binding push constants
-		for (auto& item : m_PushConstants[0].members) 
+		for (auto& item : m_PushConstants[1].members) 
 		{
-			
+			if (item.name == "material") {
+				m_Shader->SetFloat("push.material.MetallicFactor", m_Cbuffer.material.MetallicFactor);
+				m_Shader->SetFloat("push.material.RoughnessFactor", m_Cbuffer.material.RoughnessFactor);
+				m_Shader->SetFloat("push.material.AO", m_Cbuffer.material.AO);
+				m_Shader->SetFloat4("push.material.color", m_Cbuffer.material.color);
+			}
 		}
 	}
 
