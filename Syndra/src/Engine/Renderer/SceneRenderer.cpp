@@ -45,6 +45,7 @@ namespace Syndra {
 			FramebufferTextureFormat::RGBA16F,			// Position texture attachment
 			FramebufferTextureFormat::RGBA16F,			// Normal texture attachment
 			FramebufferTextureFormat::RGBA16F,			// Albedo-specular texture attachment
+			FramebufferTextureFormat::RGBA16F,		    // Roughness-Metallic-AO texture attachment
 			FramebufferTextureFormat::RED_INTEGER,		// Entities ID texture attachment
 			FramebufferTextureFormat::DEPTH24STENCIL8	// default depth map
 		};
@@ -261,7 +262,7 @@ namespace Syndra {
 		s_Data.geoPass->BindTargetFrameBuffer();
 		RenderCommand::SetState(RenderState::DEPTH_TEST, true);
 		RenderCommand::SetClearColor(s_Data.geoPass->GetSpecification().TargetFrameBuffer->GetSpecification().ClearColor);
-		s_Data.geoPass->GetSpecification().TargetFrameBuffer->ClearAttachment(3, -1);
+		s_Data.geoPass->GetSpecification().TargetFrameBuffer->ClearAttachment(4, -1);
 		s_Data.geoShader->Bind();
 		RenderCommand::Clear();
 		for (auto ent : view)
@@ -278,8 +279,11 @@ namespace Syndra {
 				}
 				else
 				{
-					s_Data.geoShader->SetInt("push.HasDiffuseMap", 1);
+					s_Data.geoShader->SetInt("push.HasAlbedoMap", 1);
 					s_Data.geoShader->SetInt("push.HasNormalMap", 0);
+					s_Data.geoShader->SetFloat("push.material.MetallicFactor", 0);
+					s_Data.geoShader->SetFloat("push.material.RoughnessFactor", 1);
+					s_Data.geoShader->SetFloat("push.material.AO", 1);
 					s_Data.geoShader->SetMat4("transform.u_trans", tc.GetTransform());
 					s_Data.geoShader->SetInt("transform.id", (uint32_t)ent);
 					SceneRenderer::RenderEntityColor(ent, tc, mc, s_Data.geoShader);
@@ -328,6 +332,7 @@ namespace Syndra {
 		Texture2D::BindTexture(s_Data.geoPass->GetFrameBufferTextureID(0), 0);
 		Texture2D::BindTexture(s_Data.geoPass->GetFrameBufferTextureID(1), 1);
 		Texture2D::BindTexture(s_Data.geoPass->GetFrameBufferTextureID(2), 2);
+		Texture2D::BindTexture(s_Data.geoPass->GetFrameBufferTextureID(3), 6);
 
 		Renderer::Submit(s_Data.deferredLighting, s_Data.screenVao);
 
@@ -356,6 +361,7 @@ namespace Syndra {
 		static bool showAlbedo = false;
 		static bool showNormal = false;
 		static bool showPosition = false;
+		static bool showRoughMetalAO = false;
 		if (ImGui::Button("Albedo")) {
 			showAlbedo = !showAlbedo;
 		}
@@ -366,6 +372,10 @@ namespace Syndra {
 		ImGui::SameLine();
 		if (ImGui::Button("Position")) {
 			showPosition = !showPosition;
+		}
+		ImGui::SameLine();
+		if (ImGui::Button("RoughMetalAO")) {
+			showRoughMetalAO = !showRoughMetalAO;
 		}
 		auto width = s_Data.geoPass->GetSpecification().TargetFrameBuffer->GetSpecification().Width * 0.5f;
 		auto height = s_Data.geoPass->GetSpecification().TargetFrameBuffer->GetSpecification().Height * 0.5f;
@@ -385,6 +395,12 @@ namespace Syndra {
 		if (showPosition) {
 			ImGui::Begin("Position");
 			ImGui::Image(reinterpret_cast<void*>(s_Data.geoPass->GetFrameBufferTextureID(0)), frameSize, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
+			ImGui::End();
+		}
+
+		if (showRoughMetalAO) {
+			ImGui::Begin("RoughMetalAO");
+			ImGui::Image(reinterpret_cast<void*>(s_Data.geoPass->GetFrameBufferTextureID(3)), frameSize, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
 			ImGui::End();
 		}
 

@@ -476,12 +476,35 @@ namespace Syndra {
 
 				ImGui::SameLine();
 				ImGui::Checkbox("Use", &sampler.isUsed);
-				//Diffuse
+				//Albedo color
 				if (sampler.binding == 0) {
 					static glm::vec4 color;
 					ImGui::ColorEdit4("Albedo", glm::value_ptr(color), ImGuiColorEditFlags_NoInputs);
 					component.m_Shader->Bind();
 					component.m_Shader->SetFloat4("push.material.color", color);
+					component.m_Shader->Unbind();
+				}
+				//metal factor
+				if (sampler.binding == 1) {
+					static float metal;
+					ImGui::SliderFloat("Metallic factor", &metal, 0, 1);
+					component.m_Shader->Bind();
+					component.m_Shader->SetFloat("push.material.MetallicFactor", metal);
+					component.m_Shader->Unbind();
+				}
+
+				if (sampler.binding == 3) {
+					static float roughness;
+					ImGui::SliderFloat("Roughness", &roughness, 0, 1);
+					component.m_Shader->Bind();
+					component.m_Shader->SetFloat("push.material.RoughnessFactor", roughness);
+					component.m_Shader->Unbind();
+				}
+				if (sampler.binding == 4) {
+					static float AO;
+					ImGui::SliderFloat("Ambient Occlusion", &AO, 0, 1);
+					component.m_Shader->Bind();
+					component.m_Shader->SetFloat("push.material.AO", AO);
 					component.m_Shader->Unbind();
 				}
 				if (ImGui::ImageButton(m_TextureId, size, ImVec2{ 0, 1 }, ImVec2{ 1, 0 })) {

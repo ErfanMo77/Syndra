@@ -49,25 +49,31 @@ namespace Syndra {
 			if (sampler.isUsed) {
 				auto& texture = m_Textures[sampler.binding];
 				if (texture) {
-					if (sampler.binding == 0) {
-						m_Shader->SetInt("push.HasDiffuseMap", 1);
-					}
+					if (sampler.binding == 0) 
+						m_Shader->SetInt("push.HasAlbedoMap", 1);
+					if (sampler.binding == 1) 
+						m_Shader->SetInt("push.HasMetallicMap", 1);
 					if (sampler.binding == 2)
-					{
 						m_Shader->SetInt("push.HasNormalMap", 1);
-					}
+					if (sampler.binding == 3)
+						m_Shader->SetInt("push.HasRoughnessMap", 1);
+					if (sampler.binding == 4) 
+						m_Shader->SetInt("push.HasAOMap", 1);
 					texture->Bind(sampler.binding);
 				}
 			}
 			else
 			{
-				if (sampler.binding == 0) {
-					m_Shader->SetInt("push.HasDiffuseMap", 0);
-				}
+				if (sampler.binding == 0)
+					m_Shader->SetInt("push.HasAlbedoMap", 0);
+				if (sampler.binding == 1)
+					m_Shader->SetInt("push.HasMetallicMap", 0);
 				if (sampler.binding == 2)
-				{
 					m_Shader->SetInt("push.HasNormalMap", 0);
-				}
+				if (sampler.binding == 3)
+					m_Shader->SetInt("push.HasRoughnessMap", 0);
+				if (sampler.binding == 4)
+					m_Shader->SetInt("push.HasAOMap", 0);
 			}
 		}
 
