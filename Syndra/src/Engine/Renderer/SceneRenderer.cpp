@@ -198,7 +198,7 @@ namespace Syndra {
 				s_Data.dirLight.direction = glm::vec4(p->GetDirection(), 0);
 				s_Data.dirLight.position = glm::vec4(tc.Translation, 0);
 				//shadow
-				s_Data.lightView = glm::lookAt(-(glm::vec3(glm::normalize(s_Data.dirLight.direction)) * 10.0f), glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+				s_Data.lightView = glm::lookAt(-(glm::vec3(s_Data.dirLight.direction) * 10.0f), glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 				s_Data.shadowData.lightViewProj = s_Data.lightProj * s_Data.lightView;
 				s_Data.ShadowBuffer->SetData(&s_Data.shadowData, sizeof(glm::mat4));
 				p = nullptr;
