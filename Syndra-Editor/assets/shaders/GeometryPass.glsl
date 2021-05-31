@@ -60,22 +60,32 @@ void main()
 layout(location = 0) out vec3 gPosistion;	
 layout(location = 1) out vec3 gNormal;	
 layout(location = 2) out vec4 gAlbedoSpec;
-layout(location = 3) out int gEntityID;
+layout(location = 3) out vec3 gRoughMetalAO;
+layout(location = 4) out int  gEntityID;
 
-layout(binding = 0) uniform sampler2D DiffuseMap;
-layout(binding = 1) uniform sampler2D SpecularMap;
+
+layout(binding = 0) uniform sampler2D AlbedoMap;
+layout(binding = 1) uniform sampler2D metallicMap;
 layout(binding = 2) uniform sampler2D NormalMap;
+layout(binding = 3) uniform sampler2D RoughnessMap;
+layout(binding = 4) uniform sampler2D AmbientOcclusionMap;
 
 struct Material
 {
 	vec4 color;
+	float RoughnessFactor;
+	float MetallicFactor;
+	float AO;
 };
 
 layout(push_constant) uniform Push{
 	Material material;
 	int id;
-	int HasDiffuseMap;
+	int HasAlbedoMap;
 	int HasNormalMap;
+	int HasRoughnessMap;
+	int HasMetallicMap;
+	int HasAOMap;
 }push;
 
 struct VS_OUT
@@ -91,15 +101,18 @@ layout(location = 8) in	flat int id;
 
 void main()
 {
+	//////////////////////////////////////POSITION//////////////////////////////////////////
 	gPosistion = fs_in.v_pos;
 
-	if(push.HasDiffuseMap==1){
-		gAlbedoSpec.rgb = texture(DiffuseMap, fs_in.v_uv).rgb;
+	//////////////////////////////////////ALBEDO////////////////////////////////////////////
+	if(push.HasAlbedoMap==1){
+		gAlbedoSpec.rgb = texture(AlbedoMap, fs_in.v_uv).rgb;
 	}else {
 		gAlbedoSpec.rgb = push.material.color.rgb;
 	}
-	gAlbedoSpec.a = texture(SpecularMap, fs_in.v_uv).r;
-	
+	gAlbedoSpec.a = 1.0;
+
+	//////////////////////////////////////NORMAL////////////////////////////////////////////
 	if(push.HasNormalMap==1){
 		vec3 normal = texture(NormalMap, fs_in.v_uv).rgb;
 		normal = normalize(normal * 2.0 - 1.0);
@@ -108,5 +121,42 @@ void main()
 	else{
 		gNormal = fs_in.v_normal;
 	}
+
+	///////////////////////////////////ROUGHNESS////////////////////////////////////////////
+	float Roughness;
+	if(push.HasRoughnessMap == 1)
+	{
+		Roughness = texture(RoughnessMap, fs_in.v_uv).r * push.material.RoughnessFactor;
+	}
+	else
+	{
+		Roughness = push.material.RoughnessFactor;
+	}
+
+	///////////////////////////////////METALLIC/////////////////////////////////////////////
+	float Metallic;
+	if(push.HasMetallicMap == 1)
+	{
+		Metallic =  texture(metallicMap, fs_in.v_uv).r * push.material.MetallicFactor;
+	}
+	else
+	{
+		Metallic = push.material.MetallicFactor;
+	}
+
+	///////////////////////////////////AMBIENT OCCLUSION///////////////////////////////////
+	float AO;
+	if(push.HasAOMap == 1)
+	{
+		AO =  texture(AmbientOcclusionMap, fs_in.v_uv).r * push.material.AO;
+	}
+	else
+	{
+		AO = push.material.AO;
+	}
+
+	gRoughMetalAO = vec3(Roughness, Metallic, AO);
+
+	//////////////////////////////////ENTITY ID////////////////////////////////////////////
 	gEntityID = id;
 }

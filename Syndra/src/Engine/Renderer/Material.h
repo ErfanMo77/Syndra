@@ -7,17 +7,6 @@ namespace Syndra {
 
 	class Material {
 
-		struct ShaderMaterial
-		{
-			glm::vec4 color;
-		};
-
-		struct CBuffer{
-			ShaderMaterial mat;
-			int HasDiffuseMap;
-			int HasNormalMap;
-		};
-
 	public:
 
 		Material() = default;
@@ -44,6 +33,27 @@ namespace Syndra {
 		void Set(const std::string& name, const glm::vec3& value);
 
 		static Ref<Material> Create(Ref<Shader>& shader);
+
+		struct ShaderMaterial
+		{
+			glm::vec4 color;
+			float RoughnessFactor = 1;
+			float MetallicFactor = 0;
+			float AO = 1;
+		};
+
+		struct CBuffer {
+			ShaderMaterial material;
+			int id;
+			int HasAlbedoMap;
+			int HasNormalMap;
+			int HasRoughnessMap;
+			int HasMetallicMap;
+			int HasAOMap;
+
+			CBuffer() :
+				id(-1), HasAOMap(0), HasNormalMap(0), HasRoughnessMap(0), HasAlbedoMap(0) {}
+		};
 
 	private:
 

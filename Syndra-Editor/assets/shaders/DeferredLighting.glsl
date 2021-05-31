@@ -23,6 +23,7 @@ layout(location = 0) out vec4 fragColor;
 layout(binding = 0) uniform sampler2D gPosition;
 layout(binding = 1) uniform sampler2D gNormal;
 layout(binding = 2) uniform sampler2D gAlbedoSpec;
+layout(binding = 6) uniform sampler2D gRoughMetalAO;
 
 //Shadow related samplers
 layout(binding = 3) uniform sampler2D shadowMap;
@@ -186,36 +187,117 @@ float HardShadow(vec4 fragPosLightSpace, float bias)
     return shadow;
 }
 
-//Light calculation functions
-vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir, vec3 col);
-vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir,vec3 col);
-vec3 CalcSpotLight(SpotLight light, vec3 normal, vec3 fragPos, vec3 viewDir, vec3 col);
+const float PI = 3.14159265359;
+
+// ----------------------------------------------------------------------------
+float DistributionGGX(vec3 N, vec3 H, float roughness)
+{
+    float a = roughness*roughness;
+    float a2 = a*a;
+    float NdotH = max(dot(N, H), 0.0);
+    float NdotH2 = NdotH*NdotH;
+
+    float nom   = a2;
+    float denom = (NdotH2 * (a2 - 1.0) + 1.0);
+    denom = PI * denom * denom;
+
+    return nom / max(denom, 0.001); // prevent divide by zero for roughness=0.0 and NdotH=1.0
+}
+///////////////////////////////////////////////////PBR////////////////////////////////////////
+// ----------------------------------------------------------------------------
+float GeometrySchlickGGX(float NdotV, float roughness)
+{
+    float r = (roughness + 1.0);
+    float k = (r*r) / 8.0;
+
+    float nom   = NdotV;
+    float denom = NdotV * (1.0 - k) + k;
+
+    return nom / denom;
+}
+
+// ----------------------------------------------------------------------------
+float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness)
+{
+    float NdotV = max(dot(N, V), 0.0);
+    float NdotL = max(dot(N, L), 0.0);
+    float ggx2 = GeometrySchlickGGX(NdotV, roughness);
+    float ggx1 = GeometrySchlickGGX(NdotL, roughness);
+
+    return ggx1 * ggx2;
+}
+
+// ----------------------------------------------------------------------------
+vec3 FresnelSchlick(float cosTheta, vec3 F0)
+{
+    return F0 + (1.0 - F0) * pow(max(1.0 - cosTheta, 0.0), 5.0);
+}
+
+// ----------------------------------------------------------------------------
+vec3 FresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness)
+{
+    return F0 + (max(vec3(1.0 - roughness), F0) - F0) * pow(max(1.0 - cosTheta, 0.0), 5.0);
+}   
+
+// ----------------------------------------------------------------------------
+vec3 CalculateLo(vec3 L, vec3 N, vec3 V, vec3 Ra, vec3 F0, float R, float M, vec3 A)
+{
+	vec3 H = normalize(V + L); //Halfway Vector
+
+	//Cook-Torrance BRDF
+	float D = DistributionGGX(N, H, R);
+	float G = GeometrySmith(N, V, L, R);
+	vec3  F = FresnelSchlick(max(dot(H, V), 0.0), F0);
+
+	vec3 Nominator    = D * G * F;
+	float Denominator = 4 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.001;
+	vec3 Specular	  = Nominator / Denominator;
+
+	vec3 Ks = F;
+	vec3 Kd = vec3(1.0) - Ks;
+	Kd *= 1.0 - M;
+
+	float NDotL = max(dot(N, L), 0.0);
+	return (Kd * A / PI + Specular) * Ra * NDotL;
+}
 
 layout(location = 0) in vec2 v_uv;
 
 void main()
 {
 	vec3 fragPos = texture(gPosition, v_uv).rgb;
-	vec3 norm = texture(gNormal, v_uv).rgb;
+	vec3 N = texture(gNormal, v_uv).rgb;
 	vec4 albedospec = texture(gAlbedoSpec, v_uv);
-	vec3 albedo = albedospec.rgb;
-	float specular = albedospec.a;
+	vec3 Albedo = albedospec.rgb;
+	float Roughness = texture(gRoughMetalAO,  v_uv).r;
+	float Metallic  = texture(gRoughMetalAO,  v_uv).g;
+	float AO		= texture(gRoughMetalAO,  v_uv).b;
 
 	vec4 FragPosLightSpace = shadow.lightViewProj * vec4(fragPos, 1.0);
 
-	vec3 viewDir = normalize(cam.cameraPos.rgb - fragPos);
+	vec3 V = normalize(cam.cameraPos.rgb - fragPos);
 
-    vec3 lightDir = normalize(-lights.dLight.dir.rgb);
-    float bias = max(0.01 * (1.0 - dot(norm, lightDir)), 0.001); 
+	vec3 R = reflect(-V, N);
 
-	vec3 result = vec3(0);
-	result += CalcDirLight(lights.dLight, norm, viewDir, albedo);
-	for(int i = 0; i<4; i++){
-		result += CalcPointLight(lights.pLight[i], norm, fragPos, viewDir, albedo);
+	vec3 F0 = vec3(0.04);
+	F0 = mix(F0, Albedo, Metallic);
+
+	vec3 Lo = vec3(0.0);
+
+	vec3 lightDir = normalize(-lights.dLight.dir.rgb);
+    float bias = max(0.01 * (1.0 - dot(N, lightDir)), 0.001); 
+
+	Lo += CalculateLo(lightDir, N, V, lights.dLight.color.rgb, F0, Roughness, Metallic, Albedo);
+
+	for(int i = 0; i < 4; i++)
+	{
+		vec3 L = normalize(lights.pLight[i].position.rgb - fragPos);
+		float distance = length(lights.pLight[i].position.rgb - fragPos);
+		float attenuation = 1.0/(distance * distance);
+		vec3 Ra = lights.pLight[i].color.rgb * attenuation;
+		Lo += CalculateLo(L, N, V, Ra, F0, Roughness, Metallic, Albedo);
 	}
-	for(int i=0; i<1; i++){
-		result += CalcSpotLight(lights.sLight[i], norm, fragPos, viewDir, albedo);
-	}
+
 	float shadow =0;
 	if(pc.softShadow == 1){
 		shadow = SoftShadow(FragPosLightSpace, bias);
@@ -223,8 +305,10 @@ void main()
 	{
 		shadow = HardShadow(FragPosLightSpace, bias);
 	}
-	vec3 ambient = albedo * 0.1;
-	result = (1-shadow) * result + ambient;
+	vec3 ambient = vec3(0.03) * Albedo * AO;
+
+	vec3 result = vec3(0);
+	result = (1-shadow) * Lo + ambient;
 
     vec3 hdrColor = result;
   
@@ -234,62 +318,4 @@ void main()
 	mapped = pow(mapped, vec3(1.0 / pc.gamma));
 
 	fragColor = vec4(mapped, 1.0);
-}
-
-vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir,vec3 col){
-    vec3 lightDir = normalize(-light.dir.rgb);
-    float diff = max(dot(normal, lightDir), 0.0);
-	vec3 color;
-	if(col == vec3(0)){
-		color = vec3(diff)* light.color.rgb;
-	}else {
-		color = col * diff * light.color.rgb;
-	}
-	return color;
-}
-
-vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir,vec3 col)
-{
-    vec3 lightDir = normalize(light.position.rgb - fragPos);
-
-    float diff = max(dot(normal, lightDir), 0.0);
-
-    float distance = length(light.position.rgb - fragPos);
-    float attenuation = 1.0 / (constant + quadratic * (distance * distance));  
-	if(distance > light.dist){
-		attenuation = 0;
-	}
-	vec3 color;
-	if(col == vec3(0)){
-		color = vec3(diff)* light.color.rgb;
-	}else {
-		color = col * diff * light.color.rgb;
-	}
-
-    color *= attenuation;
-    return color;
-}
-
-vec3 CalcSpotLight(SpotLight light, vec3 normal, vec3 fragPos, vec3 viewDir, vec3 col){
-
-	vec3 lightDir = normalize(light.position.rgb - fragPos);
-
-    float diff = max(dot(normal, lightDir), 0.0);
-
-    float distance = length(light.position.rgb - fragPos);
-    float attenuation = 1.0 / (constant + quadratic * (distance * distance));  
-
-	vec3 color;
-	if(col == vec3(0)){
-		color = vec3(diff)* light.color.rgb;
-	}else {
-		color = col * diff * light.color.rgb;
-	}
-	float theta = dot(lightDir, normalize(-light.direction.rgb)); 
-    float epsilon = light.cutOff - light.outerCutOff;
-    float intensity = clamp((theta - light.outerCutOff) / epsilon, 0.0, 1.0);
-    color *= attenuation * intensity;
-
-	return color;
-
 }

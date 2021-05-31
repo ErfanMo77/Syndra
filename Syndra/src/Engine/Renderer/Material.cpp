@@ -13,21 +13,42 @@ namespace Syndra {
 
 	void Material::Set(const std::string& name, float value)
 	{
-
+		if (name == "push.material.MetallicFactor") {
+			m_Cbuffer.material.MetallicFactor = value;
+		}
+		else if (name == "push.material.RoughnessFactor") {
+			m_Cbuffer.material.RoughnessFactor = value;
+		}
+		else if(name == "push.material.AO")
+		{
+			m_Cbuffer.material.AO = value;
+		}
 	}
 
 	void Material::Set(const std::string& name, int value)
 	{
-		for (auto& item : m_PushConstants[0].members) {
-			if (name == item.name) {
-				
-			}
+		if (name == "HasAlbedoMap") {
+			m_Cbuffer.HasAlbedoMap = value;
+		}
+		else if (name == "HasNormalMap") {
+			m_Cbuffer.HasNormalMap = value;
+		}
+		else if (name == "HasRoughnessMap") {
+			m_Cbuffer.HasRoughnessMap = value;
+		}
+		else if (name == "HasMetallicMap") {
+			m_Cbuffer.HasMetallicMap = value;
+		}
+		else if (name == "HasAOMap") {
+			m_Cbuffer.HasAOMap = value;
 		}
 	}
 
 	void Material::Set(const std::string& name, const glm::vec4& value)
 	{
-
+		if (name == "push.material.color") {
+			m_Cbuffer.material.color = value;
+		}
 	}
 
 	void Material::Set(const std::string& name, const glm::vec3& value)
@@ -49,32 +70,43 @@ namespace Syndra {
 			if (sampler.isUsed) {
 				auto& texture = m_Textures[sampler.binding];
 				if (texture) {
-					if (sampler.binding == 0) {
-						m_Shader->SetInt("push.HasDiffuseMap", 1);
-					}
+					if (sampler.binding == 0) 
+						m_Shader->SetInt("push.HasAlbedoMap", 1);
+					if (sampler.binding == 1) 
+						m_Shader->SetInt("push.HasMetallicMap", 1);
 					if (sampler.binding == 2)
-					{
 						m_Shader->SetInt("push.HasNormalMap", 1);
-					}
+					if (sampler.binding == 3)
+						m_Shader->SetInt("push.HasRoughnessMap", 1);
+					if (sampler.binding == 4) 
+						m_Shader->SetInt("push.HasAOMap", 1);
 					texture->Bind(sampler.binding);
 				}
 			}
 			else
 			{
-				if (sampler.binding == 0) {
-					m_Shader->SetInt("push.HasDiffuseMap", 0);
-				}
+				if (sampler.binding == 0)
+					m_Shader->SetInt("push.HasAlbedoMap", 0);
+				if (sampler.binding == 1)
+					m_Shader->SetInt("push.HasMetallicMap", 0);
 				if (sampler.binding == 2)
-				{
 					m_Shader->SetInt("push.HasNormalMap", 0);
-				}
+				if (sampler.binding == 3)
+					m_Shader->SetInt("push.HasRoughnessMap", 0);
+				if (sampler.binding == 4)
+					m_Shader->SetInt("push.HasAOMap", 0);
 			}
 		}
 
 		//Binding push constants
-		for (auto& item : m_PushConstants[0].members) 
+		for (auto& item : m_PushConstants[1].members) 
 		{
-			
+			if (item.name == "material") {
+				m_Shader->SetFloat("push.material.MetallicFactor", m_Cbuffer.material.MetallicFactor);
+				m_Shader->SetFloat("push.material.RoughnessFactor", m_Cbuffer.material.RoughnessFactor);
+				m_Shader->SetFloat("push.material.AO", m_Cbuffer.material.AO);
+				m_Shader->SetFloat4("push.material.color", m_Cbuffer.material.color);
+			}
 		}
 	}
 

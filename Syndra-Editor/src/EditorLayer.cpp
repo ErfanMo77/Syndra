@@ -389,7 +389,7 @@ namespace Syndra {
 		{
 			auto& mousePickFB = m_ActiveScene->GetMainFrameBuffer();
 			mousePickFB->Bind();
-			int pixelData = mousePickFB->ReadPixel(3, mouseX, mouseY);
+			int pixelData = mousePickFB->ReadPixel(4, mouseX, mouseY);
 			if (pixelData != -1) {
 				m_ScenePanel->SetSelectedEntity(m_ActiveScene->FindEntity(pixelData));
 			}
