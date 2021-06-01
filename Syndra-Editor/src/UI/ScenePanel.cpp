@@ -443,9 +443,6 @@ namespace Syndra {
 			auto& component = entity.GetComponent<MaterialComponent>();
 
 			ImGui::Separator();
-			//ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 2,5 });
-			//ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, { 10,0 });
-			//ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x - 40);
 			ImGui::Columns(2);
 			ImGui::SetColumnWidth(0, 80);
 			ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{ 0, 0 });
@@ -465,8 +462,11 @@ namespace Syndra {
 				ImGui::PushID(sampler.name.c_str());
 				ImGui::Separator();
 				int frame_padding = -1 + 0;                             // -1 == uses default padding (style.FramePadding)
-				ImVec2 size = ImVec2(64.0f,64.0f);                     // Size of the image we want to make visible
+				ImVec2 size = ImVec2(64.0f,64.0f);                      // Size of the image we want to make visible
+				ImGui::Checkbox("Use", &sampler.isUsed);
+				ImGui::SameLine();
 				ImGui::Text(sampler.name.c_str());
+
 				m_TextureId = reinterpret_cast<void*>(m_EmptyTexture->GetRendererID());
 				auto& texture = component.material->GetTexture(sampler);
 				if (texture)
@@ -474,42 +474,58 @@ namespace Syndra {
 					m_TextureId = reinterpret_cast<void*>(texture->GetRendererID());
 				}
 
-				ImGui::SameLine();
-				ImGui::Checkbox("Use", &sampler.isUsed);
+				if (ImGui::ImageButton(m_TextureId, size, ImVec2{ 0, 1 }, ImVec2{ 1, 0 })) {
+
+					auto path = FileDialogs::OpenFile("Syndra Texture (*.*)\0*.*\0");
+					if (path) {
+						//Add texture as sRGB color space if it is binded to 0 (diffuse texture binding)
+						materialTextures[sampler.binding] = Texture2D::Create(*path, sampler.binding == 0);
+					}
+				}
+				const auto& buffer = component.material->GetCBuffer();
 				//Albedo color
 				if (sampler.binding == 0) {
-					static glm::vec4 color;
+					glm::vec4 color = buffer.material.color;
+					float tiling = buffer.tiling;
+					if (ImGui::DragFloat("Tiling", &tiling, 0.05f, 0.001f, 100)) {
+						component.material->Set("tiling", tiling);
+					}
 					if (ImGui::ColorEdit4("Albedo", glm::value_ptr(color), ImGuiColorEditFlags_NoInputs)) {
 						component.material->Set("push.material.color", color);
 					}
 				}
 				//metal factor
 				if (sampler.binding == 1) {
-					static float metal;
-					if (ImGui::SliderFloat("Metallic factor", &metal, 0, 1)) {
+					float metal = buffer.material.MetallicFactor;
+					ImGui::AlignTextToFramePadding();
+					ImGui::Text("Metallic\0");
+					ImGui::SameLine();
+					ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+					if (ImGui::SliderFloat("##Metallic", &metal, 0, 1)) {
 						component.material->Set("push.material.MetallicFactor", metal);
 					}
 				}
 				if (sampler.binding == 3) {
-					static float roughness;
-					if (ImGui::SliderFloat("Roughness", &roughness, 0, 1)) {
+					float roughness = buffer.material.RoughnessFactor;
+					ImGui::AlignTextToFramePadding();
+					ImGui::Text("Roughness\0");
+					ImGui::SameLine();
+					ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+					if (ImGui::SliderFloat("##Roughness", &roughness, 0, 1)) {
 						component.material->Set("push.material.RoughnessFactor", roughness);
 					}
 				}
 				if (sampler.binding == 4) {
-					static float AO;
-					if (ImGui::SliderFloat("Ambient Occlusion", &AO, 0, 1)) {
+					float AO = buffer.material.AO;
+					ImGui::AlignTextToFramePadding();
+					ImGui::Text("Ambient Occlusion\0");
+					ImGui::SameLine();
+					ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+					if (ImGui::SliderFloat("##Ambient Occlusion", &AO, 0, 1)) {
 						component.material->Set("push.material.AO", AO);
 					}
 				}
-				if (ImGui::ImageButton(m_TextureId, size, ImVec2{ 0, 1 }, ImVec2{ 1, 0 })) {
 
-					auto path = FileDialogs::OpenFile("Syndra Texture (*.*)\0*.*\0");
-					if (path) {
-						//Add texture as sRGB color space if it is binded to 0 (diffuse texture binding)
-						materialTextures[sampler.binding] = Texture2D::Create(*path,sampler.binding==0);
-					}
-				}
 				ImGui::PopID();
 			}
 			ImGui::TreePop();

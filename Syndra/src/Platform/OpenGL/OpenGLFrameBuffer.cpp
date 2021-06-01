@@ -93,17 +93,30 @@ namespace Syndra {
 		return false;
 	}
 
+	static bool IsCubemapFormat(FramebufferTextureFormat format)
+	{
+		if (format == FramebufferTextureFormat::Cubemap) {
+			return true;
+		}
+
+		return false;
+	}
+
 	OpenGLFrameBuffer::OpenGLFrameBuffer(const FramebufferSpecification& spec)
 		:m_Specification(spec)
 	{
 		for (auto& format : m_Specification.Attachments.Attachments) 
 		{
-			if (!IsDepthFormat(format.TextureFormat)) {
-				m_ColorAttachmentSpecifications.emplace_back(format);
+			if (IsDepthFormat(format.TextureFormat)) {
+				m_DepthAttachmentSpecification = format;
+			}
+			else if(IsCubemapFormat(format.TextureFormat))
+			{
+				m_CubeMapAttachmentSpecification = format;
 			}
 			else
 			{
-				m_DepthAttachmentSpecification = format;
+				m_ColorAttachmentSpecifications.emplace_back(format);
 			}
 		}
 
@@ -172,6 +185,21 @@ namespace Syndra {
 			}
 		}
 
+		if (m_CubeMapAttachmentSpecification.TextureFormat != FramebufferTextureFormat::None) 
+		{
+			glCreateTextures(GL_TEXTURE_CUBE_MAP, 1, &m_CubemapAttachment);
+			glBindTexture(GL_TEXTURE_CUBE_MAP, m_CubemapAttachment);
+			for (unsigned int i = 0; i < 6; ++i)
+			{
+				glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB16F, m_Specification.Width, m_Specification.Height, 0, GL_RGB, GL_FLOAT, nullptr);
+			}
+			glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+			glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+			glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+			glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+			glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		}
+		
 		if (m_ColorAttachments.size() > 1)
 		{
 			SN_CORE_ASSERT(m_ColorAttachments.size() <= 5, "Syndra only supports 5 attachments per framebuffer");
@@ -180,9 +208,15 @@ namespace Syndra {
 		}
 		else if (m_ColorAttachments.empty())
 		{
-			// Only depth-pass
-			glDrawBuffer(GL_NONE);
-			glReadBuffer(GL_NONE);
+			if (m_CubeMapAttachmentSpecification.TextureFormat == FramebufferTextureFormat::None) {
+				// Only depth-pass
+				glDrawBuffer(GL_NONE);
+				glReadBuffer(GL_NONE);
+			}
+			else {
+				GLenum buffer = GL_COLOR_ATTACHMENT0;
+				glDrawBuffers(1, &buffer);
+			}
 		}
 
 		SN_CORE_ASSERT(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE, "Framebuffer is incomplete!");
@@ -221,6 +255,19 @@ namespace Syndra {
 			TextureFormatToGL(spec.TextureFormat), GL_INT, &value);
 	}
 
+	uint32_t OpenGLFrameBuffer::GetColorAttachmentRendererID(uint32_t index /*= 0*/) const
+	{
+		if (m_ColorAttachments.empty())
+		{
+			return m_CubemapAttachment;
+		}
+		else
+		{
+			SN_CORE_ASSERT(index < m_ColorAttachments.size(), "Framebuffer color attachment index should be less than attachments' size");
+			return m_ColorAttachments[index];
+		}
+	}
+
 	int OpenGLFrameBuffer::ReadPixel(uint32_t attachmentIndex, int x, int y)
 	{
 		SN_CORE_ASSERT(attachmentIndex < m_ColorAttachments.size(),"Attachment index should be less than size!");
@@ -229,6 +276,11 @@ namespace Syndra {
 		int pixelData;
 		glReadPixels(x, y, 1, 1, GL_RED_INTEGER, GL_INT, &pixelData);
 		return pixelData;
+	}
+
+	void OpenGLFrameBuffer::BindCubemapFace(uint32_t index) const
+	{
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + index, m_CubemapAttachment, 0);
 	}
 
 }

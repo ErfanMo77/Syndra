@@ -23,6 +23,9 @@ namespace Syndra {
 		{
 			m_Cbuffer.material.AO = value;
 		}
+		else if (name == "tiling") {
+			m_Cbuffer.tiling = value;
+		}
 	}
 
 	void Material::Set(const std::string& name, int value)
@@ -106,6 +109,7 @@ namespace Syndra {
 				m_Shader->SetFloat("push.material.RoughnessFactor", m_Cbuffer.material.RoughnessFactor);
 				m_Shader->SetFloat("push.material.AO", m_Cbuffer.material.AO);
 				m_Shader->SetFloat4("push.material.color", m_Cbuffer.material.color);
+				m_Shader->SetFloat("push.tiling", m_Cbuffer.tiling);
 			}
 		}
 	}

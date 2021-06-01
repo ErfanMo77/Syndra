@@ -2,6 +2,7 @@
 #include "imgui.h"
 #include "imgui_internal.h"
 
+#include "Engine/Utils/PlatformUtils.h"
 #include "Engine/Core/Application.h"
 #include "Engine/Renderer/SceneRenderer.h"
 #include "Engine/Scene/Entity.h"
@@ -99,9 +100,6 @@ namespace Syndra {
 		s_Data.main = s_Data.shaders.Get("main");
 		s_Data.deferredLighting = s_Data.shaders.Get("DeferredLighting");
 
-		//s_Data.mouseShader = s_Data.shaders.Get("mouse");
-		//s_Data.outline = s_Data.shaders.Get("outline");
-
 		//----------------------------------------------SCREEN QUAD---------------------------------------------//
 		s_Data.screenVao = VertexArray::Create();
 		float quad[] = {
@@ -148,14 +146,21 @@ namespace Syndra {
 		float dSize = s_Data.orthoSize;
 		s_Data.lightProj = glm::ortho(-dSize, dSize, -dSize, dSize, s_Data.lightNear, s_Data.lightFar);
 		s_Data.ShadowBuffer = UniformBuffer::Create(sizeof(glm::mat4), 3);
+
+		//s_Data.environment = CreateRef<Environment>();
 	}
 
 	void SceneRenderer::BeginScene(const PerspectiveCamera& camera)
 	{
+		if (s_Data.environment)
+		{
+			s_Data.environment->SetViewProjection(camera.GetViewMatrix(), camera.GetProjection());
+		}
+		
 		s_Data.CameraBuffer.ViewProjection = camera.GetViewProjection();
 		s_Data.CameraBuffer.position = glm::vec4(camera.GetPosition(), 0);
 		s_Data.CameraUniformBuffer->SetData(&s_Data.CameraBuffer, sizeof(CameraData));
-
+		
 		for (auto& pointLight : s_Data.pointLights) 
 		{
 			pointLight.color = glm::vec4(0);
@@ -198,7 +203,7 @@ namespace Syndra {
 				s_Data.dirLight.direction = glm::vec4(p->GetDirection(), 0);
 				s_Data.dirLight.position = glm::vec4(tc.Translation, 0);
 				//shadow
-				s_Data.lightView = glm::lookAt(-(glm::vec3(glm::normalize(s_Data.dirLight.direction)) * 10.0f), glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+				s_Data.lightView = glm::lookAt(-(glm::vec3(s_Data.dirLight.direction) * 10.0f), glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 				s_Data.shadowData.lightViewProj = s_Data.lightProj * s_Data.lightView;
 				s_Data.ShadowBuffer->SetData(&s_Data.shadowData, sizeof(glm::mat4));
 				p = nullptr;
@@ -280,6 +285,7 @@ namespace Syndra {
 				else
 				{
 					s_Data.geoShader->SetInt("push.HasAlbedoMap", 1);
+					s_Data.geoShader->SetFloat("push.tiling", 1.0f);
 					s_Data.geoShader->SetInt("push.HasNormalMap", 0);
 					s_Data.geoShader->SetInt("push.HasMetallicMap", 0);
 					s_Data.geoShader->SetInt("push.HasRoughnessMap", 0);
@@ -314,10 +320,14 @@ namespace Syndra {
 		//-------------------------------------------------Lighting and post-processing pass---------------------------------------------------//
 
 		s_Data.lightingPass->BindTargetFrameBuffer();
+
+
 		s_Data.screenVao->Bind();
 		RenderCommand::SetState(RenderState::DEPTH_TEST, false);
 
 		s_Data.deferredLighting->Bind();
+
+
 		//shadow map samplers
 		Texture2D::BindTexture(s_Data.shadowPass->GetSpecification().TargetFrameBuffer->GetDepthAttachmentRendererID(), 3);
 		Texture1D::BindTexture(s_Data.distributionSampler0->GetRendererID(), 4);
@@ -340,6 +350,13 @@ namespace Syndra {
 		Renderer::Submit(s_Data.deferredLighting, s_Data.screenVao);
 
 		s_Data.deferredLighting->Unbind();
+		if (s_Data.environment) {
+			glEnable(GL_DEPTH_TEST);
+			glDepthFunc(GL_LEQUAL);
+			s_Data.environment->RenderBackground();
+			glDepthFunc(GL_LESS);
+		}
+
 		s_Data.lightingPass->UnbindTargetFrameBuffer();
 		
 		Renderer::EndScene();
@@ -442,6 +459,13 @@ namespace Syndra {
 		}
 		ImGui::PopItemWidth();
 
+		if (ImGui::Button("HDR", { 40,20 })) {
+			auto path = FileDialogs::OpenFile("HDR (*.hdr)\0*.hdr\0");
+			if (path) {
+				//Add texture as sRGB color space if it is binded to 0 (diffuse texture binding)
+				s_Data.environment = CreateRef<Environment>(Texture2D::CreateHDR(*path, false, true));
+			}
+		}
 		ImGui::End();
 	}
 

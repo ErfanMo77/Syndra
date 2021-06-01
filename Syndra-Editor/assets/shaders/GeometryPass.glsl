@@ -81,6 +81,7 @@ struct Material
 layout(push_constant) uniform Push{
 	Material material;
 	int id;
+	float tiling;
 	int HasAlbedoMap;
 	int HasNormalMap;
 	int HasRoughnessMap;
@@ -103,10 +104,11 @@ void main()
 {
 	//////////////////////////////////////POSITION//////////////////////////////////////////
 	gPosistion = fs_in.v_pos;
+	vec2 uv = fs_in.v_uv * push.tiling;
 
 	//////////////////////////////////////ALBEDO////////////////////////////////////////////
 	if(push.HasAlbedoMap==1){
-		gAlbedoSpec.rgb = texture(AlbedoMap, fs_in.v_uv).rgb;
+		gAlbedoSpec.rgb = texture(AlbedoMap, uv).rgb;
 	}else {
 		gAlbedoSpec.rgb = push.material.color.rgb;
 	}
@@ -114,7 +116,7 @@ void main()
 
 	//////////////////////////////////////NORMAL////////////////////////////////////////////
 	if(push.HasNormalMap==1){
-		vec3 normal = texture(NormalMap, fs_in.v_uv).rgb;
+		vec3 normal = texture(NormalMap, uv).rgb;
 		normal = normalize(normal * 2.0 - 1.0);
 		gNormal = normalize(fs_in.TBN * normal);
 	}
@@ -126,7 +128,7 @@ void main()
 	float Roughness;
 	if(push.HasRoughnessMap == 1)
 	{
-		Roughness = texture(RoughnessMap, fs_in.v_uv).r * push.material.RoughnessFactor;
+		Roughness = texture(RoughnessMap, uv).r * push.material.RoughnessFactor;
 	}
 	else
 	{
@@ -137,7 +139,7 @@ void main()
 	float Metallic;
 	if(push.HasMetallicMap == 1)
 	{
-		Metallic =  texture(metallicMap, fs_in.v_uv).r * push.material.MetallicFactor;
+		Metallic =  texture(metallicMap, uv).r * push.material.MetallicFactor;
 	}
 	else
 	{
@@ -148,7 +150,7 @@ void main()
 	float AO;
 	if(push.HasAOMap == 1)
 	{
-		AO =  texture(AmbientOcclusionMap, fs_in.v_uv).r * push.material.AO;
+		AO =  texture(AmbientOcclusionMap, uv).r * push.material.AO;
 	}
 	else
 	{

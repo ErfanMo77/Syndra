@@ -8,6 +8,27 @@ namespace Syndra {
 	class Material {
 
 	public:
+		struct ShaderMaterial
+		{
+			glm::vec4 color;
+			float RoughnessFactor = 1;
+			float MetallicFactor = 0;
+			float AO = 1;
+		};
+
+		struct CBuffer {
+			ShaderMaterial material;
+			int id;
+			float tiling;
+			int HasAlbedoMap;
+			int HasNormalMap;
+			int HasRoughnessMap;
+			int HasMetallicMap;
+			int HasAOMap;
+
+			CBuffer() :
+				id(-1), HasAOMap(0), HasNormalMap(0), HasRoughnessMap(0), HasAlbedoMap(0), tiling(1) {}
+		};
 
 		Material() = default;
 		Material(const Material& material) { 
@@ -26,6 +47,7 @@ namespace Syndra {
 		void AddTexture(const Sampler& sampler, Ref<Texture2D>& texture);
 
 		Ref<Texture2D> GetTexture(const Sampler& sampler);
+		CBuffer GetCBuffer() { return m_Cbuffer; }
 
 		void Set(const std::string& name, float value);
 		void Set(const std::string& name, int value);
@@ -33,27 +55,6 @@ namespace Syndra {
 		void Set(const std::string& name, const glm::vec3& value);
 
 		static Ref<Material> Create(Ref<Shader>& shader);
-
-		struct ShaderMaterial
-		{
-			glm::vec4 color;
-			float RoughnessFactor = 1;
-			float MetallicFactor = 0;
-			float AO = 1;
-		};
-
-		struct CBuffer {
-			ShaderMaterial material;
-			int id;
-			int HasAlbedoMap;
-			int HasNormalMap;
-			int HasRoughnessMap;
-			int HasMetallicMap;
-			int HasAOMap;
-
-			CBuffer() :
-				id(-1), HasAOMap(0), HasNormalMap(0), HasRoughnessMap(0), HasAlbedoMap(0) {}
-		};
 
 	private:
 

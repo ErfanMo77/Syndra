@@ -14,6 +14,8 @@ namespace Syndra {
 		RED_INTEGER,
 		RGBA16F,
 
+		Cubemap,
+
 		// Depth/stencil
 		DEPTH24STENCIL8,
 		DEPTH32,
@@ -66,6 +68,8 @@ namespace Syndra {
 
 		virtual uint32_t GetColorAttachmentRendererID(uint32_t index = 0) const = 0;
 		virtual uint32_t GetDepthAttachmentRendererID() const = 0;
+
+		virtual void BindCubemapFace(uint32_t index) const = 0;
 
 		virtual const FramebufferSpecification& GetSpecification() const = 0;
 		static Ref<FrameBuffer> Create(const FramebufferSpecification& spec);

@@ -164,6 +164,31 @@ namespace Syndra {
 		if (!m_FullScreen) {
 			m_ScenePanel->OnImGuiRender();
 		}
+
+		//-----------------------------------------------Editor camera settings-------------------------------------//
+		static bool camerSettings = true;
+		if (!m_FullScreen) {
+			if (camerSettings) {
+				ImGui::Begin("Camera settings", &camerSettings);
+				//FOV
+				float fov = m_ActiveScene->m_Camera->GetFOV();
+				if (ImGui::SliderFloat("Fov", &fov, 10, 180)) {
+					m_ActiveScene->m_Camera->SetFov(fov);
+				}
+				ImGui::Separator();
+				//near-far clip
+				float nearClip = m_ActiveScene->m_Camera->GetNear();
+				float farClip = m_ActiveScene->m_Camera->GetFar();
+				if (ImGui::SliderFloat("Far clip", &farClip, 10, 10000)) {
+					m_ActiveScene->m_Camera->SetFarClip(farClip);
+				}
+				ImGui::Separator();
+				if (ImGui::SliderFloat("Near clip", &nearClip, 0.0001f, 1)) {
+					m_ActiveScene->m_Camera->SetNearClip(nearClip);
+				}
+				ImGui::End();
+			}
+		}
 		//----------------------------------------------Scene Settings-----------------------------------//
 		if (!m_FullScreen) {
 			ImGui::Begin("Scene settings");
@@ -174,11 +199,12 @@ namespace Syndra {
 			}
 			ImGui::End();
 		}
-		
-		//------------------------Renderer settings
+
+		//---------------------------------------------Renderer settings---------------------------------//
 		if (!m_FullScreen) {
 			SceneRenderer::OnImGuiUpdate();
 		}
+	
 		//----------------------------------------------Renderer info-----------------------------------//
 		ImGui::Begin("Renderer info");
 		ImGui::Text(m_Info.c_str());
@@ -268,32 +294,6 @@ namespace Syndra {
 		ImGui::PopStyleVar();
 
 		ImGui::End();
-
-
-		//-----------------------------------------------Editor camera settings-------------------------------------//
-		static bool camerSettings = true;
-		if (!m_FullScreen) {
-			if (camerSettings) {
-				ImGui::Begin("Camera settings", &camerSettings);
-				//FOV
-				float fov = m_ActiveScene->m_Camera->GetFOV();
-				if (ImGui::SliderFloat("Fov", &fov, 10, 180)) {
-					m_ActiveScene->m_Camera->SetFov(fov);
-				}
-				ImGui::Separator();
-				//near-far clip
-				float nearClip = m_ActiveScene->m_Camera->GetNear();
-				float farClip = m_ActiveScene->m_Camera->GetFar();
-				if (ImGui::SliderFloat("Far clip", &farClip, 10, 10000)) {
-					m_ActiveScene->m_Camera->SetFarClip(farClip);
-				}
-				ImGui::Separator();
-				if (ImGui::SliderFloat("Near clip", &nearClip, 0.0001f, 1)) {
-					m_ActiveScene->m_Camera->SetNearClip(nearClip);
-				}
-				ImGui::End();
-			}
-		}
 	}
 
 	void EditorLayer::OnEvent(Event& event)
