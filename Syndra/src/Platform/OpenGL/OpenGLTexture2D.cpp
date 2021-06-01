@@ -21,53 +21,60 @@ namespace Syndra {
 		glTextureParameteri(m_RendererID, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	}
 
-	OpenGLTexture2D::OpenGLTexture2D(const std::string& path, bool sRGB)
+	OpenGLTexture2D::OpenGLTexture2D(const std::string& path, bool sRGB, bool HDR)
 		: m_Path(path)
 	{
 		int width, height, channels;
-		stbi_set_flip_vertically_on_load(1);
+		
 		stbi_uc* data = nullptr;
-		{
-			data = stbi_load(path.c_str(), &width, &height, &channels, 0);
+		if (HDR) {
+			LoadHDR();
 		}
-		
-		//SN_CORE_ASSERT(data, "Failed to load image!");
-		m_Width = width;
-		m_Height = height;
-
-		GLenum internalFormat = 0, dataFormat = 0;
-		if (channels == 4)
+		else
 		{
-			internalFormat = sRGB ? GL_SRGB8_ALPHA8 : GL_RGBA8;
-			dataFormat = GL_RGBA;
+			stbi_set_flip_vertically_on_load(1);
+			{
+				data = stbi_load(path.c_str(), &width, &height, &channels, 0);
+			}
+
+			//SN_CORE_ASSERT(data, "Failed to load image!");
+			m_Width = width;
+			m_Height = height;
+
+			GLenum internalFormat = 0, dataFormat = 0;
+			if (channels == 4)
+			{
+				internalFormat = sRGB ? GL_SRGB8_ALPHA8 : GL_RGBA8;
+				dataFormat = GL_RGBA;
+			}
+			else if (channels == 3)
+			{
+				internalFormat = sRGB ? GL_SRGB8 : GL_RGB8;
+				dataFormat = GL_RGB;
+			}
+
+			uint32_t mipmapLevels;
+			m_InternalFormat = internalFormat;
+			m_DataFormat = dataFormat;
+			mipmapLevels = (GLsizei)floor(log2(std::max(width, height)));
+			//SN_CORE_ASSERT(internalFormat & dataFormat, "Format not supported!");
+
+			glCreateTextures(GL_TEXTURE_2D, 1, &m_RendererID);
+			glBindTexture(GL_TEXTURE_2D, m_RendererID);
+			glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+			glTextureStorage2D(m_RendererID, mipmapLevels, internalFormat, m_Width, m_Height);
+
+			glTextureParameteri(m_RendererID, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+			glTextureParameteri(m_RendererID, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+			glTextureParameteri(m_RendererID, GL_TEXTURE_WRAP_S, GL_REPEAT);
+			glTextureParameteri(m_RendererID, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+			glTextureSubImage2D(m_RendererID, 0, 0, 0, m_Width, m_Height, dataFormat, GL_UNSIGNED_BYTE, data);
+			glGenerateTextureMipmap(m_RendererID);
+			glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
+			stbi_image_free(data);
 		}
-		else if (channels == 3)
-		{
-			internalFormat = sRGB ? GL_SRGB8 : GL_RGB8;
-			dataFormat = GL_RGB;
-		}
-
-		uint32_t mipmapLevels;
-		m_InternalFormat = internalFormat;
-		m_DataFormat = dataFormat;
-		mipmapLevels = (GLsizei)floor(log2(std::max(width, height)));
-		//SN_CORE_ASSERT(internalFormat & dataFormat, "Format not supported!");
-
-		glCreateTextures(GL_TEXTURE_2D, 1, &m_RendererID);
-		glBindTexture(GL_TEXTURE_2D, m_RendererID);
-		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-		glTextureStorage2D(m_RendererID, mipmapLevels, internalFormat, m_Width, m_Height);
-		
-		glTextureParameteri(m_RendererID, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-		glTextureParameteri(m_RendererID, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-		glTextureParameteri(m_RendererID, GL_TEXTURE_WRAP_S, GL_REPEAT);
-		glTextureParameteri(m_RendererID, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
-		glTextureSubImage2D(m_RendererID, 0, 0, 0, m_Width, m_Height, dataFormat, GL_UNSIGNED_BYTE, data);
-		glGenerateTextureMipmap(m_RendererID);
-		glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
-		stbi_image_free(data);
 	}
 
 	OpenGLTexture2D::OpenGLTexture2D(uint32_t mWidth, uint32_t mHeight,const unsigned char* data, bool sRGB)
@@ -144,6 +151,22 @@ namespace Syndra {
 	{
 		//glActiveTexture(GL_TEXTURE0 + slot);
 		glBindTextureUnit(slot, rendererID);
+	}
+
+	void OpenGLTexture2D::LoadHDR()
+	{
+		int width, height, channels;
+		float* data = stbi_loadf(m_Path.c_str(), &width, &height, &channels, 0);
+		glCreateTextures(GL_TEXTURE_2D, 1, &m_RendererID);
+		glBindTexture(GL_TEXTURE_2D, m_RendererID);
+
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_FLOAT, data);
+
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		stbi_image_free(data);
 	}
 
 	bool OpenGLTexture2D::operator==(const Texture& other) const

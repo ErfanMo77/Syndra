@@ -308,7 +308,6 @@ void main()
 
 	vec3 result = vec3(0);
 	result = (1-shadow) * Lo + ambient;
-
     vec3 hdrColor = result;
   
     // reinhard tone mapping

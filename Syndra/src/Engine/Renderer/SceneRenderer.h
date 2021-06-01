@@ -4,6 +4,7 @@
 #include "Engine/Renderer/Renderer.h"
 #include "Engine/Renderer/FrameBuffer.h"
 #include "Engine/Renderer/UniformBuffer.h"
+#include "Engine/Renderer/Environment.h"
 #include "Engine/Renderer/RenderPass.h"
 #include "entt.hpp"
 
@@ -88,6 +89,8 @@ namespace Syndra {
 		struct SceneData
 		{
 			CameraData CameraBuffer;
+			//Env
+			Ref<Environment> environment;
 			//Light
 			float exposure;
 			float gamma;
@@ -110,12 +113,12 @@ namespace Syndra {
 			Ref<Texture1D> distributionSampler0, distributionSampler1;
 			//shaders
 			ShaderLibrary shaders;
-			Ref<Shader> diffuse, geoShader, outline, mouseShader, aa, main, depth, deferredLighting;
+			Ref<Shader> diffuse, geoShader, outline, mouseShader, aa, main, depth, deferredLighting, hdrToCubeShader;
 			//FrameBuffers
 			int textureRenderSlot=2;
 			Ref<RenderPass> geoPass, shadowPass, lightingPass;
 			//Scene quad VBO, VAO, EBO
-			Ref<VertexArray> screenVao;
+			Ref<VertexArray> screenVao, cubeVao;
 			Ref<VertexBuffer> screenVbo;
 			Ref<IndexBuffer> screenEbo;
 		};
