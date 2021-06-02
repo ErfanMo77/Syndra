@@ -53,7 +53,7 @@ namespace Syndra {
 		GeoFbSpec.Width = 1280;
 		GeoFbSpec.Height = 720;
 		GeoFbSpec.Samples = 1;
-		GeoFbSpec.ClearColor = glm::vec4(0.196f, 0.196f, 0.196f, 1.0f);
+		GeoFbSpec.ClearColor = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 
 		RenderPassSpecification GeoPassSpec;
 		GeoPassSpec.TargetFrameBuffer = FrameBuffer::Create(GeoFbSpec);
@@ -74,8 +74,8 @@ namespace Syndra {
 		//-----------------------------------------------Shadow Pass---------------------------------------------//
 		FramebufferSpecification shadowSpec;
 		shadowSpec.Attachments = { FramebufferTextureFormat::DEPTH32 };
-		shadowSpec.Width = 2048;
-		shadowSpec.Height = 2048;
+		shadowSpec.Width = 4096;
+		shadowSpec.Height = 4096;
 		shadowSpec.Samples = 1;
 		shadowSpec.ClearColor = {0.0f, 0.0f, 0.0f, 1.0f};
 
@@ -321,13 +321,10 @@ namespace Syndra {
 
 		s_Data.lightingPass->BindTargetFrameBuffer();
 
-
-		s_Data.screenVao->Bind();
 		RenderCommand::SetState(RenderState::DEPTH_TEST, false);
+		s_Data.screenVao->Bind();
 
 		s_Data.deferredLighting->Bind();
-
-
 		//shadow map samplers
 		Texture2D::BindTexture(s_Data.shadowPass->GetSpecification().TargetFrameBuffer->GetDepthAttachmentRendererID(), 3);
 		Texture1D::BindTexture(s_Data.distributionSampler0->GetRendererID(), 4);
@@ -346,17 +343,25 @@ namespace Syndra {
 		Texture2D::BindTexture(s_Data.geoPass->GetFrameBufferTextureID(1), 1);
 		Texture2D::BindTexture(s_Data.geoPass->GetFrameBufferTextureID(2), 2);
 		Texture2D::BindTexture(s_Data.geoPass->GetFrameBufferTextureID(3), 6);
-
+		if (s_Data.environment) {
+			s_Data.environment->BindIrradianceMap(7);
+		}
 		Renderer::Submit(s_Data.deferredLighting, s_Data.screenVao);
 
 		s_Data.deferredLighting->Unbind();
+		
+		glBindFramebuffer(GL_READ_FRAMEBUFFER, s_Data.geoPass->GetSpecification().TargetFrameBuffer->GetRendererID());
+		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, s_Data.lightingPass->GetSpecification().TargetFrameBuffer->GetRendererID()); // write to default framebuffer
+		auto w = s_Data.lightingPass->GetSpecification().TargetFrameBuffer->GetSpecification().Width;
+		auto h = s_Data.lightingPass->GetSpecification().TargetFrameBuffer->GetSpecification().Height;
+		glBlitFramebuffer(0, 0, w, h, 0, 0, w, h, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
 		if (s_Data.environment) {
 			glEnable(GL_DEPTH_TEST);
 			glDepthFunc(GL_LEQUAL);
 			s_Data.environment->RenderBackground();
 			glDepthFunc(GL_LESS);
 		}
-
+		
 		s_Data.lightingPass->UnbindTargetFrameBuffer();
 		
 		Renderer::EndScene();
@@ -465,6 +470,10 @@ namespace Syndra {
 				//Add texture as sRGB color space if it is binded to 0 (diffuse texture binding)
 				s_Data.environment = CreateRef<Environment>(Texture2D::CreateHDR(*path, false, true));
 			}
+		}
+		static float intensity=0.5f;
+		if (ImGui::SliderFloat("Intensity", &intensity, 0, 1)) {
+			s_Data.environment->SetIntensity(intensity);
 		}
 		ImGui::End();
 	}

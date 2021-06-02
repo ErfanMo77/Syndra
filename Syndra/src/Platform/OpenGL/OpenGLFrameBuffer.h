@@ -27,6 +27,9 @@ namespace Syndra {
 
 		virtual void BindCubemapFace(uint32_t index) const override;
 
+
+		virtual uint32_t GetRendererID() const override;
+
 	private:
 		uint32_t m_RendererID = 0;
 		FramebufferSpecification m_Specification;

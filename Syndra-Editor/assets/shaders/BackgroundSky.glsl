@@ -31,12 +31,20 @@ void main()
 layout(location = 0) out vec4 FragColor;
 layout(location = 0) in  vec3 WorldPos;
 
+layout(push_constant) uniform Push{
+    float intensity;
+}push;
+
 layout(binding = 0) uniform samplerCube environmentMap;
+//layout(binding = 1) uniform samplerCube irradianceMap;
 
 void main()
 {		
     vec3 envColor = texture(environmentMap, WorldPos).rgb;
-    
+    //vec3 radiance = texture(irradianceMap, WorldPos).rgb;
+
+    //vec3 color = mix(envColor,radiance, push.intensity);
+
     // HDR tonemap and gamma correct
     vec3 mapped = vec3(1.0) - exp(-envColor * 0.7);
     // gamma correction 
