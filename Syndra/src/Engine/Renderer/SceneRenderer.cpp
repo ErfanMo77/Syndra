@@ -146,7 +146,7 @@ namespace Syndra {
 		float dSize = s_Data.orthoSize;
 		s_Data.lightProj = glm::ortho(-dSize, dSize, -dSize, dSize, s_Data.lightNear, s_Data.lightFar);
 		s_Data.ShadowBuffer = UniformBuffer::Create(sizeof(glm::mat4), 3);
-
+		s_Data.intensity = 1.0f;
 		//s_Data.environment = CreateRef<Environment>();
 	}
 
@@ -338,13 +338,17 @@ namespace Syndra {
 		s_Data.deferredLighting->SetFloat("pc.exposure", s_Data.exposure);
 		s_Data.deferredLighting->SetFloat("pc.gamma", s_Data.gamma);
 		s_Data.deferredLighting->SetFloat("pc.near", s_Data.lightNear);
+		//s_Data.deferredLighting->SetFloat("pc.intensity", s_Data.intensity);
 		//GBuffer samplers
 		Texture2D::BindTexture(s_Data.geoPass->GetFrameBufferTextureID(0), 0);
 		Texture2D::BindTexture(s_Data.geoPass->GetFrameBufferTextureID(1), 1);
 		Texture2D::BindTexture(s_Data.geoPass->GetFrameBufferTextureID(2), 2);
 		Texture2D::BindTexture(s_Data.geoPass->GetFrameBufferTextureID(3), 6);
 		if (s_Data.environment) {
+			s_Data.environment->SetIntensity(s_Data.intensity);
 			s_Data.environment->BindIrradianceMap(7);
+			s_Data.environment->BindPreFilterMap(8);
+			s_Data.environment->BindBRDFMap(9);
 		}
 		Renderer::Submit(s_Data.deferredLighting, s_Data.screenVao);
 
@@ -463,7 +467,8 @@ namespace Syndra {
 			s_Data.lightProj = glm::ortho(-s_Data.orthoSize, s_Data.orthoSize, -s_Data.orthoSize, s_Data.orthoSize, s_Data.lightNear, s_Data.lightFar);
 		}
 		ImGui::PopItemWidth();
-
+		ImGui::NewLine();
+		ImGui::Separator();
 		if (ImGui::Button("HDR", { 40,20 })) {
 			auto path = FileDialogs::OpenFile("HDR (*.hdr)\0*.hdr\0");
 			if (path) {
@@ -471,10 +476,8 @@ namespace Syndra {
 				s_Data.environment = CreateRef<Environment>(Texture2D::CreateHDR(*path, false, true));
 			}
 		}
-		static float intensity=0.5f;
-		if (ImGui::SliderFloat("Intensity", &intensity, 0, 1)) {
-			s_Data.environment->SetIntensity(intensity);
-		}
+		ImGui::SliderFloat("Intensity", &s_Data.intensity, 0.01, 100);
+		
 		ImGui::End();
 	}
 

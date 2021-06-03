@@ -90,6 +90,7 @@ namespace Syndra {
 		{
 			CameraData CameraBuffer;
 			//Env
+			float intensity;
 			Ref<Environment> environment;
 			//Light
 			float exposure;

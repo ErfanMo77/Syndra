@@ -14,3 +14,8 @@ imgui.ini
 Syndra/vendor/VulkanSDK
 Syndra-Editor/assets/cache
 scripts/__pycache__
+/Syndra-Editor/assets/Models/Chair
+/Syndra-Editor/assets/Scenes
+/Syndra-Editor/assets/Models/New folder
+/Syndra-Editor/assets/Textures/antique_medieval_uf2vbflaw
+/Syndra-Editor/assets/Textures

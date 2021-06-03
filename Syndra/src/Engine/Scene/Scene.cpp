@@ -28,7 +28,7 @@ namespace Syndra {
 	{
 		Entity entity = { m_Registry.create() };
 		auto& tag = entity.AddComponent<TagComponent>();
-		tag.Tag = name.empty() ? "Entity" : name;
+		tag.Tag = name.empty() ? "Entity" + std::to_string(uint32_t(entity)) : name;
 		entity.AddComponent<TransformComponent>();
 		Ref<Entity> ent = CreateRef<Entity>(entity);
 		m_Entities.push_back(ent);

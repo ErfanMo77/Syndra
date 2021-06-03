@@ -27,6 +27,8 @@ layout(binding = 6) uniform sampler2D gRoughMetalAO;
 
 // IBL
 layout(binding = 7) uniform samplerCube irradianceMap;
+layout(binding = 8) uniform samplerCube prefilterMap;
+layout(binding = 9) uniform sampler2D   brdfLUT;  
 
 //Shadow related samplers
 layout(binding = 3) uniform sampler2D shadowMap;
@@ -82,6 +84,7 @@ layout(push_constant) uniform pushConstants{
 	float gamma;
 	float size;
 	float near;
+	float intensity;
 	int numPCFSamples;
 	int numBlockerSearchSamples;
 	int softShadow;
@@ -274,7 +277,7 @@ void main()
 	float Roughness = texture(gRoughMetalAO,  v_uv).r;
 	float Metallic  = texture(gRoughMetalAO,  v_uv).g;
 	float AO		= texture(gRoughMetalAO,  v_uv).b;
-	//gl_FragDepth = texture(gDepth, v_uv).r;
+
 	vec4 FragPosLightSpace = shadow.lightViewProj * vec4(fragPos, 1.0);
 
 	vec3 V = normalize(cam.cameraPos.rgb - fragPos);
@@ -308,11 +311,21 @@ void main()
 		shadow = HardShadow(FragPosLightSpace, bias);
 	}
 
-	vec3 kS = FresnelSchlickRoughness(max(dot(N, V), 0.0), F0, Roughness); 
-	vec3 kD = 1.0 - kS;
+	vec3 F = FresnelSchlickRoughness(max(dot(N, V), 0.0), F0, Roughness);
+
+	vec3 Ks = F;
+	vec3 Kd = 1.0 - Ks;
+	Kd *= 1.0 - Metallic;
+	
 	vec3 irradiance = texture(irradianceMap, N).rgb;
 	vec3 diffuse    = irradiance * Albedo;
-	vec3 ambient    = (kD * diffuse) * AO; 
+
+    const float MAX_REFLECTION_LOD = 4.0;
+    vec3 prefilteredColor = textureLod(prefilterMap, R,  Roughness * MAX_REFLECTION_LOD).rgb; 
+    vec2 BRDF  = texture(brdfLUT, vec2(max(dot(N, V), 0.0), Roughness)).rg;
+    vec3 specular = prefilteredColor * (F * BRDF.x + BRDF.y);
+
+	vec3 ambient = (Kd * diffuse + specular) * AO; 
 
 	vec3 result = vec3(0);
 	result = (1-shadow) * Lo + ambient;
