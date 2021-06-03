@@ -49,9 +49,9 @@ void main()
             vec3 tangentSample = vec3(sin(theta) * cos(phi),  sin(theta) * sin(phi), cos(theta));
             vec3 sampleVec = tangentSample.x * right + tangentSample.y * up + tangentSample.z * N; 
             vec3 color = texture(environmentMap, sampleVec).rgb;
-            float r = min(color.r, 200);
-            float g = min(color.g, 200);
-            float b = min(color.b, 200);
+            float r = min(color.r, 1);
+            float g = min(color.g, 1);
+            float b = min(color.b, 1);
             irradiance += vec3(r,g,b) * cos(theta) * sin(theta);
             nrSamples++;
         }

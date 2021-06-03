@@ -18,18 +18,25 @@ namespace Syndra {
 
 		void SetIntensity(float intensity);
 		void BindIrradianceMap(uint32_t slot);
+		void BindPreFilterMap(uint32_t slot);
+		void BindBRDFMap(uint32_t slot);
 
 	private:
 		void SetupCube();
 		void SetupFrameBuffer();
 
 		void RenderCube();
+		void RenderQuad();
 
 	private:
+		unsigned int envCubemap;
+		unsigned int brdfLUTTexture;
+		unsigned int prefilterMap;
+		unsigned int irradianceMap;
 		Ref<Texture2D> m_HDRSkyMap;
-		Ref<Shader> m_EquirectangularToCube, m_BackgroundShader, m_IrradianceConvShader;
-		Ref<VertexArray> m_CubeVAO;
-		Ref<FrameBuffer> m_CaptureFBO, m_IrradianceFBO;
+		Ref<Shader> m_EquirectangularToCube, m_BackgroundShader, m_IrradianceConvShader, m_PrefilterShader, m_BRDFLutShader;
+		Ref<VertexArray> m_CubeVAO, m_QuadVAO;
+		Ref<FrameBuffer> m_IrradianceFBO, m_PrefilterFBO;
 		glm::mat4 m_View, m_Projection;
 	};
 
