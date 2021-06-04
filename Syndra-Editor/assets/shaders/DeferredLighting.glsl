@@ -273,7 +273,7 @@ void main()
 {
 	vec3 fragPos = texture(gPosition, v_uv).rgb;
 	vec3 N = texture(gNormal, v_uv).rgb;
-	vec3 Albedo = pow(texture(gAlbedoSpec, v_uv).rgb, vec3(1.9));
+	vec3 Albedo = pow(texture(gAlbedoSpec, v_uv).rgb, vec3(2.2));
 	float Roughness = texture(gRoughMetalAO,  v_uv).r;
 	float Metallic  = texture(gRoughMetalAO,  v_uv).g;
 	float AO		= texture(gRoughMetalAO,  v_uv).b;
