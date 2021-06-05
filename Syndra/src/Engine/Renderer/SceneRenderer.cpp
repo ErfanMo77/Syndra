@@ -82,20 +82,35 @@ namespace Syndra {
 		RenderPassSpecification shadowPassSpec;
 		shadowPassSpec.TargetFrameBuffer = FrameBuffer::Create(shadowSpec);
 		s_Data.shadowPass = RenderPass::Create(shadowPassSpec);
+
+		//-----------------------------------------------Anti Aliasing------------------------------------------//
+		//FramebufferSpecification aaFB;
+		//aaFB.Attachments = { FramebufferTextureFormat::RGBA8 };
+		//aaFB.Width = 1280;
+		//aaFB.Height = 720;
+		//aaFB.Samples = 1;
+		//aaFB.ClearColor = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+
+		//RenderPassSpecification aaPassSpec;
+		//aaPassSpec.TargetFrameBuffer = FrameBuffer::Create(aaFB);
+		//s_Data.aaPass = RenderPass::Create(aaPassSpec);
 		
-		//------------------------------------------------Shaders------------------------------------------------//
-		if (!s_Data.aa) {
+		//------------------------------------------------Shaders-----------------------------------------------//
+		
+		//s_Data.fxaa = Shader::Create("assets/shaders/FXAA.glsl");
+
+		if (!s_Data.main) {
 			s_Data.shaders.Load("assets/shaders/diffuse.glsl");
+			//s_Data.shaders.Load("assets/shaders/FXAA.glsl");
 			s_Data.shaders.Load("assets/shaders/main.glsl");
 			s_Data.shaders.Load("assets/shaders/DeferredLighting.glsl");
 			s_Data.shaders.Load("assets/shaders/GeometryPass.glsl");
 			//s_Data.shaders.Load("assets/shaders/mouse.glsl");
 			//s_Data.shaders.Load("assets/shaders/outline.glsl");
 		}
-		s_Data.aa = Shader::Create("assets/shaders/aa.glsl");
 		s_Data.depth = Shader::Create("assets/shaders/depth.glsl");
 		s_Data.geoShader = s_Data.shaders.Get("GeometryPass");
-
+		//s_Data.fxaa = s_Data.shaders.Get("FXAA");
 		s_Data.diffuse = s_Data.shaders.Get("diffuse");
 		s_Data.main = s_Data.shaders.Get("main");
 		s_Data.deferredLighting = s_Data.shaders.Get("DeferredLighting");
@@ -144,7 +159,8 @@ namespace Syndra {
 		s_Data.diffuse->Unbind();
 
 		float dSize = s_Data.orthoSize;
-		s_Data.lightProj = glm::ortho(-dSize, dSize, -dSize, dSize, s_Data.lightNear, s_Data.lightFar);
+		//s_Data.lightProj = glm::ortho(-dSize, dSize, -dSize, dSize, s_Data.lightNear, s_Data.lightFar);
+		s_Data.lightProj = glm::perspective(90.0f, 1.0f, s_Data.lightNear, s_Data.lightFar);
 		s_Data.ShadowBuffer = UniformBuffer::Create(sizeof(glm::mat4), 3);
 		s_Data.intensity = 1.0f;
 		//s_Data.environment = CreateRef<Environment>();
@@ -353,7 +369,17 @@ namespace Syndra {
 		Renderer::Submit(s_Data.deferredLighting, s_Data.screenVao);
 
 		s_Data.deferredLighting->Unbind();
+
+		//s_Data.aaPass->BindTargetFrameBuffer();
+		//s_Data.fxaa->Bind();
+		//s_Data.fxaa->SetFloat("pc.width", (float)s_Data.aaPass->GetSpecification().TargetFrameBuffer->GetSpecification().Width);
+		//s_Data.fxaa->SetFloat("pc.height", (float)s_Data.aaPass->GetSpecification().TargetFrameBuffer->GetSpecification().Height);
+		//Texture2D::BindTexture(s_Data.lightingPass->GetFrameBufferTextureID(0), 0);
+		//Renderer::Submit(s_Data.fxaa, s_Data.screenVao);
+		//s_Data.fxaa->Unbind();
+		//s_Data.aaPass->UnbindTargetFrameBuffer();
 		
+		s_Data.lightingPass->BindTargetFrameBuffer();
 		glBindFramebuffer(GL_READ_FRAMEBUFFER, s_Data.geoPass->GetSpecification().TargetFrameBuffer->GetRendererID());
 		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, s_Data.lightingPass->GetSpecification().TargetFrameBuffer->GetRendererID()); // write to default framebuffer
 		auto w = s_Data.lightingPass->GetSpecification().TargetFrameBuffer->GetSpecification().Width;
@@ -380,6 +406,7 @@ namespace Syndra {
 	{
 		s_Data.geoPass->GetSpecification().TargetFrameBuffer->Resize(width, height);
 		s_Data.lightingPass->GetSpecification().TargetFrameBuffer->Resize(width, height);
+		//s_Data.aaPass->GetSpecification().TargetFrameBuffer->Resize(width, height);
 	}
 
 	void SceneRenderer::OnImGuiUpdate()

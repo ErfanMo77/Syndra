@@ -451,7 +451,7 @@ namespace Syndra {
 			ImGui::PopStyleVar();
 			ImGui::NextColumn();
 			ImGui::PushItemWidth(ImGui::GetContentRegionAvailWidth());
-			ImGui::TextColored({0.2f,0.8f,0.3f,1.0f}, "PBR shader\0");
+			ImGui::Text("PBR shader\0");
 			ImGui::PopItemWidth();
 			ImGui::Columns(1);
 			ImGuiIO& io = ImGui::GetIO();
@@ -479,7 +479,7 @@ namespace Syndra {
 					auto path = FileDialogs::OpenFile("Syndra Texture (*.*)\0*.*\0");
 					if (path) {
 						//Add texture as sRGB color space if it is binded to 0 (diffuse texture binding)
-						materialTextures[sampler.binding] = Texture2D::Create(*path, sampler.binding == 0);
+						materialTextures[sampler.binding] = Texture2D::Create(*path);
 					}
 				}
 				const auto& buffer = component.material->GetCBuffer();

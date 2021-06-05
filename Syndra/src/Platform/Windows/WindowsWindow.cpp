@@ -66,10 +66,10 @@ namespace Syndra {
 			++s_GLFWWindowCount;
 		}
 
-		//GLFWimage images[1];
-		//images[0].pixels = stbi_load("assets/Logo/LOGO100.png", &images[0].width, &images[0].height,0, 4);
-		//glfwSetWindowIcon(m_Window, 1, images);
-		//stbi_image_free(images[0].pixels);
+		GLFWimage images[1];
+		images[0].pixels = stbi_load("assets/Logo/LOGO100.png", &images[0].width, &images[0].height, 0, 4);
+		glfwSetWindowIcon(m_Window, 1, images);
+		stbi_image_free(images[0].pixels);
 
 		m_Context = new OpenGLContext(m_Window);
 		m_Context->Init();

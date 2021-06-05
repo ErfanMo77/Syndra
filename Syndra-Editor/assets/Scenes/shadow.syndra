@@ -1,13 +1,13 @@
 Scene: shadow
 Camera:
-  Yaw: -6.62159729
-  Pitch: 0.472799331
-  distance: 9.92256069
+  Yaw: -5.91360569
+  Pitch: 0.475199193
+  distance: 23.7960777
   FOV: 45
   Near: 0.100000001
   Far: 1000
 Entities:
-  - Entity: 0
+  - Entity: 1
     TagComponent:
       Tag: Directional Light
     TransformComponent:
@@ -16,10 +16,10 @@ Entities:
       Scale: [1, 1, 1]
     LightComponent:
       Type: Directional
-      Color: [1, 0.999997318, 0.999989986]
-      Intensity: 14.8000002
+      Color: [1, 0.902802587, 0.637130797]
+      Intensity: 15.1000004
       Direction: [-4, -6.28000021, 0]
-  - Entity: 1
+  - Entity: 2
     TagComponent:
       Tag: Entity
     TransformComponent:
@@ -28,23 +28,23 @@ Entities:
       Scale: [2.27999973, 2.27999997, 2.27999973]
     MeshComponent:
       Path: \assets\Models\cube\cube.obj
-  - Entity: 2
+  - Entity: 3
     TagComponent:
       Tag: Entity
     TransformComponent:
-      Translation: [0, -3.46880341, -0.628978312]
+      Translation: [2.11629844, -5.1635046, -3.65411878]
       Rotation: [0, 0, 0]
-      Scale: [11.5375051, 0.474241018, 11.5375051]
+      Scale: [32.6511383, 1.34210205, 32.6511383]
     MeshComponent:
       Path: \assets\Models\cube\cube.obj
     MaterialComponent:
       shader: GeometryPass
       Textures:
-        - {binding: 0, path: ""}
+        - {binding: 0, path: C:\dev\Syndra\Syndra-Editor\assets\Textures\New folder\ufomabmo_4K_Albedo.jpg}
         - {binding: 1, path: ""}
-        - {binding: 2, path: ""}
-        - {binding: 3, path: ""}
-        - {binding: 4, path: ""}
+        - {binding: 2, path: C:\dev\Syndra\Syndra-Editor\assets\Textures\New folder\ufomabmo_4K_Normal.jpg}
+        - {binding: 3, path: C:\dev\Syndra\Syndra-Editor\assets\Textures\New folder\ufomabmo_4K_Roughness.jpg}
+        - {binding: 4, path: C:\dev\Syndra\Syndra-Editor\assets\Textures\New folder\ufomabmo_4K_AO.jpg}
   - Entity: 4
     TagComponent:
       Tag: Entity
@@ -67,11 +67,11 @@ Entities:
       shader: GeometryPass
       Textures:
         - {binding: 0, path: D:\Bridge stuff\Downloaded\3d\container_barrel_udlmcdhqx\udlmcdhqx_2K_Albedo.jpg}
-        - {binding: 1, path: ""}
         - {binding: 2, path: D:\Bridge stuff\Downloaded\3d\container_barrel_udlmcdhqx\udlmcdhqx_2K_Normal_LOD0.jpg}
         - {binding: 3, path: D:\Bridge stuff\Downloaded\3d\container_barrel_udlmcdhqx\udlmcdhqx_2K_Roughness.jpg}
+        - {binding: 1, path: ""}
         - {binding: 4, path: ""}
-  - Entity: 1048579
+  - Entity: 6
     TagComponent:
       Tag: Entity
     TransformComponent:
@@ -84,7 +84,7 @@ Entities:
       shader: GeometryPass
       Textures:
         - {binding: 0, path: D:\Bridge stuff\Downloaded\3d\stone_sculpture_uffkcc1va\uffkcc1va_4K_Albedo.jpg}
-        - {binding: 1, path: ""}
         - {binding: 2, path: D:\Bridge stuff\Downloaded\3d\stone_sculpture_uffkcc1va\uffkcc1va_4K_Normal_LOD0.jpg}
         - {binding: 3, path: D:\Bridge stuff\Downloaded\3d\stone_sculpture_uffkcc1va\uffkcc1va_4K_Roughness.jpg}
         - {binding: 4, path: D:\Bridge stuff\Downloaded\3d\stone_sculpture_uffkcc1va\uffkcc1va_4K_AO.jpg}
+        - {binding: 1, path: ""}
