@@ -84,16 +84,16 @@ namespace Syndra {
 		s_Data.shadowPass = RenderPass::Create(shadowPassSpec);
 
 		//-----------------------------------------------Anti Aliasing------------------------------------------//
-		//FramebufferSpecification aaFB;
-		//aaFB.Attachments = { FramebufferTextureFormat::RGBA8 };
-		//aaFB.Width = 1280;
-		//aaFB.Height = 720;
-		//aaFB.Samples = 1;
-		//aaFB.ClearColor = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+		FramebufferSpecification aaFB;
+		aaFB.Attachments = { FramebufferTextureFormat::RGBA8, FramebufferTextureFormat::DEPTH24STENCIL8 };
+		aaFB.Width = 1280;
+		aaFB.Height = 720;
+		aaFB.Samples = 1;
+		aaFB.ClearColor = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 
-		//RenderPassSpecification aaPassSpec;
-		//aaPassSpec.TargetFrameBuffer = FrameBuffer::Create(aaFB);
-		//s_Data.aaPass = RenderPass::Create(aaPassSpec);
+		RenderPassSpecification aaPassSpec;
+		aaPassSpec.TargetFrameBuffer = FrameBuffer::Create(aaFB);
+		s_Data.aaPass = RenderPass::Create(aaPassSpec);
 		
 		//------------------------------------------------Shaders-----------------------------------------------//
 		
@@ -101,7 +101,7 @@ namespace Syndra {
 
 		if (!s_Data.main) {
 			s_Data.shaders.Load("assets/shaders/diffuse.glsl");
-			//s_Data.shaders.Load("assets/shaders/FXAA.glsl");
+			s_Data.shaders.Load("assets/shaders/FXAA.glsl");
 			s_Data.shaders.Load("assets/shaders/main.glsl");
 			s_Data.shaders.Load("assets/shaders/DeferredLighting.glsl");
 			s_Data.shaders.Load("assets/shaders/GeometryPass.glsl");
@@ -110,7 +110,7 @@ namespace Syndra {
 		}
 		s_Data.depth = Shader::Create("assets/shaders/depth.glsl");
 		s_Data.geoShader = s_Data.shaders.Get("GeometryPass");
-		//s_Data.fxaa = s_Data.shaders.Get("FXAA");
+		s_Data.fxaa = s_Data.shaders.Get("FXAA");
 		s_Data.diffuse = s_Data.shaders.Get("diffuse");
 		s_Data.main = s_Data.shaders.Get("main");
 		s_Data.deferredLighting = s_Data.shaders.Get("DeferredLighting");
@@ -152,6 +152,9 @@ namespace Syndra {
 		
 		GeneratePoissonDisk(s_Data.distributionSampler0, 64);
 		GeneratePoissonDisk(s_Data.distributionSampler1, 64);
+
+		s_Data.deferredLighting->Bind();
+		s_Data.deferredLighting->SetFloat("pc.near", s_Data.lightNear);
 
 		s_Data.diffuse->Bind();
 		Texture1D::BindTexture(s_Data.distributionSampler0->GetRendererID(), 4);
@@ -370,14 +373,14 @@ namespace Syndra {
 
 		s_Data.deferredLighting->Unbind();
 
-		//s_Data.aaPass->BindTargetFrameBuffer();
-		//s_Data.fxaa->Bind();
-		//s_Data.fxaa->SetFloat("pc.width", (float)s_Data.aaPass->GetSpecification().TargetFrameBuffer->GetSpecification().Width);
-		//s_Data.fxaa->SetFloat("pc.height", (float)s_Data.aaPass->GetSpecification().TargetFrameBuffer->GetSpecification().Height);
-		//Texture2D::BindTexture(s_Data.lightingPass->GetFrameBufferTextureID(0), 0);
-		//Renderer::Submit(s_Data.fxaa, s_Data.screenVao);
-		//s_Data.fxaa->Unbind();
-		//s_Data.aaPass->UnbindTargetFrameBuffer();
+		s_Data.aaPass->BindTargetFrameBuffer();
+		s_Data.fxaa->Bind();
+		s_Data.fxaa->SetFloat("pc.width", (float)s_Data.aaPass->GetSpecification().TargetFrameBuffer->GetSpecification().Width);
+		s_Data.fxaa->SetFloat("pc.height", (float)s_Data.aaPass->GetSpecification().TargetFrameBuffer->GetSpecification().Height);
+		Texture2D::BindTexture(s_Data.lightingPass->GetFrameBufferTextureID(0), 0);
+		Renderer::Submit(s_Data.fxaa, s_Data.screenVao);
+		s_Data.fxaa->Unbind();
+		s_Data.aaPass->UnbindTargetFrameBuffer();
 		
 		s_Data.lightingPass->BindTargetFrameBuffer();
 		glBindFramebuffer(GL_READ_FRAMEBUFFER, s_Data.geoPass->GetSpecification().TargetFrameBuffer->GetRendererID());
@@ -399,14 +402,14 @@ namespace Syndra {
 
 	void SceneRenderer::Reload()
 	{
-		s_Data.diffuse->Reload();
+		s_Data.fxaa->Reload();
 	}
 
 	void SceneRenderer::OnViewPortResize(uint32_t width, uint32_t height)
 	{
 		s_Data.geoPass->GetSpecification().TargetFrameBuffer->Resize(width, height);
 		s_Data.lightingPass->GetSpecification().TargetFrameBuffer->Resize(width, height);
-		//s_Data.aaPass->GetSpecification().TargetFrameBuffer->Resize(width, height);
+		s_Data.aaPass->GetSpecification().TargetFrameBuffer->Resize(width, height);
 	}
 
 	void SceneRenderer::OnImGuiUpdate()
@@ -510,7 +513,7 @@ namespace Syndra {
 
 	uint32_t SceneRenderer::GetTextureID(int index)
 	{
-		return s_Data.lightingPass->GetSpecification().TargetFrameBuffer->GetColorAttachmentRendererID(index);
+		return s_Data.aaPass->GetSpecification().TargetFrameBuffer->GetColorAttachmentRendererID(index);
 	}
 
 	Syndra::FramebufferSpecification SceneRenderer::GetMainFrameSpec()
