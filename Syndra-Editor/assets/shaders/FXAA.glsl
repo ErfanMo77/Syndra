@@ -30,7 +30,7 @@ layout(push_constant) uniform push{
 void main()
 {
     gl_Position = vec4(a_pos,1.0);
-    v_uv.xy = a_uv;
+    v_uv.xy = a_uv * vec2(pc.width, pc.height);
 
     vec2 rcpFrame = vec2(1/(pc.width),1/(pc.height));
 	v_uv.wz = a_uv - (rcpFrame * (0.5));
@@ -50,6 +50,9 @@ layout(push_constant) uniform push{
     float height;
 }pc;
 
+const float FXAA_REDUCE_MUL = 1.0 / 16.0;
+const float FXAA_REDUCE_MIN = 1.0/ 1024.0;
+
 void main()
 {
     vec2 resolution = vec2(pc.width, pc.height);
@@ -61,10 +64,10 @@ void main()
 	vec2 v_rgbSE = (v_uv.xy + vec2(1.0, 1.0)) * inverseVP;
 	vec2 v_rgbM = vec2(v_uv.xy * inverseVP);
 
-    vec3 rgbNW = textureOffset(u_Texture, v_uv.xy,ivec2(-1,-1)).xyz;
-    vec3 rgbNE = textureOffset(u_Texture, v_uv.xy,ivec2(1,-1)).xyz;
-    vec3 rgbSW = textureOffset(u_Texture, v_uv.xy,ivec2(-1,1)).xyz;
-    vec3 rgbSE = textureOffset(u_Texture, v_uv.xy,ivec2(1,1)).xyz;
+    vec3 rgbNW = texture(u_Texture, v_rgbNW).xyz;
+    vec3 rgbNE = texture(u_Texture, v_rgbNE).xyz;
+    vec3 rgbSW = texture(u_Texture, v_rgbSW).xyz;
+    vec3 rgbSE = texture(u_Texture, v_rgbSE).xyz;
     vec3 rgbM  = texture(u_Texture, v_rgbM).xyz;
 
     vec3  luma = vec3(0.299, 0.587, 0.114);
@@ -81,19 +84,19 @@ void main()
     dir.y =  ((lumaNW + lumaSW) - (lumaNE + lumaSE));
     
     float dirReduce = max((lumaNW + lumaNE + lumaSW + lumaSE) *
-                          (0.25 * (1.0 / 8.0)), (1.0/ 128.0));
+                          (0.25 * FXAA_REDUCE_MUL), FXAA_REDUCE_MIN);
 
     float rcpDirMin = 1.0 / (min(abs(dir.x), abs(dir.y)) + dirReduce);
-    dir = min(vec2(8.0, 8.0),
-              max(vec2(-8.0, -8.0),
+    dir = min(vec2(32.0, 32.0),
+              max(vec2(-32.0, -32.0),
               dir * rcpDirMin)) * inverseVP;
 
     vec3 rgbA = 0.5 * (
-        texture(u_Texture, v_uv.xy + dir * (1.0 / 3.0 - 0.5)).xyz +
-        texture(u_Texture, v_uv.xy + dir * (2.0 / 3.0 - 0.5)).xyz);
+        texture(u_Texture, v_uv.xy * inverseVP + dir * (1.0 / 3.0 - 0.5)).xyz +
+        texture(u_Texture, v_uv.xy * inverseVP + dir * (2.0 / 3.0 - 0.5)).xyz);
     vec3 rgbB = rgbA * 0.5 + 0.25 * (
-        texture(u_Texture, v_uv.xy + dir * -0.5).xyz +
-        texture(u_Texture, v_uv.xy + dir * 0.5).xyz);
+        texture(u_Texture, v_uv.xy * inverseVP + dir * -0.5).xyz +
+        texture(u_Texture, v_uv.xy * inverseVP + dir * 0.5).xyz);
 
     float lumaB = dot(rgbB, luma);
     vec4 color;

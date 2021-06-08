@@ -85,7 +85,7 @@ namespace Syndra {
 
 		//-----------------------------------------------Anti Aliasing------------------------------------------//
 		FramebufferSpecification aaFB;
-		aaFB.Attachments = { FramebufferTextureFormat::RGBA8, FramebufferTextureFormat::DEPTH24STENCIL8 };
+		aaFB.Attachments = { FramebufferTextureFormat::RGBA8 };
 		aaFB.Width = 1280;
 		aaFB.Height = 720;
 		aaFB.Samples = 1;
@@ -373,15 +373,6 @@ namespace Syndra {
 
 		s_Data.deferredLighting->Unbind();
 
-		s_Data.aaPass->BindTargetFrameBuffer();
-		s_Data.fxaa->Bind();
-		s_Data.fxaa->SetFloat("pc.width", (float)s_Data.aaPass->GetSpecification().TargetFrameBuffer->GetSpecification().Width);
-		s_Data.fxaa->SetFloat("pc.height", (float)s_Data.aaPass->GetSpecification().TargetFrameBuffer->GetSpecification().Height);
-		Texture2D::BindTexture(s_Data.lightingPass->GetFrameBufferTextureID(0), 0);
-		Renderer::Submit(s_Data.fxaa, s_Data.screenVao);
-		s_Data.fxaa->Unbind();
-		s_Data.aaPass->UnbindTargetFrameBuffer();
-		
 		s_Data.lightingPass->BindTargetFrameBuffer();
 		glBindFramebuffer(GL_READ_FRAMEBUFFER, s_Data.geoPass->GetSpecification().TargetFrameBuffer->GetRendererID());
 		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, s_Data.lightingPass->GetSpecification().TargetFrameBuffer->GetRendererID()); // write to default framebuffer
@@ -394,9 +385,18 @@ namespace Syndra {
 			s_Data.environment->RenderBackground();
 			glDepthFunc(GL_LESS);
 		}
-		
+
 		s_Data.lightingPass->UnbindTargetFrameBuffer();
-		
+
+		s_Data.aaPass->BindTargetFrameBuffer();
+		s_Data.fxaa->Bind();
+		s_Data.fxaa->SetFloat("pc.width", (float)s_Data.aaPass->GetSpecification().TargetFrameBuffer->GetSpecification().Width);
+		s_Data.fxaa->SetFloat("pc.height", (float)s_Data.aaPass->GetSpecification().TargetFrameBuffer->GetSpecification().Height);
+		Texture2D::BindTexture(s_Data.lightingPass->GetFrameBufferTextureID(0), 0);
+		Renderer::Submit(s_Data.fxaa, s_Data.screenVao);
+		s_Data.fxaa->Unbind();
+		s_Data.aaPass->UnbindTargetFrameBuffer();
+
 		Renderer::EndScene();
 	}
 
