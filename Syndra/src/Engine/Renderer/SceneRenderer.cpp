@@ -145,8 +145,8 @@ namespace Syndra {
 		s_Data.gamma = 1.9f;
 		s_Data.lightSize = 2.0f;
 		s_Data.orthoSize = 10.0f;
-		s_Data.lightNear = 1.0f;
-		s_Data.lightFar = 500.0f;
+		s_Data.lightNear = 20.0f;
+		s_Data.lightFar = 300.0f;
 		//Light uniform Buffer layout: -- point lights -- spotlights -- directional light--
 		s_Data.LightsBuffer = UniformBuffer::Create(sizeof(s_Data.pointLights) + sizeof(s_Data.spotLights) + sizeof(s_Data.dirLight), 2);
 		
@@ -163,10 +163,10 @@ namespace Syndra {
 
 		float dSize = s_Data.orthoSize;
 		//s_Data.lightProj = glm::ortho(-dSize, dSize, -dSize, dSize, s_Data.lightNear, s_Data.lightFar);
-		s_Data.lightProj = glm::perspective(90.0f, 1.0f, s_Data.lightNear, s_Data.lightFar);
+		s_Data.lightProj = glm::perspective(45.0f, 1.0f, s_Data.lightNear, s_Data.lightFar);
 		s_Data.ShadowBuffer = UniformBuffer::Create(sizeof(glm::mat4), 3);
 		s_Data.intensity = 1.0f;
-		//s_Data.environment = CreateRef<Environment>();
+
 	}
 
 	void SceneRenderer::BeginScene(const PerspectiveCamera& camera)
@@ -222,7 +222,7 @@ namespace Syndra {
 				s_Data.dirLight.direction = glm::vec4(p->GetDirection(), 0);
 				s_Data.dirLight.position = glm::vec4(tc.Translation, 0);
 				//shadow
-				s_Data.lightView = glm::lookAt(-(glm::vec3(s_Data.dirLight.direction) * 10.0f), glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+				s_Data.lightView = glm::lookAt(-(glm::normalize(glm::vec3(s_Data.dirLight.direction)) * s_Data.lightFar / 4.0f), glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 				s_Data.shadowData.lightViewProj = s_Data.lightProj * s_Data.lightView;
 				s_Data.ShadowBuffer->SetData(&s_Data.shadowData, sizeof(glm::mat4));
 				p = nullptr;
@@ -357,7 +357,7 @@ namespace Syndra {
 		s_Data.deferredLighting->SetFloat("pc.exposure", s_Data.exposure);
 		s_Data.deferredLighting->SetFloat("pc.gamma", s_Data.gamma);
 		s_Data.deferredLighting->SetFloat("pc.near", s_Data.lightNear);
-		//s_Data.deferredLighting->SetFloat("pc.intensity", s_Data.intensity);
+		s_Data.deferredLighting->SetFloat("pc.intensity", s_Data.intensity);
 		//GBuffer samplers
 		Texture2D::BindTexture(s_Data.geoPass->GetFrameBufferTextureID(0), 0);
 		Texture2D::BindTexture(s_Data.geoPass->GetFrameBufferTextureID(1), 1);
@@ -387,7 +387,8 @@ namespace Syndra {
 		}
 
 		s_Data.lightingPass->UnbindTargetFrameBuffer();
-
+		//-------------------------------------------------ANTI ALIASING PASS------------------------------------------------------------------//
+		
 		s_Data.aaPass->BindTargetFrameBuffer();
 		s_Data.fxaa->Bind();
 		s_Data.fxaa->SetFloat("pc.width", (float)s_Data.aaPass->GetSpecification().TargetFrameBuffer->GetSpecification().Width);
@@ -482,19 +483,14 @@ namespace Syndra {
 		ImGui::DragFloat("blocker samples", &s_Data.numBlocker,1,1,64);
 		ImGui::DragFloat("Size", &s_Data.lightSize, 0.01f, 0, 100);
 		
-		ImGui::PushMultiItemsWidths(3, ImGui::CalcItemWidth());
+		ImGui::PushMultiItemsWidths(2, ImGui::CalcItemWidth());
 		if (ImGui::DragFloat("near", &s_Data.lightNear, 0.01f, 0.1f, 100.0f)) {
-			s_Data.lightProj = glm::ortho(-s_Data.orthoSize, s_Data.orthoSize, -s_Data.orthoSize, s_Data.orthoSize, s_Data.lightNear, s_Data.lightFar);
+			s_Data.lightProj = glm::perspective(45.0f, 1.0f, s_Data.lightNear, s_Data.lightFar);
 		}
 		ImGui::PopItemWidth();
 		ImGui::SameLine();
 		if (ImGui::DragFloat("far", &s_Data.lightFar, 0.1f, 100.0f, 10000.0f)) {
-			s_Data.lightProj = glm::ortho(-s_Data.orthoSize, s_Data.orthoSize, -s_Data.orthoSize, s_Data.orthoSize, s_Data.lightNear, s_Data.lightFar);
-		}
-		ImGui::PopItemWidth();
-		ImGui::SameLine();
-		if (ImGui::DragFloat("camera size", &s_Data.orthoSize, 0.1f, 1, 50)) {
-			s_Data.lightProj = glm::ortho(-s_Data.orthoSize, s_Data.orthoSize, -s_Data.orthoSize, s_Data.orthoSize, s_Data.lightNear, s_Data.lightFar);
+			s_Data.lightProj = glm::perspective(45.0f, 1.0f, s_Data.lightNear, s_Data.lightFar);
 		}
 		ImGui::PopItemWidth();
 		ImGui::NewLine();
@@ -506,7 +502,11 @@ namespace Syndra {
 				s_Data.environment = CreateRef<Environment>(Texture2D::CreateHDR(*path, false, true));
 			}
 		}
-		ImGui::SliderFloat("Intensity", &s_Data.intensity, 0.01, 100);
+		if (ImGui::DragFloat("Intensity", &s_Data.intensity, 0.01f, 1,20)) {
+			if (s_Data.environment) {
+				s_Data.environment->SetIntensity(s_Data.intensity);
+			}
+		}
 		
 		ImGui::End();
 	}
