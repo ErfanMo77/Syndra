@@ -17,8 +17,6 @@ If the repository was cloned non-recursively previously, use `git submodule upda
 
 Then, you can execute GenerateProjects.bat to generate visual studio solution file.
 
-There is also a ready to use build version of syndra available at [Syndra Build](https://github.com/ErfanMo77/Syndra-Build).
-
 ## Authors
 
 * **Erfan Momeni** - [erfanmo](https://github.com/ErfanMo77)
