@@ -22,7 +22,7 @@ namespace Syndra {
 		}
 		m_EmptyTexture = Texture2D::Create("assets/Models/cube/default.png");
 		m_TextureId = reinterpret_cast<void*>(m_EmptyTexture->GetRendererID());
-		m_SelectedShader = "diffuse";
+		m_SelectedShader = "GeometryPass";
 	}
 
 	void ScenePanel::SetContext(const Ref<Scene>& scene)

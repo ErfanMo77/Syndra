@@ -229,6 +229,11 @@ namespace Syndra {
 		m_BackgroundShader->Unbind();
 	}
 
+	uint32_t Environment::GetBackgroundTextureID() const
+	{
+		return m_HDRSkyMap->GetRendererID();
+	}
+
 	void Environment::BindIrradianceMap(uint32_t slot)
 	{
 		Texture2D::BindTexture(irradianceMap, slot);

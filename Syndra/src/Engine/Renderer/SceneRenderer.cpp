@@ -123,19 +123,19 @@ namespace Syndra {
 			-1.0f, -1.0f, 0.0f,    0.0f, 0.0f,   // bottom left
 			-1.0f,  1.0f, 0.0f,    0.0f, 1.0f    // top left 
 		};
-		s_Data.screenVbo = VertexBuffer::Create(quad, sizeof(quad));
+		auto vb = VertexBuffer::Create(quad, sizeof(quad));
 		BufferLayout quadLayout = {
 			{ShaderDataType::Float3,"a_pos"},
 			{ShaderDataType::Float2,"a_uv"},
 		};
-		s_Data.screenVbo->SetLayout(quadLayout);
-		s_Data.screenVao->AddVertexBuffer(s_Data.screenVbo);
+		vb->SetLayout(quadLayout);
+		s_Data.screenVao->AddVertexBuffer(vb);
 		unsigned int quadIndices[] = {
 			0, 3, 1, // first triangle
 			1, 3, 2  // second triangle
 		};
-		s_Data.screenEbo = IndexBuffer::Create(quadIndices, sizeof(quadIndices) / sizeof(uint32_t));
-		s_Data.screenVao->SetIndexBuffer(s_Data.screenEbo);
+		auto eb = IndexBuffer::Create(quadIndices, sizeof(quadIndices) / sizeof(uint32_t));
+		s_Data.screenVao->SetIndexBuffer(eb);
 		s_Data.CameraUniformBuffer = UniformBuffer::Create(sizeof(CameraData), 0);
 
 		//SN_CORE_TRACE("SIZE OF POINT LIGHTS : {0}", sizeof(s_Data.pointLights));
@@ -401,9 +401,9 @@ namespace Syndra {
 		Renderer::EndScene();
 	}
 
-	void SceneRenderer::Reload()
+	void SceneRenderer::Reload(const Ref<Shader>& shader)
 	{
-		s_Data.fxaa->Reload();
+		shader->Reload();
 	}
 
 	void SceneRenderer::OnViewPortResize(uint32_t width, uint32_t height)
@@ -495,6 +495,34 @@ namespace Syndra {
 		ImGui::PopItemWidth();
 		ImGui::NewLine();
 		ImGui::Separator();
+		std::string label =	"shader";
+		static Ref<Shader> selectedShader;
+		if (selectedShader) {
+			label = selectedShader->GetName();
+		}
+		static int item_current_idx = 0;
+		static int index = 0;
+		if (ImGui::BeginCombo("##Shaders", label.c_str()))
+		{
+			for(auto& shader : s_Data.shaders.GetShaders())
+			{
+				//const bool is_selected = (item_current_idx == n);
+				if (ImGui::Selectable(shader.first.c_str(), true)) {
+					selectedShader = shader.second;
+				}
+
+				ImGui::SetItemDefaultFocus();
+			}
+			ImGui::EndCombo();
+		}
+		ImGui::SameLine();
+		if (ImGui::Button("Reload shader")) {
+			Reload(selectedShader);
+		}
+		ImGui::Separator();
+		ImGui::End();
+
+		ImGui::Begin("Environment");
 		if (ImGui::Button("HDR", { 40,20 })) {
 			auto path = FileDialogs::OpenFile("HDR (*.hdr)\0*.hdr\0");
 			if (path) {
@@ -502,12 +530,14 @@ namespace Syndra {
 				s_Data.environment = CreateRef<Environment>(Texture2D::CreateHDR(*path, false, true));
 			}
 		}
+		if (s_Data.environment) {
+			ImGui::Image(reinterpret_cast<void*>(s_Data.environment->GetBackgroundTextureID()), { 300, 150 }, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
+		}
 		if (ImGui::DragFloat("Intensity", &s_Data.intensity, 0.01f, 1,20)) {
 			if (s_Data.environment) {
 				s_Data.environment->SetIntensity(s_Data.intensity);
 			}
 		}
-		
 		ImGui::End();
 	}
 

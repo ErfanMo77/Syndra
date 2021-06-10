@@ -17,6 +17,9 @@ namespace Syndra {
 		void SetViewProjection(const glm::mat4& view, const glm::mat4& projection) { m_View = view; m_Projection = projection; }
 
 		void SetIntensity(float intensity);
+
+		uint32_t GetBackgroundTextureID() const;
+
 		void BindIrradianceMap(uint32_t slot);
 		void BindPreFilterMap(uint32_t slot);
 		void BindBRDFMap(uint32_t slot);
