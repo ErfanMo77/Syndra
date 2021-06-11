@@ -10,7 +10,7 @@ namespace Syndra {
 	public:
 		struct ShaderMaterial
 		{
-			glm::vec4 color;
+			glm::vec4 color = glm::vec4(0.3f,0.3f,0.3f,1.0f);
 			float RoughnessFactor = 1;
 			float MetallicFactor = 0;
 			float AO = 1;

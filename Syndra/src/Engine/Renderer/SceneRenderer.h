@@ -30,7 +30,7 @@ namespace Syndra {
 
 		static void EndScene();
 
-		static void Reload();
+		static void Reload(const Ref<Shader>& shader);
 
 		static void OnViewPortResize(uint32_t width, uint32_t height);
 
@@ -115,13 +115,10 @@ namespace Syndra {
 			//shaders
 			ShaderLibrary shaders;
 			Ref<Shader> diffuse, geoShader, outline, mouseShader, fxaa, main, depth, deferredLighting, hdrToCubeShader;
-			//FrameBuffers
-			int textureRenderSlot=2;
+			//Render passes
 			Ref<RenderPass> geoPass, shadowPass, lightingPass, aaPass;
-			//Scene quad VBO, VAO, EBO
-			Ref<VertexArray> screenVao, cubeVao;
-			Ref<VertexBuffer> screenVbo;
-			Ref<IndexBuffer> screenEbo;
+			//Scene quad VBO
+			Ref<VertexArray> screenVao;
 		};
 
 	};

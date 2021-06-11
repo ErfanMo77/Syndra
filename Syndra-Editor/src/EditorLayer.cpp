@@ -189,17 +189,6 @@ namespace Syndra {
 				ImGui::End();
 			}
 		}
-		//----------------------------------------------Scene Settings-----------------------------------//
-		if (!m_FullScreen) {
-			ImGui::Begin("Scene settings");
-			ImGui::ColorEdit3("cube color", glm::value_ptr(m_CubeColor));
-			ImGui::ColorEdit3("clear color", glm::value_ptr(m_ClearColor));
-			if (ImGui::Button("Reload shader")) {
-				m_ActiveScene->ReloadShader();
-			}
-			ImGui::End();
-		}
-
 		//---------------------------------------------Renderer settings---------------------------------//
 		if (!m_FullScreen) {
 			SceneRenderer::OnImGuiUpdate();
@@ -266,7 +255,7 @@ namespace Syndra {
 
 			// Snapping
 			bool snap = Input::IsKeyPressed(Key::LeftControl);
-			float snapValue = 0.5f; // Snap to 0.5m for translation/scale
+			float snapValue = 1.0f; // Snap to 0.5m for translation/scale
 			// Snap to 45 degrees for rotation
 			if (m_GizmoType == ImGuizmo::OPERATION::ROTATE)
 				snapValue = 45.0f;
