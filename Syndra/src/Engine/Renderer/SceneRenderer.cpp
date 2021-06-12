@@ -136,6 +136,9 @@ namespace Syndra {
 		};
 		auto eb = IndexBuffer::Create(quadIndices, sizeof(quadIndices) / sizeof(uint32_t));
 		s_Data.screenVao->SetIndexBuffer(eb);
+
+		//----------------------------------------------Uniform BUffers---------------------------------------------//
+		//TODO Should be moved to a different class?
 		s_Data.CameraUniformBuffer = UniformBuffer::Create(sizeof(CameraData), 0);
 
 		//SN_CORE_TRACE("SIZE OF POINT LIGHTS : {0}", sizeof(s_Data.pointLights));
@@ -147,8 +150,8 @@ namespace Syndra {
 		s_Data.orthoSize = 10.0f;
 		s_Data.lightNear = 20.0f;
 		s_Data.lightFar = 300.0f;
-		//Light uniform Buffer layout: -- point lights -- spotlights -- directional light--
-		s_Data.LightsBuffer = UniformBuffer::Create(sizeof(s_Data.pointLights) + sizeof(s_Data.spotLights) + sizeof(s_Data.dirLight), 2);
+		//Light uniform Buffer layout: -- point lights -- spotlights -- directional light--Binding point 2
+		s_Data.lightManager = CreateRef<LightManager>(2);
 		
 		GeneratePoissonDisk(s_Data.distributionSampler0, 64);
 		GeneratePoissonDisk(s_Data.distributionSampler1, 64);
@@ -179,26 +182,6 @@ namespace Syndra {
 		s_Data.CameraBuffer.ViewProjection = camera.GetViewProjection();
 		s_Data.CameraBuffer.position = glm::vec4(camera.GetPosition(), 0);
 		s_Data.CameraUniformBuffer->SetData(&s_Data.CameraBuffer, sizeof(CameraData));
-		
-		for (auto& pointLight : s_Data.pointLights) 
-		{
-			pointLight.color = glm::vec4(0);
-			pointLight.position = glm::vec4(0);
-			pointLight.dist = 0.0f;
-		}
-
-		for (auto& spot : s_Data.spotLights)
-		{
-			spot.color = glm::vec4(0);
-			spot.position = glm::vec4(0);
-			spot.direction = glm::vec4(0);
-			spot.innerCutOff = glm::cos(glm::radians(12.5f));
-			spot.outerCutOff = glm::cos(glm::radians(15.0f));
-		}
-
-		s_Data.dirLight.color = glm::vec4(0);
-		s_Data.dirLight.position = glm::vec4(0);
-		s_Data.dirLight.direction = glm::vec4(0);
 
 		Renderer::BeginScene(camera);
 	}
@@ -218,11 +201,9 @@ namespace Syndra {
 
 			if (lc.type == LightType::Directional) {
 				auto p = dynamic_cast<DirectionalLight*>(lc.light.get());
-				s_Data.dirLight.color = glm::vec4(lc.light->GetColor(), 0) * p->GetIntensity();
-				s_Data.dirLight.direction = glm::vec4(p->GetDirection(), 0);
-				s_Data.dirLight.position = glm::vec4(tc.Translation, 0);
+				s_Data.lightManager->UpdateDirLight(p, tc.Translation);
 				//shadow
-				s_Data.lightView = glm::lookAt(-(glm::normalize(glm::vec3(s_Data.dirLight.direction)) * s_Data.lightFar / 4.0f), glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+				s_Data.lightView = glm::lookAt(-(glm::normalize(p->GetDirection()) * s_Data.lightFar / 4.0f), glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 				s_Data.shadowData.lightViewProj = s_Data.lightProj * s_Data.lightView;
 				s_Data.ShadowBuffer->SetData(&s_Data.shadowData, sizeof(glm::mat4));
 				p = nullptr;
@@ -230,9 +211,7 @@ namespace Syndra {
 			if (lc.type == LightType::Point) {
 				if (pIndex < 4) {
 					auto p = dynamic_cast<PointLight*>(lc.light.get());
-					s_Data.pointLights[pIndex].color = glm::vec4(p->GetColor(), 1) * p->GetIntensity();
-					s_Data.pointLights[pIndex].position = glm::vec4(tc.Translation, 1);
-					s_Data.pointLights[pIndex].dist = p->GetRange();
+					s_Data.lightManager->UpdatePointLights(p, tc.Translation, pIndex);
 					pIndex++;
 					p = nullptr;
 				}
@@ -240,11 +219,7 @@ namespace Syndra {
 			if (lc.type == LightType::Spot) {
 				if (sIndex < 4) {
 					auto p = dynamic_cast<SpotLight*>(lc.light.get());
-					s_Data.spotLights[sIndex].color = glm::vec4(p->GetColor(), 1) * p->GetIntensity();
-					s_Data.spotLights[sIndex].position = glm::vec4(tc.Translation, 1);
-					s_Data.spotLights[sIndex].direction = glm::vec4(p->GetDirection(), 0);
-					s_Data.spotLights[sIndex].innerCutOff = glm::cos(glm::radians(p->GetInnerCutOff()));
-					s_Data.spotLights[sIndex].outerCutOff = glm::cos(glm::radians(p->GetOuterCutOff()));
+					s_Data.lightManager->UpdateSpotLights(p, tc.Translation, sIndex);
 					sIndex++;
 					p = nullptr;
 				}
@@ -252,10 +227,7 @@ namespace Syndra {
 		}
 
 		//Filling light buffer data with different light values
-		s_Data.LightsBuffer->SetData(&s_Data.pointLights, sizeof(s_Data.pointLights));
-		s_Data.LightsBuffer->SetData(&s_Data.spotLights, sizeof(s_Data.spotLights), sizeof(s_Data.pointLights));
-		s_Data.LightsBuffer->SetData(&s_Data.dirLight, sizeof(s_Data.dirLight), sizeof(s_Data.pointLights) + sizeof(s_Data.spotLights));
-
+		s_Data.lightManager->UpdateBuffer();
 	}
 
 	void SceneRenderer::RenderScene(Scene& scene)

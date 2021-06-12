@@ -5,6 +5,7 @@
 #include "Engine/Renderer/FrameBuffer.h"
 #include "Engine/Renderer/UniformBuffer.h"
 #include "Engine/Renderer/Environment.h"
+#include "Engine/Renderer/LightManager.h"
 #include "Engine/Renderer/RenderPass.h"
 #include "entt.hpp"
 
@@ -52,30 +53,6 @@ namespace Syndra {
 			glm::vec4 position;
 		};
 
-		struct pointLight
-		{
-			glm::vec4 position;
-			glm::vec4 color;
-			float dist;
-			glm::vec3 dummy;
-		};
-
-		struct spotLight {
-			glm::vec4 position;
-			glm::vec4 color;
-			glm::vec4 direction;
-			float innerCutOff;
-			float outerCutOff;
-			glm::vec2 dummy;
-		};
-
-		struct directionalLight
-		{
-			glm::vec4 position;
-			glm::vec4 direction;
-			glm::vec4 color;
-		};
-
 		struct ShadowData {
 			glm::mat4 lightViewProj;
 		};
@@ -89,20 +66,18 @@ namespace Syndra {
 		struct SceneData
 		{
 			CameraData CameraBuffer;
-			//Env
+			//Environment
 			float intensity;
 			Ref<Environment> environment;
 			//Light
+			Ref<LightManager> lightManager;
 			float exposure;
 			float gamma;
 			float lightSize;
 			float orthoSize;
 			float lightNear;
 			float lightFar;
-			directionalLight dirLight;
-			pointLight pointLights[4];
-			spotLight spotLights[4];
-			Ref<UniformBuffer> CameraUniformBuffer, LightsBuffer, ShadowBuffer;
+			Ref<UniformBuffer> CameraUniformBuffer, ShadowBuffer;
 			//Shadow
 			bool softShadow = false;
 			float numPCF = 8;
