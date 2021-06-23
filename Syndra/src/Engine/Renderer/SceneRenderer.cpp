@@ -141,9 +141,6 @@ namespace Syndra {
 		//TODO Should be moved to a different class?
 		s_Data.CameraUniformBuffer = UniformBuffer::Create(sizeof(CameraData), 0);
 
-		//SN_CORE_TRACE("SIZE OF POINT LIGHTS : {0}", sizeof(s_Data.pointLights));
-		//SN_CORE_TRACE("SIZE OF SPOT LIGHTS : {0}", sizeof(s_Data.spotLights));
-		//SN_CORE_TRACE("SIZE OF DIRECTIONAL LIGHT : {0}", sizeof(s_Data.dirLight));
 		s_Data.exposure = 0.5f;
 		s_Data.gamma = 1.9f;
 		s_Data.lightSize = 2.0f;
@@ -182,7 +179,7 @@ namespace Syndra {
 		s_Data.CameraBuffer.ViewProjection = camera.GetViewProjection();
 		s_Data.CameraBuffer.position = glm::vec4(camera.GetPosition(), 0);
 		s_Data.CameraUniformBuffer->SetData(&s_Data.CameraBuffer, sizeof(CameraData));
-
+		s_Data.lightManager->IntitializeLights();
 		Renderer::BeginScene(camera);
 	}
 
