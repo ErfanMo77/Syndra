@@ -105,17 +105,17 @@ namespace Syndra {
 
 	struct MaterialComponent
 	{
-		Ref<Material> material;
+		Material material;
 		Ref<Shader> m_Shader;
 
 		MaterialComponent() = default;
 		MaterialComponent(const MaterialComponent& material) = default;
 		MaterialComponent(const Ref<Material>& material, const Ref<Shader>& shader)
-			:material(material), m_Shader(shader)
+			:material(*material), m_Shader(shader)
 		{}
 		MaterialComponent(Ref<Shader> shader) {
 			m_Shader = shader;
-			material = Material::Create(shader);
+			material = *Material::Create(shader);
 		}
 	};
 

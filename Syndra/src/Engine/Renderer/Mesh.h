@@ -33,6 +33,7 @@ namespace Syndra {
 		~Mesh() = default;
 
 		Ref<VertexArray> GetVertexArray() const  { return m_VertexArray; }
+		void BindVertexArray() const { m_VertexArray->Bind(); }
 
 	private:
 		Ref<VertexArray> m_VertexArray;

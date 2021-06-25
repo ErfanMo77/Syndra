@@ -26,8 +26,8 @@ namespace Syndra {
 		static void UpdateLights(Scene& scene);
 		static void RenderScene(Scene& scene);
 
-		static void RenderEntityColor(const entt::entity& entity, TransformComponent& tc, MeshComponent& mc, const Ref<Shader>& shader);
-		static void RenderEntityColor(const entt::entity& entity, TransformComponent& tc, MeshComponent& mc, MaterialComponent& mat);
+		static void RenderEntity(const entt::entity& entity, MeshComponent& mc, const Ref<Shader>& shader);
+		static void RenderEntity(const entt::entity& entity, MeshComponent& mc, MaterialComponent& mat);
 
 		static void EndScene();
 
