@@ -455,8 +455,8 @@ namespace Syndra {
 			ImGui::PopItemWidth();
 			ImGui::Columns(1);
 			ImGuiIO& io = ImGui::GetIO();
-			std::vector<Sampler>& samplers = component.material->GetSamplers();
-			auto& materialTextures = component.material->GetTextures();
+			std::vector<Sampler>& samplers = component.material.GetSamplers();
+			auto& materialTextures = component.material.GetTextures();
 			for (auto& sampler : samplers)
 			{	
 				ImGui::PushID(sampler.name.c_str());
@@ -468,7 +468,7 @@ namespace Syndra {
 				ImGui::Text(sampler.name.c_str());
 
 				m_TextureId = reinterpret_cast<void*>(m_EmptyTexture->GetRendererID());
-				auto& texture = component.material->GetTexture(sampler);
+				auto& texture = component.material.GetTexture(sampler);
 				if (texture)
 				{
 					m_TextureId = reinterpret_cast<void*>(texture->GetRendererID());
@@ -482,16 +482,16 @@ namespace Syndra {
 						materialTextures[sampler.binding] = Texture2D::Create(*path);
 					}
 				}
-				const auto& buffer = component.material->GetCBuffer();
+				const auto& buffer = component.material.GetCBuffer();
 				//Albedo color
 				if (sampler.binding == 0) {
 					glm::vec4 color = buffer.material.color;
 					float tiling = buffer.tiling;
 					if (ImGui::DragFloat("Tiling", &tiling, 0.05f, 0.001f, 100)) {
-						component.material->Set("tiling", tiling);
+						component.material.Set("tiling", tiling);
 					}
 					if (ImGui::ColorEdit4("Albedo", glm::value_ptr(color), ImGuiColorEditFlags_NoInputs)) {
-						component.material->Set("push.material.color", color);
+						component.material.Set("push.material.color", color);
 					}
 				}
 				//metal factor
@@ -502,7 +502,7 @@ namespace Syndra {
 					ImGui::SameLine();
 					ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
 					if (ImGui::SliderFloat("##Metallic", &metal, 0, 1)) {
-						component.material->Set("push.material.MetallicFactor", metal);
+						component.material.Set("push.material.MetallicFactor", metal);
 					}
 				}
 				if (sampler.binding == 3) {
@@ -512,7 +512,7 @@ namespace Syndra {
 					ImGui::SameLine();
 					ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
 					if (ImGui::SliderFloat("##Roughness", &roughness, 0, 1)) {
-						component.material->Set("push.material.RoughnessFactor", roughness);
+						component.material.Set("push.material.RoughnessFactor", roughness);
 					}
 				}
 				if (sampler.binding == 4) {
@@ -522,7 +522,7 @@ namespace Syndra {
 					ImGui::SameLine();
 					ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
 					if (ImGui::SliderFloat("##Ambient Occlusion", &AO, 0, 1)) {
-						component.material->Set("push.material.AO", AO);
+						component.material.Set("push.material.AO", AO);
 					}
 				}
 

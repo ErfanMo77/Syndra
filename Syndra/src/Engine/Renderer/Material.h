@@ -42,12 +42,14 @@ namespace Syndra {
 
 		std::vector<PushConstant>& GetPushConstants() { return m_PushConstants; }
 		std::vector<Sampler>& GetSamplers() { return m_Samplers; }
-		std::unordered_map<uint32_t, Ref<Texture2D>>& GetTextures() { return m_Textures; }
+		std::unordered_map<uint32_t, Ref<Texture2D>> GetTextures() { return m_Textures; }
 		
 		void AddTexture(const Sampler& sampler, Ref<Texture2D>& texture);
 
 		Ref<Texture2D> GetTexture(const Sampler& sampler);
 		CBuffer GetCBuffer() { return m_Cbuffer; }
+
+		void SetTextures(std::unordered_map<uint32_t, Ref<Texture2D>>& textures) { m_Textures = textures; }
 
 		void Set(const std::string& name, float value);
 		void Set(const std::string& name, int value);

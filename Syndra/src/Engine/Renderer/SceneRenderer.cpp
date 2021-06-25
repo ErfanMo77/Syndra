@@ -246,7 +246,7 @@ namespace Syndra {
 			if (!mc.path.empty()) 
 			{
 				s_Data.depth->SetMat4("transform.u_trans", tc.GetTransform());
-				SceneRenderer::RenderEntityColor(ent, tc, mc, s_Data.depth);
+				SceneRenderer::RenderEntity(ent, mc, s_Data.depth);
 			}
 		}
 		s_Data.shadowPass->UnbindTargetFrameBuffer();
@@ -268,7 +268,7 @@ namespace Syndra {
 					auto& mat = scene.m_Registry.get<MaterialComponent>(ent);
 					s_Data.geoShader->SetInt("transform.id", (uint32_t)ent);
 					s_Data.geoShader->SetMat4("transform.u_trans", tc.GetTransform());
-					SceneRenderer::RenderEntityColor(ent, tc, mc, mat);
+					SceneRenderer::RenderEntity(ent, mc, mat);
 				}
 				else
 				{
@@ -283,7 +283,7 @@ namespace Syndra {
 					s_Data.geoShader->SetFloat("push.material.AO", 1);
 					s_Data.geoShader->SetMat4("transform.u_trans", tc.GetTransform());
 					s_Data.geoShader->SetInt("transform.id", (uint32_t)ent);
-					SceneRenderer::RenderEntityColor(ent, tc, mc, s_Data.geoShader);
+					SceneRenderer::RenderEntity(ent, mc, s_Data.geoShader);
 				}
 			}
 		}
@@ -291,14 +291,14 @@ namespace Syndra {
 		s_Data.geoPass->UnbindTargetFrameBuffer();
 	}
 
-	void SceneRenderer::RenderEntityColor(const entt::entity& entity, TransformComponent& tc, MeshComponent& mc,const Ref<Shader>& shader)
+	void SceneRenderer::RenderEntity(const entt::entity& entity, MeshComponent& mc,const Ref<Shader>& shader)
 	{
 		//RenderCommand::SetState(RenderState::CULL, false);
 		Renderer::Submit(shader, mc.model);
 		//RenderCommand::SetState(RenderState::CULL, true);
 	}
 
-	void SceneRenderer::RenderEntityColor(const entt::entity& entity, TransformComponent& tc, MeshComponent& mc, MaterialComponent& mat)
+	void SceneRenderer::RenderEntity(const entt::entity& entity, MeshComponent& mc, MaterialComponent& mat)
 	{
 		Renderer::Submit(mat.material, mc.model);
 	}

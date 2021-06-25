@@ -16,7 +16,7 @@ namespace Syndra {
 
 		static void Submit(const Ref<Shader>& shader, const Ref<VertexArray>& vertexArray);
 		static void Submit(const Ref<Shader>& shader, const Model& model);
-		static void Submit(const Ref<Material>& material, const Model& model);
+		static void Submit(Material& material, const Model& model);
 
 		static void OnWindowResize(uint32_t width, uint32_t height);
 
