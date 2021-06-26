@@ -204,7 +204,7 @@ namespace Syndra {
 			out << YAML::Key << "shader" << YAML::Value << shader->GetName();
 
 			out << YAML::Key << "Textures" << YAML::Value << YAML::BeginSeq;
-			out << material.material.GetTextures();
+			out << material.m_Material.GetTextures();
 			out << YAML::EndSeq;
 
 			out << YAML::EndMap; // MaterialComponent
@@ -368,7 +368,7 @@ namespace Syndra {
 
 					auto material = Material::Create(shader);
 
-					auto materialTextures = material->GetTextures();
+					auto& materialTextures = material->GetTextures();
 
 					auto textures = materialComponent["Textures"];
 					if (textures) {
@@ -381,7 +381,7 @@ namespace Syndra {
 							}
 						}
 					}
-					material->SetTextures(materialTextures);
+
 					deserializedEntity->AddComponent<MaterialComponent>(material,shader);
 
 					//mc.path = materialComponent["Path"].as<std::string>();

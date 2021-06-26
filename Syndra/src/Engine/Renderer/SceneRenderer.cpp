@@ -300,7 +300,7 @@ namespace Syndra {
 
 	void SceneRenderer::RenderEntity(const entt::entity& entity, MeshComponent& mc, MaterialComponent& mat)
 	{
-		Renderer::Submit(mat.material, mc.model);
+		Renderer::Submit(mat.m_Material, mc.model);
 	}
 
 	void SceneRenderer::EndScene()
