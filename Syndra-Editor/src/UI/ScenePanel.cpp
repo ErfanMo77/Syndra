@@ -62,15 +62,31 @@ namespace Syndra {
 			if (ImGui::MenuItem("Create empty entity")) {
 				m_SelectionContext = *m_Context->CreateEntity();
 			}
-			if (ImGui::MenuItem("Add Sphere")) {
-				m_SelectionContext = *m_Context->CreatePrimitive(PrimitiveType::Sphere);
+			if (ImGui::BeginMenu("Add primitive")) {
+				if (ImGui::MenuItem("Add Sphere")) {
+					m_SelectionContext = *m_Context->CreatePrimitive(PrimitiveType::Sphere);
+				}
+				if (ImGui::MenuItem("Add Cube")) {
+					m_SelectionContext = *m_Context->CreatePrimitive(PrimitiveType::Cube);
+				}
+				if (ImGui::MenuItem("Add Plane")) {
+					m_SelectionContext = *m_Context->CreatePrimitive(PrimitiveType::Plane);
+				}
+				ImGui::EndMenu();
 			}
-			if (ImGui::MenuItem("Add Cube")) {
-				m_SelectionContext = *m_Context->CreatePrimitive(PrimitiveType::Cube);
+			if (ImGui::BeginMenu("Add Light")) {
+				if (ImGui::MenuItem("Add Point Light")) {
+					m_SelectionContext = *m_Context->CreateLight(LightType::Point);
+				}
+				if (ImGui::MenuItem("Add Directional Light")) {
+					m_SelectionContext = *m_Context->CreateLight(LightType::Directional);
+				}
+				if (ImGui::MenuItem("Add SpotLight")) {
+					m_SelectionContext = *m_Context->CreateLight(LightType::Spot);
+				}
+				ImGui::EndMenu();
 			}
-			if (ImGui::MenuItem("Add Plane")) {
-				m_SelectionContext = *m_Context->CreatePrimitive(PrimitiveType::Plane);
-			}
+
 			ImGui::EndPopup();
 		}
 

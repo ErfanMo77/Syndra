@@ -86,6 +86,12 @@ namespace Syndra {
 			light = CreateRef<PointLight>();
 		}
 
+		LightComponent(LightType otherType, Ref<Light>& otherLight)
+		{
+			type = otherType;
+			light = otherLight;
+		}
+
 		LightComponent(const LightComponent& other) {
 			this->type = other.type;
 			if (type == LightType::Directional) {
