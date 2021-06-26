@@ -57,6 +57,64 @@ namespace Syndra {
 		return ent;
 	}
 
+	Ref<Entity> Scene::CreatePrimitive(PrimitiveType type)
+	{
+		auto ent = this->CreateEntity();
+		std::string path;
+		switch (type)
+		{
+		case Syndra::PrimitiveType::Cube:
+			ent->GetComponent<TagComponent>().Tag = "Cube";
+			path = std::string("assets\\Models\\cube\\cube.obj");
+			ent->AddComponent<MeshComponent>(path);
+			break;
+		case Syndra::PrimitiveType::Plane:
+			ent->GetComponent<TagComponent>().Tag = "Plane";
+			path = std::string("assets\\Models\\plane\\plane.obj");
+			ent->AddComponent<MeshComponent>(path);
+			break;
+		case Syndra::PrimitiveType::Sphere:
+			ent->GetComponent<TagComponent>().Tag = "Sphere";
+			path = std::string("assets\\Models\\Sphere\\Sphere.fbx");
+			ent->AddComponent<MeshComponent>(path);
+			break;
+		default:
+			break;
+		}
+		return ent;
+	}
+
+	Syndra::Ref<Syndra::Entity> Scene::CreateLight(LightType type)
+	{
+		auto ent = this->CreateEntity();
+		std::string path;
+		Ref<Light> light;
+		switch (type)
+		{
+		case Syndra::LightType::Directional:
+			ent->GetComponent<TagComponent>().Tag = "Directional Light";
+			light = CreateRef<DirectionalLight>(glm::vec3(1.0f));
+			ent->AddComponent<LightComponent>(type, light);
+			break;
+		case Syndra::LightType::Point:
+			ent->GetComponent<TagComponent>().Tag = "Point Light";
+			light = CreateRef<PointLight>(glm::vec3(1.0f));
+			ent->AddComponent<LightComponent>(type, light);
+			break;
+		case Syndra::LightType::Spot:
+			ent->GetComponent<TagComponent>().Tag = "Spot Light";
+			light = CreateRef<SpotLight>(glm::vec3(1.0f));
+			ent->AddComponent<LightComponent>(type, light);
+			break;
+		case Syndra::LightType::Area:
+			//TODO
+			break;
+		default:
+			break;
+		}
+		return ent;
+	}
+
 	void Scene::DestroyEntity(const Entity& entity)
 	{
 		m_Registry.destroy(entity);

@@ -62,6 +62,31 @@ namespace Syndra {
 			if (ImGui::MenuItem("Create empty entity")) {
 				m_SelectionContext = *m_Context->CreateEntity();
 			}
+			if (ImGui::BeginMenu("Add primitive")) {
+				if (ImGui::MenuItem("Add Sphere")) {
+					m_SelectionContext = *m_Context->CreatePrimitive(PrimitiveType::Sphere);
+				}
+				if (ImGui::MenuItem("Add Cube")) {
+					m_SelectionContext = *m_Context->CreatePrimitive(PrimitiveType::Cube);
+				}
+				if (ImGui::MenuItem("Add Plane")) {
+					m_SelectionContext = *m_Context->CreatePrimitive(PrimitiveType::Plane);
+				}
+				ImGui::EndMenu();
+			}
+			if (ImGui::BeginMenu("Add Light")) {
+				if (ImGui::MenuItem("Add Point Light")) {
+					m_SelectionContext = *m_Context->CreateLight(LightType::Point);
+				}
+				if (ImGui::MenuItem("Add Directional Light")) {
+					m_SelectionContext = *m_Context->CreateLight(LightType::Directional);
+				}
+				if (ImGui::MenuItem("Add SpotLight")) {
+					m_SelectionContext = *m_Context->CreateLight(LightType::Spot);
+				}
+				ImGui::EndMenu();
+			}
+
 			ImGui::EndPopup();
 		}
 
@@ -455,8 +480,8 @@ namespace Syndra {
 			ImGui::PopItemWidth();
 			ImGui::Columns(1);
 			ImGuiIO& io = ImGui::GetIO();
-			std::vector<Sampler>& samplers = component.material.GetSamplers();
-			auto& materialTextures = component.material.GetTextures();
+			std::vector<Sampler>& samplers = component.m_Material.GetSamplers();
+			auto& materialTextures = component.m_Material.GetTextures();
 			for (auto& sampler : samplers)
 			{	
 				ImGui::PushID(sampler.name.c_str());
@@ -468,7 +493,7 @@ namespace Syndra {
 				ImGui::Text(sampler.name.c_str());
 
 				m_TextureId = reinterpret_cast<void*>(m_EmptyTexture->GetRendererID());
-				auto& texture = component.material.GetTexture(sampler);
+				auto& texture = component.m_Material.GetTexture(sampler);
 				if (texture)
 				{
 					m_TextureId = reinterpret_cast<void*>(texture->GetRendererID());
@@ -482,16 +507,16 @@ namespace Syndra {
 						materialTextures[sampler.binding] = Texture2D::Create(*path);
 					}
 				}
-				const auto& buffer = component.material.GetCBuffer();
+				const auto& buffer = component.m_Material.GetCBuffer();
 				//Albedo color
 				if (sampler.binding == 0) {
 					glm::vec4 color = buffer.material.color;
 					float tiling = buffer.tiling;
 					if (ImGui::DragFloat("Tiling", &tiling, 0.05f, 0.001f, 100)) {
-						component.material.Set("tiling", tiling);
+						component.m_Material.Set("tiling", tiling);
 					}
 					if (ImGui::ColorEdit4("Albedo", glm::value_ptr(color), ImGuiColorEditFlags_NoInputs)) {
-						component.material.Set("push.material.color", color);
+						component.m_Material.Set("push.material.color", color);
 					}
 				}
 				//metal factor
@@ -502,7 +527,7 @@ namespace Syndra {
 					ImGui::SameLine();
 					ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
 					if (ImGui::SliderFloat("##Metallic", &metal, 0, 1)) {
-						component.material.Set("push.material.MetallicFactor", metal);
+						component.m_Material.Set("push.material.MetallicFactor", metal);
 					}
 				}
 				if (sampler.binding == 3) {
@@ -512,7 +537,7 @@ namespace Syndra {
 					ImGui::SameLine();
 					ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
 					if (ImGui::SliderFloat("##Roughness", &roughness, 0, 1)) {
-						component.material.Set("push.material.RoughnessFactor", roughness);
+						component.m_Material.Set("push.material.RoughnessFactor", roughness);
 					}
 				}
 				if (sampler.binding == 4) {
@@ -522,7 +547,7 @@ namespace Syndra {
 					ImGui::SameLine();
 					ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
 					if (ImGui::SliderFloat("##Ambient Occlusion", &AO, 0, 1)) {
-						component.material.Set("push.material.AO", AO);
+						component.m_Material.Set("push.material.AO", AO);
 					}
 				}
 
