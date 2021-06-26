@@ -62,6 +62,15 @@ namespace Syndra {
 			if (ImGui::MenuItem("Create empty entity")) {
 				m_SelectionContext = *m_Context->CreateEntity();
 			}
+			if (ImGui::MenuItem("Add Sphere")) {
+				m_SelectionContext = *m_Context->CreatePrimitive(PrimitiveType::Sphere);
+			}
+			if (ImGui::MenuItem("Add Cube")) {
+				m_SelectionContext = *m_Context->CreatePrimitive(PrimitiveType::Cube);
+			}
+			if (ImGui::MenuItem("Add Plane")) {
+				m_SelectionContext = *m_Context->CreatePrimitive(PrimitiveType::Plane);
+			}
 			ImGui::EndPopup();
 		}
 

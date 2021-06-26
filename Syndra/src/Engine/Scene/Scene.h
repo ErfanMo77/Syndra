@@ -9,6 +9,13 @@ namespace Syndra {
 
 	class Entity;
 
+	enum class PrimitiveType
+	{
+		Cube,
+		Plane,
+		Sphere
+	};
+
 	class Scene
 	{
 	public:
@@ -18,6 +25,8 @@ namespace Syndra {
 
 		Ref<Entity> CreateEntity(const std::string& name = std::string());
 		Ref<Entity> CreateEntity(const Entity& entity);
+
+		Ref<Entity> CreatePrimitive(PrimitiveType type);
 
 		void DestroyEntity(const Entity& entity);
 		Entity FindEntity(uint32_t id);

@@ -57,6 +57,33 @@ namespace Syndra {
 		return ent;
 	}
 
+	Ref<Entity> Scene::CreatePrimitive(PrimitiveType type)
+	{
+		auto ent = this->CreateEntity();
+		std::string path;
+		switch (type)
+		{
+		case Syndra::PrimitiveType::Cube:
+			ent->GetComponent<TagComponent>().Tag = "Cube";
+			path = std::string("assets\\Models\\cube\\cube.obj");
+			ent->AddComponent<MeshComponent>(path);
+			break;
+		case Syndra::PrimitiveType::Plane:
+			ent->GetComponent<TagComponent>().Tag = "Plane";
+			path = std::string("assets\\Models\\plane\\plane.obj");
+			ent->AddComponent<MeshComponent>(path);
+			break;
+		case Syndra::PrimitiveType::Sphere:
+			ent->GetComponent<TagComponent>().Tag = "Sphere";
+			path = std::string("assets\\Models\\Sphere\\Sphere.fbx");
+			ent->AddComponent<MeshComponent>(path);
+			break;
+		default:
+			break;
+		}
+		return ent;
+	}
+
 	void Scene::DestroyEntity(const Entity& entity)
 	{
 		m_Registry.destroy(entity);
