@@ -211,22 +211,31 @@ namespace Syndra {
 		ImGuiWindow* window = ImGui::GetCurrentWindow();
 		const ImGuiID id = window->GetID("Viewport");
 
+		m_ViewportFocused = ImGui::IsWindowFocused();
+		m_ViewportHovered = ImGui::IsWindowHovered();
+
 		ImGui::Dummy({ 0,3 });
 		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, { 0,5 });
+		//Full screen button
 		if (ImGui::ImageButton(io.Fonts->TexID, { 20,20 })) {
 			m_FullScreen = !m_FullScreen;
 		}
 		ImGui::PopStyleVar();
+		ImGui::SameLine(40);
+		//Global or local gizmos button
+		ImGui::PushID("gizmos Type\0");
 
+		if (ImGui::ImageButton(io.Fonts->TexID, { 20,20 })) {
+			m_GizmosChanged = true;
+			m_GizmoMode == 0 ? m_GizmoMode = 1 : m_GizmoMode = 0;
+		}
+		ImGui::PopID();
 
 		auto viewportMinRegion = ImGui::GetWindowContentRegionMin();
 		auto viewportMaxRegion = ImGui::GetWindowContentRegionMax();
 		auto viewportOffset = ImGui::GetWindowPos();
 		m_ViewportBounds[0] = { viewportMinRegion.x + viewportOffset.x, viewportMinRegion.y + viewportOffset.y };
 		m_ViewportBounds[1] = { viewportMaxRegion.x + viewportOffset.x, viewportMaxRegion.y + viewportOffset.y };
-
-		m_ViewportFocused = ImGui::IsWindowFocused();
-		m_ViewportHovered = ImGui::IsWindowHovered();
 
 		Application::Get().GetImGuiLayer()->SetBlockEvents(!m_ViewportFocused && !m_ViewportHovered);
 
@@ -242,8 +251,6 @@ namespace Syndra {
 		ImGuizmo::SetRect(m_ViewportBounds[0].x, m_ViewportBounds[0].y, m_ViewportBounds[1].x - m_ViewportBounds[0].x, m_ViewportBounds[1].y - m_ViewportBounds[0].y);
 		const glm::mat4& cameraProjection = m_ActiveScene->m_Camera->GetProjection();
 		glm::mat4 cameraView = m_ActiveScene->m_Camera->GetViewMatrix();
-
-		/*ImGuizmo::DrawGrid(glm::value_ptr(cameraView), glm::value_ptr(cameraProjection), glm::value_ptr(glm::mat4(1.0f)), 10);*/
 		
 		// Gizmos
 		Entity selectedEntity = m_ScenePanel->GetSelectedEntity();
@@ -263,10 +270,10 @@ namespace Syndra {
 			float snapValues[3] = { snapValue, snapValue, snapValue };
 
 			ImGuizmo::Manipulate(glm::value_ptr(cameraView), glm::value_ptr(cameraProjection),
-				(ImGuizmo::OPERATION)m_GizmoType, ImGuizmo::LOCAL, glm::value_ptr(transform),
+				(ImGuizmo::OPERATION)m_GizmoType, (ImGuizmo::MODE)m_GizmoMode, glm::value_ptr(transform),
 				nullptr, snap ? snapValues : nullptr);
 
-			if (ImGuizmo::IsUsing())
+			if (ImGuizmo::IsUsing() || m_GizmosChanged)
 			{
 				glm::vec3 translation, rotation, scale;
 				Math::DecomposeTransform(transform, translation,rotation, scale);
@@ -277,7 +284,6 @@ namespace Syndra {
 				tc.Scale = scale;
 			}
 		}
-
 
 		ImGui::End();
 		ImGui::PopStyleVar();
@@ -374,7 +380,7 @@ namespace Syndra {
 		int mouseX = (int)mx;
 		int mouseY = (int)my;
 		altIsDown = Input::IsKeyPressed(Key::LeftAlt);
-		if (mouseX >= 0 && mouseY >= 0 && mouseX < (int)viewportSize.x && mouseY < (int)viewportSize.y && !altIsDown && m_ViewportHovered && !ImGuizmo::IsOver())
+		if (mouseX >= 0 && mouseY >= 0 && mouseX < (int)viewportSize.x && mouseY < (int)viewportSize.y && !altIsDown && m_ViewportHovered && !ImGuizmo::IsOver() && !m_GizmosChanged)
 		{
 			auto& mousePickFB = m_ActiveScene->GetMainFrameBuffer();
 			mousePickFB->Bind();
@@ -388,6 +394,7 @@ namespace Syndra {
 			}
 			//SN_CORE_WARN("pixel data: {0}", pixelData);
 			mousePickFB->Unbind();
+			m_GizmosChanged = false;
 		}
 		return false;
 	}
