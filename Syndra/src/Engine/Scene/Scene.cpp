@@ -13,10 +13,6 @@ namespace Syndra {
 		SceneRenderer::Initialize();
 		m_Shaders = SceneRenderer::GetShaderLibrary();
 		m_Camera = new PerspectiveCamera(45.0f, 1.66f, 0.1f, 1000.0f);
-		auto ent = CreateEntity("Directional Light");
-		auto& comp = ent->AddComponent<LightComponent>();
-		comp.type = LightType::Directional;
-		comp.light = CreateRef<DirectionalLight>();
 	}
 
 	Scene::~Scene()
@@ -148,7 +144,7 @@ namespace Syndra {
 	void Scene::OnUpdateEditor(Timestep ts)
 	{
 		SceneRenderer::BeginScene(*m_Camera);
-		SceneRenderer::RenderScene(*this);
+		SceneRenderer::RenderScene();
 		SceneRenderer::EndScene();
 	}
 

@@ -19,6 +19,7 @@ namespace Syndra {
 		void SetIntensity(float intensity);
 
 		uint32_t GetBackgroundTextureID() const;
+		std::string GetPath() { return m_HDRSkyMap->GetPath(); }
 
 		void BindIrradianceMap(uint32_t slot);
 		void BindPreFilterMap(uint32_t slot);

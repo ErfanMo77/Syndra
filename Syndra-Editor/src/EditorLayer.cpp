@@ -29,6 +29,7 @@ namespace Syndra {
 	{
 		m_ActiveScene = CreateRef<Scene>();
 		m_ScenePanel = CreateRef<ScenePanel>(m_ActiveScene);
+		SceneRenderer::SetScene(m_ActiveScene);
 
 		FramebufferSpecification fbSpec;
 		fbSpec.Attachments = { FramebufferTextureFormat::RGBA8 , FramebufferTextureFormat::DEPTH24STENCIL8 };
@@ -273,7 +274,7 @@ namespace Syndra {
 				(ImGuizmo::OPERATION)m_GizmoType, (ImGuizmo::MODE)m_GizmoMode, glm::value_ptr(transform),
 				nullptr, snap ? snapValues : nullptr);
 
-			if (ImGuizmo::IsUsing() || m_GizmosChanged)
+			if (ImGuizmo::IsUsing())
 			{
 				glm::vec3 translation, rotation, scale;
 				Math::DecomposeTransform(transform, translation,rotation, scale);
@@ -357,7 +358,10 @@ namespace Syndra {
 				m_GizmoType = ImGuizmo::OPERATION::SCALE;
 			break;
 		}
-
+		case Key::T:
+			m_GizmosChanged = true;
+			m_GizmoMode == 0 ? m_GizmoMode = 1 : m_GizmoMode = 0;
+			break;
 		case Key::F:
 		{
 			if (m_ScenePanel->GetSelectedEntity()) {
@@ -380,7 +384,7 @@ namespace Syndra {
 		int mouseX = (int)mx;
 		int mouseY = (int)my;
 		altIsDown = Input::IsKeyPressed(Key::LeftAlt);
-		if (mouseX >= 0 && mouseY >= 0 && mouseX < (int)viewportSize.x && mouseY < (int)viewportSize.y && !altIsDown && m_ViewportHovered && !ImGuizmo::IsOver() && !m_GizmosChanged)
+		if (mouseX >= 0 && mouseY >= 0 && mouseX < (int)viewportSize.x && mouseY < (int)viewportSize.y && !altIsDown && m_ViewportHovered && !ImGuizmo::IsOver())
 		{
 			auto& mousePickFB = m_ActiveScene->GetMainFrameBuffer();
 			mousePickFB->Bind();
@@ -390,11 +394,14 @@ namespace Syndra {
 			}
 			else
 			{
-				m_ScenePanel->SetSelectedEntity({});
+				if (m_GizmosChanged) {
+					m_ScenePanel->SetSelectedEntity({});
+					m_GizmosChanged = false;
+				}
 			}
 			//SN_CORE_WARN("pixel data: {0}", pixelData);
 			mousePickFB->Unbind();
-			m_GizmosChanged = false;
+			
 		}
 		return false;
 	}
@@ -404,6 +411,7 @@ namespace Syndra {
 		m_ActiveScene = CreateRef<Scene>();
 		m_ActiveScene->OnViewportResize((uint32_t)m_ViewportSize.x, (uint32_t)m_ViewportSize.y);
 		m_ScenePanel->SetContext(m_ActiveScene);
+		SceneRenderer::SetScene(m_ActiveScene);
 	}
 
 	void EditorLayer::OpenScene()
@@ -414,9 +422,11 @@ namespace Syndra {
 			m_ActiveScene = CreateRef<Scene>();
 			m_ActiveScene->OnViewportResize((uint32_t)m_ViewportSize.x, (uint32_t)m_ViewportSize.y);
 			m_ScenePanel->SetContext(m_ActiveScene);
-			
+
 			SceneSerializer serializer(m_ActiveScene);
 			serializer.Deserialize(*filepath);
+
+			SceneRenderer::SetScene(m_ActiveScene);
 			Application::Get().GetWindow().SetTitle("Syndra Editor "+m_ActiveScene->m_Name+ " scene");
 		}
 	}

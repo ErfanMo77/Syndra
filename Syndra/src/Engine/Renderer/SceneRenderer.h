@@ -23,8 +23,8 @@ namespace Syndra {
 		static void Initialize();
 
 		static void BeginScene(const PerspectiveCamera& camera);
-		static void UpdateLights(Scene& scene);
-		static void RenderScene(Scene& scene);
+		static void UpdateLights();
+		static void RenderScene();
 
 		static void RenderEntity(const entt::entity& entity, MeshComponent& mc, const Ref<Shader>& shader);
 		static void RenderEntity(const entt::entity& entity, MeshComponent& mc, MaterialComponent& mat);
@@ -36,6 +36,8 @@ namespace Syndra {
 		static void OnViewPortResize(uint32_t width, uint32_t height);
 
 		static void OnImGuiUpdate();
+
+		static void SetScene(const Ref<Scene>& scene);
 
 		static uint32_t GetTextureID(int index);
 
@@ -65,6 +67,8 @@ namespace Syndra {
 
 		struct SceneData
 		{
+			//Scene object
+			Ref<Scene> scene;
 			CameraData CameraBuffer;
 			//Environment
 			float intensity;
