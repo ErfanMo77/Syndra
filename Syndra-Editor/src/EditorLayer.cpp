@@ -29,6 +29,7 @@ namespace Syndra {
 	{
 		m_ActiveScene = CreateRef<Scene>();
 		m_ScenePanel = CreateRef<ScenePanel>(m_ActiveScene);
+		SceneRenderer::SetScene(m_ActiveScene);
 
 		FramebufferSpecification fbSpec;
 		fbSpec.Attachments = { FramebufferTextureFormat::RGBA8 , FramebufferTextureFormat::DEPTH24STENCIL8 };
@@ -211,22 +212,31 @@ namespace Syndra {
 		ImGuiWindow* window = ImGui::GetCurrentWindow();
 		const ImGuiID id = window->GetID("Viewport");
 
+		m_ViewportFocused = ImGui::IsWindowFocused();
+		m_ViewportHovered = ImGui::IsWindowHovered();
+
 		ImGui::Dummy({ 0,3 });
 		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, { 0,5 });
+		//Full screen button
 		if (ImGui::ImageButton(io.Fonts->TexID, { 20,20 })) {
 			m_FullScreen = !m_FullScreen;
 		}
 		ImGui::PopStyleVar();
+		ImGui::SameLine(40);
+		//Global or local gizmos button
+		ImGui::PushID("gizmos Type\0");
 
+		if (ImGui::ImageButton(io.Fonts->TexID, { 20,20 })) {
+			m_GizmosChanged = true;
+			m_GizmoMode == 0 ? m_GizmoMode = 1 : m_GizmoMode = 0;
+		}
+		ImGui::PopID();
 
 		auto viewportMinRegion = ImGui::GetWindowContentRegionMin();
 		auto viewportMaxRegion = ImGui::GetWindowContentRegionMax();
 		auto viewportOffset = ImGui::GetWindowPos();
 		m_ViewportBounds[0] = { viewportMinRegion.x + viewportOffset.x, viewportMinRegion.y + viewportOffset.y };
 		m_ViewportBounds[1] = { viewportMaxRegion.x + viewportOffset.x, viewportMaxRegion.y + viewportOffset.y };
-
-		m_ViewportFocused = ImGui::IsWindowFocused();
-		m_ViewportHovered = ImGui::IsWindowHovered();
 
 		Application::Get().GetImGuiLayer()->SetBlockEvents(!m_ViewportFocused && !m_ViewportHovered);
 
@@ -242,8 +252,6 @@ namespace Syndra {
 		ImGuizmo::SetRect(m_ViewportBounds[0].x, m_ViewportBounds[0].y, m_ViewportBounds[1].x - m_ViewportBounds[0].x, m_ViewportBounds[1].y - m_ViewportBounds[0].y);
 		const glm::mat4& cameraProjection = m_ActiveScene->m_Camera->GetProjection();
 		glm::mat4 cameraView = m_ActiveScene->m_Camera->GetViewMatrix();
-
-		/*ImGuizmo::DrawGrid(glm::value_ptr(cameraView), glm::value_ptr(cameraProjection), glm::value_ptr(glm::mat4(1.0f)), 10);*/
 		
 		// Gizmos
 		Entity selectedEntity = m_ScenePanel->GetSelectedEntity();
@@ -263,7 +271,7 @@ namespace Syndra {
 			float snapValues[3] = { snapValue, snapValue, snapValue };
 
 			ImGuizmo::Manipulate(glm::value_ptr(cameraView), glm::value_ptr(cameraProjection),
-				(ImGuizmo::OPERATION)m_GizmoType, ImGuizmo::LOCAL, glm::value_ptr(transform),
+				(ImGuizmo::OPERATION)m_GizmoType, (ImGuizmo::MODE)m_GizmoMode, glm::value_ptr(transform),
 				nullptr, snap ? snapValues : nullptr);
 
 			if (ImGuizmo::IsUsing())
@@ -277,7 +285,6 @@ namespace Syndra {
 				tc.Scale = scale;
 			}
 		}
-
 
 		ImGui::End();
 		ImGui::PopStyleVar();
@@ -351,7 +358,10 @@ namespace Syndra {
 				m_GizmoType = ImGuizmo::OPERATION::SCALE;
 			break;
 		}
-
+		case Key::T:
+			m_GizmosChanged = true;
+			m_GizmoMode == 0 ? m_GizmoMode = 1 : m_GizmoMode = 0;
+			break;
 		case Key::F:
 		{
 			if (m_ScenePanel->GetSelectedEntity()) {
@@ -384,10 +394,14 @@ namespace Syndra {
 			}
 			else
 			{
-				m_ScenePanel->SetSelectedEntity({});
+				if (m_GizmosChanged) {
+					m_ScenePanel->SetSelectedEntity({});
+					m_GizmosChanged = false;
+				}
 			}
 			//SN_CORE_WARN("pixel data: {0}", pixelData);
 			mousePickFB->Unbind();
+			
 		}
 		return false;
 	}
@@ -397,6 +411,7 @@ namespace Syndra {
 		m_ActiveScene = CreateRef<Scene>();
 		m_ActiveScene->OnViewportResize((uint32_t)m_ViewportSize.x, (uint32_t)m_ViewportSize.y);
 		m_ScenePanel->SetContext(m_ActiveScene);
+		SceneRenderer::SetScene(m_ActiveScene);
 	}
 
 	void EditorLayer::OpenScene()
@@ -407,9 +422,11 @@ namespace Syndra {
 			m_ActiveScene = CreateRef<Scene>();
 			m_ActiveScene->OnViewportResize((uint32_t)m_ViewportSize.x, (uint32_t)m_ViewportSize.y);
 			m_ScenePanel->SetContext(m_ActiveScene);
-			
+
 			SceneSerializer serializer(m_ActiveScene);
 			serializer.Deserialize(*filepath);
+
+			SceneRenderer::SetScene(m_ActiveScene);
 			Application::Get().GetWindow().SetTitle("Syndra Editor "+m_ActiveScene->m_Name+ " scene");
 		}
 	}

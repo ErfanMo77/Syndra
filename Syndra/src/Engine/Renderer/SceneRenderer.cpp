@@ -169,23 +169,25 @@ namespace Syndra {
 
 	}
 
+	//Initializing camera, uniform buffers and environment map
 	void SceneRenderer::BeginScene(const PerspectiveCamera& camera)
 	{
 		if (s_Data.environment)
 		{
 			s_Data.environment->SetViewProjection(camera.GetViewMatrix(), camera.GetProjection());
 		}
-		
+
 		s_Data.CameraBuffer.ViewProjection = camera.GetViewProjection();
 		s_Data.CameraBuffer.position = glm::vec4(camera.GetPosition(), 0);
 		s_Data.CameraUniformBuffer->SetData(&s_Data.CameraBuffer, sizeof(CameraData));
+
 		s_Data.lightManager->IntitializeLights();
 		Renderer::BeginScene(camera);
 	}
 
-	void SceneRenderer::UpdateLights(Scene& scene) 
+	void SceneRenderer::UpdateLights() 
 	{
-		auto viewLights = scene.m_Registry.view<TransformComponent, LightComponent>();
+		auto viewLights = s_Data.scene->m_Registry.view<TransformComponent, LightComponent>();
 		//point light index
 		int pIndex = 0;
 		//spot light index
@@ -227,12 +229,12 @@ namespace Syndra {
 		s_Data.lightManager->UpdateBuffer();
 	}
 
-	void SceneRenderer::RenderScene(Scene& scene)
+	void SceneRenderer::RenderScene()
 	{
 
-		UpdateLights(scene);
+		UpdateLights();
 
-		auto view = scene.m_Registry.view<TransformComponent, MeshComponent>();
+		auto view = s_Data.scene->m_Registry.view<TransformComponent, MeshComponent>();
 		//---------------------------------------------------------SHADOW PASS------------------------------------------//
 		s_Data.shadowPass->BindTargetFrameBuffer();
 		RenderCommand::SetState(RenderState::DEPTH_TEST, true);
@@ -264,8 +266,8 @@ namespace Syndra {
 			auto& mc = view.get<MeshComponent>(ent);
 			if (!mc.path.empty()) 
 			{
-				if (scene.m_Registry.has<MaterialComponent>(ent)) {
-					auto& mat = scene.m_Registry.get<MaterialComponent>(ent);
+				if (s_Data.scene->m_Registry.has<MaterialComponent>(ent)) {
+					auto& mat = s_Data.scene->m_Registry.get<MaterialComponent>(ent);
 					s_Data.geoShader->SetInt("transform.id", (uint32_t)ent);
 					s_Data.geoShader->SetMat4("transform.u_trans", tc.GetTransform());
 					SceneRenderer::RenderEntity(ent, mc, mat);
@@ -497,7 +499,8 @@ namespace Syndra {
 			if (path) {
 				//Add texture as sRGB color space if it is binded to 0 (diffuse texture binding)
 				s_Data.environment = CreateRef<Environment>(Texture2D::CreateHDR(*path, false, true));
-			}
+				s_Data.scene->m_EnvironmentPath = *path;
+			}	
 		}
 		if (s_Data.environment) {
 			ImGui::Image(reinterpret_cast<void*>(s_Data.environment->GetBackgroundTextureID()), { 300, 150 }, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
@@ -508,6 +511,18 @@ namespace Syndra {
 			}
 		}
 		ImGui::End();
+	}
+
+	void SceneRenderer::SetScene(const Ref<Scene>& scene)
+	{
+		s_Data.scene = scene;
+		auto path = scene->m_EnvironmentPath;
+		if (s_Data.environment) {
+			s_Data.scene->m_EnvironmentPath = s_Data.environment->GetPath();
+		}
+		if (!path.empty()) {
+			s_Data.environment = CreateRef<Environment>(Texture2D::CreateHDR(path, false, true));
+		}
 	}
 
 	uint32_t SceneRenderer::GetTextureID(int index)

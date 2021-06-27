@@ -1,13 +1,14 @@
 Scene: shadow
+Environment path: C:\dev\Syndra\Syndra-Editor\assets\HDRI\GCanyon_C_YumaPoint_3k.hdr
 Camera:
-  Yaw: -5.91360569
-  Pitch: 0.475199193
-  distance: 23.7960777
+  Yaw: -5.90400696
+  Pitch: 0.439198524
+  distance: 11.3716135
   FOV: 45
   Near: 0.100000001
   Far: 1000
 Entities:
-  - Entity: 1
+  - Entity: 0
     TagComponent:
       Tag: Directional Light
     TransformComponent:
@@ -19,7 +20,7 @@ Entities:
       Color: [1, 0.902802587, 0.637130797]
       Intensity: 15.1000004
       Direction: [-4, -6.28000021, 0]
-  - Entity: 2
+  - Entity: 1
     TagComponent:
       Tag: Entity
     TransformComponent:
@@ -28,7 +29,7 @@ Entities:
       Scale: [2.27999973, 2.27999997, 2.27999973]
     MeshComponent:
       Path: \assets\Models\cube\cube.obj
-  - Entity: 3
+  - Entity: 2
     TagComponent:
       Tag: Entity
     TransformComponent:
@@ -41,11 +42,11 @@ Entities:
       shader: GeometryPass
       Textures:
         - {binding: 0, path: C:\dev\Syndra\Syndra-Editor\assets\Textures\New folder\ufomabmo_4K_Albedo.jpg}
-        - {binding: 1, path: ""}
         - {binding: 2, path: C:\dev\Syndra\Syndra-Editor\assets\Textures\New folder\ufomabmo_4K_Normal.jpg}
         - {binding: 3, path: C:\dev\Syndra\Syndra-Editor\assets\Textures\New folder\ufomabmo_4K_Roughness.jpg}
         - {binding: 4, path: C:\dev\Syndra\Syndra-Editor\assets\Textures\New folder\ufomabmo_4K_AO.jpg}
-  - Entity: 4
+        - {binding: 1, path: ""}
+  - Entity: 3
     TagComponent:
       Tag: Entity
     TransformComponent:
@@ -54,7 +55,7 @@ Entities:
       Scale: [1, 1, 1]
     MeshComponent:
       Path: \assets\Models\cube\cube.obj
-  - Entity: 5
+  - Entity: 4
     TagComponent:
       Tag: Entity
     TransformComponent:
@@ -71,7 +72,7 @@ Entities:
         - {binding: 3, path: D:\Bridge stuff\Downloaded\3d\container_barrel_udlmcdhqx\udlmcdhqx_2K_Roughness.jpg}
         - {binding: 1, path: ""}
         - {binding: 4, path: ""}
-  - Entity: 6
+  - Entity: 5
     TagComponent:
       Tag: Entity
     TransformComponent:
@@ -88,3 +89,15 @@ Entities:
         - {binding: 3, path: D:\Bridge stuff\Downloaded\3d\stone_sculpture_uffkcc1va\uffkcc1va_4K_Roughness.jpg}
         - {binding: 4, path: D:\Bridge stuff\Downloaded\3d\stone_sculpture_uffkcc1va\uffkcc1va_4K_AO.jpg}
         - {binding: 1, path: ""}
+  - Entity: 6
+    TagComponent:
+      Tag: Point Light
+    TransformComponent:
+      Translation: [-1.64963877, 2.84494686, 2.24999785]
+      Rotation: [0, 0, 0]
+      Scale: [1, 1, 1]
+    LightComponent:
+      Type: Point
+      Color: [0.96848774, 0.502109706, 1]
+      Intensity: 400
+      Range: 10

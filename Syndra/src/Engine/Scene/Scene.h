@@ -53,6 +53,7 @@ namespace Syndra {
 		entt::registry m_Registry;
 
 		std::vector<Ref<Entity>> m_Entities;
+		std::string m_EnvironmentPath;
 		
 		std::string m_Name;
 

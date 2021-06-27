@@ -223,6 +223,8 @@ namespace Syndra {
 		out << YAML::BeginMap;
 		out << YAML::Key << "Scene" << YAML::Value << name;
 
+		out << YAML::Key << "Environment path" << YAML::Value << m_Scene->m_EnvironmentPath;
+
 		//camera
 		out << YAML::Key << "Camera"   <<   YAML::Value << YAML::BeginMap;
 		out << YAML::Key << "Yaw"      <<   YAML::Value << m_Scene->m_Camera->GetYaw();
@@ -254,6 +256,10 @@ namespace Syndra {
 		std::string sceneName = data["Scene"].as<std::string>();
 		m_Scene->m_Name = sceneName;
 		SN_CORE_TRACE("Deserializing scene '{0}'", sceneName);
+		if (data["Environment path"]) {
+			auto hdriPath = data["Environment path"].as<std::string>();
+			m_Scene->m_EnvironmentPath = hdriPath;
+		}
 
 		auto camera = data["Camera"];
 		auto yaw = camera["Yaw"].as<float>();
