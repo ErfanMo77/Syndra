@@ -4,7 +4,10 @@
 #include "Engine/Scene/Entity.h"
 #include "Engine/Scene/Components.h"
 #include "Engine/Core/Input.h"
+
 #include "Panels/MaterialPanel.h"
+#include "Panels/MeshPanel.h"
+#include "Panels/LightPanel.h"
 
 #include <imgui/imgui.h>
 #include <imgui/imgui_internal.h>
@@ -30,6 +33,8 @@ namespace Syndra {
 		std::vector<std::string> m_ShaderNames;
 
 		Ref<MaterialPanel> m_MaterialPanel;
+		Ref<MeshPanel> m_MeshPanel;
+		Ref<LightPanel> m_LightPanel;
 	
 		Ref<Scene> m_Context;
 		Entity m_SelectionContext;

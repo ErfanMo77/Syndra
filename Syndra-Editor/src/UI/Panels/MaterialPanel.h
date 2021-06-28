@@ -12,6 +12,7 @@ namespace Syndra {
 
 	public:
 		MaterialPanel();
+		~MaterialPanel() = default;
 
 		 void DrawMaterial(Entity& entity);
 
