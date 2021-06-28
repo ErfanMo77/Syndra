@@ -1,9 +1,9 @@
 Scene: shadow
 Environment path: C:\dev\Syndra\Syndra-Editor\assets\HDRI\GCanyon_C_YumaPoint_3k.hdr
 Camera:
-  Yaw: -5.90400696
-  Pitch: 0.439198524
-  distance: 11.3716135
+  Yaw: -6.01680899
+  Pitch: 0.364798963
+  distance: 10.4779463
   FOV: 45
   Near: 0.100000001
   Far: 1000
@@ -89,15 +89,3 @@ Entities:
         - {binding: 3, path: D:\Bridge stuff\Downloaded\3d\stone_sculpture_uffkcc1va\uffkcc1va_4K_Roughness.jpg}
         - {binding: 4, path: D:\Bridge stuff\Downloaded\3d\stone_sculpture_uffkcc1va\uffkcc1va_4K_AO.jpg}
         - {binding: 1, path: ""}
-  - Entity: 6
-    TagComponent:
-      Tag: Point Light
-    TransformComponent:
-      Translation: [-1.64963877, 2.84494686, 2.24999785]
-      Rotation: [0, 0, 0]
-      Scale: [1, 1, 1]
-    LightComponent:
-      Type: Point
-      Color: [0.96848774, 0.502109706, 1]
-      Intensity: 400
-      Range: 10

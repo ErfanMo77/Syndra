@@ -1,5 +1,6 @@
 #include "lpch.h"
 #include "ScenePanel.h"
+#include "UI.h"
 #include <filesystem>
 
 #include "Engine/Utils/PlatformUtils.h"
@@ -100,74 +101,6 @@ namespace Syndra {
 		}
 
 		ImGui::End();
-	}
-
-	void ScenePanel::DrawVec3Control(const std::string& label, glm::vec3& values, float resetValue, float columnWidth)
-	{
-		ImGuiIO& io = ImGui::GetIO();
-		auto boldFont =io.Fonts->Fonts[1];
-
-		ImGui::PushID(label.c_str());
-
-		ImGui::Columns(2);
-		ImGui::SetColumnWidth(0, columnWidth);
-		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{ 0, 5 });
-		ImGui::Text(label.c_str());
-		ImGui::PopStyleVar();
-		ImGui::NextColumn();
-
-		ImGui::PushMultiItemsWidths(3, ImGui::CalcItemWidth());
-		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{ 0, 5 });
-
-		float lineHeight = GImGui->Font->FontSize + GImGui->Style.FramePadding.y * 2.0f;
-		ImVec2 buttonSize = { lineHeight + 3.0f, lineHeight };
-
-		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.8f, 0.1f, 0.15f, 1.0f });
-		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{ 0.9f, 0.2f, 0.2f, 1.0f });
-		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{ 0.8f, 0.1f, 0.15f, 1.0f });
-		ImGui::PushFont(boldFont);
-		if (ImGui::Button("X", buttonSize))
-			values.x = resetValue;
-		ImGui::PopFont();
-		ImGui::PopStyleColor(3);
-
-		ImGui::SameLine();
-		ImGui::DragFloat("##X", &values.x, 0.1f, 0.0f, 0.0f, "%.2f");
-		ImGui::PopItemWidth();
-		ImGui::SameLine();
-
-		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.2f, 0.7f, 0.2f, 1.0f });
-		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{ 0.3f, 0.8f, 0.3f, 1.0f });
-		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{ 0.2f, 0.7f, 0.2f, 1.0f });
-		ImGui::PushFont(boldFont);
-		if (ImGui::Button("Y", buttonSize))
-			values.y = resetValue;
-		ImGui::PopFont();
-		ImGui::PopStyleColor(3);
-
-		ImGui::SameLine();
-		ImGui::DragFloat("##Y", &values.y, 0.1f, 0.0f, 0.0f, "%.2f");
-		ImGui::PopItemWidth();
-		ImGui::SameLine();
-
-		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.1f, 0.25f, 0.8f, 1.0f });
-		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{ 0.2f, 0.35f, 0.9f, 1.0f });
-		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{ 0.1f, 0.25f, 0.8f, 1.0f });
-		ImGui::PushFont(boldFont);
-		if (ImGui::Button("Z", buttonSize))
-			values.z = resetValue;
-		ImGui::PopFont();
-		ImGui::PopStyleColor(3);
-
-		ImGui::SameLine();
-		ImGui::DragFloat("##Z", &values.z, 0.1f, 0.0f, 0.0f, "%.2f");
-		ImGui::PopItemWidth();
-
-		ImGui::PopStyleVar();
-
-		ImGui::Columns(1);
-
-		ImGui::PopID();
 	}
 
 	template<typename T>
@@ -296,11 +229,11 @@ namespace Syndra {
 		if (DrawComponent<TransformComponent>("Transform", entity, false, &TransformRemoved)) {
 			auto& component = entity.GetComponent<TransformComponent>();
 			ImGui::Separator();
-			DrawVec3Control("Translation", component.Translation);
+			UI::DrawVec3Control("Translation", component.Translation);
 			glm::vec3 Rot = glm::degrees(component.Rotation);
-			DrawVec3Control("Rotation", Rot);
+			UI::DrawVec3Control("Rotation", Rot);
 			component.Rotation = glm::radians(Rot);
-			DrawVec3Control("Scale", component.Scale, 1.0f);
+			UI::DrawVec3Control("Scale", component.Scale, 1.0f);
 			ImGui::TreePop();
 		}
 
@@ -423,9 +356,9 @@ namespace Syndra {
 			{
 				auto p = dynamic_cast<PointLight*>(component.light.get());
 				float range = p->GetRange();
-				ImGui::Text("Range\0");
-				ImGui::SameLine();
-				ImGui::DragFloat("##range", &range);
+
+				UI::DragFloat("Range", &range);
+
 				p->SetRange(range);
 				p = nullptr;
 			}
@@ -442,13 +375,10 @@ namespace Syndra {
 
 				float iCut = p->GetInnerCutOff();
 				float oCut = p->GetOuterCutOff();
-				ImGui::Text("Cutoff\0",10);
-				ImGui::SameLine();
-				ImGui::DragFloat("##Inner Cutoff", &iCut, 0.5f, 0, p->GetOuterCutOff() - 0.01f);
 
-				ImGui::Text("Outer Cutoff\0");
-				ImGui::SameLine();
-				ImGui::DragFloat("##Outer Cutoff", &oCut, 0.5f, p->GetInnerCutOff() + 0.01f, 180);
+				UI::DragFloat("Cutoff", &iCut, 0.5f, 0, p->GetOuterCutOff() - 0.01f);
+				UI::DragFloat("Outer Cutoff", &oCut, 0.5f, p->GetOuterCutOff() + 0.01f, 180);
+
 				p->SetCutOff(iCut, oCut);
 				p = nullptr;
 			}
@@ -479,9 +409,19 @@ namespace Syndra {
 			ImGui::Text("PBR shader\0");
 			ImGui::PopItemWidth();
 			ImGui::Columns(1);
+
+			ImGui::Separator();
+
 			ImGuiIO& io = ImGui::GetIO();
 			std::vector<Sampler>& samplers = component.m_Material.GetSamplers();
 			auto& materialTextures = component.m_Material.GetTextures();
+			const auto& buffer = component.m_Material.GetCBuffer();
+
+			float tiling = buffer.tiling;
+			if (UI::DragFloat("Tiling", &tiling, 0.05f, 0.001f, 100)) {
+				component.m_Material.Set("tiling", tiling);
+			}
+
 			for (auto& sampler : samplers)
 			{	
 				ImGui::PushID(sampler.name.c_str());
@@ -507,14 +447,10 @@ namespace Syndra {
 						materialTextures[sampler.binding] = Texture2D::Create(*path);
 					}
 				}
-				const auto& buffer = component.m_Material.GetCBuffer();
+
 				//Albedo color
 				if (sampler.binding == 0) {
 					glm::vec4 color = buffer.material.color;
-					float tiling = buffer.tiling;
-					if (ImGui::DragFloat("Tiling", &tiling, 0.05f, 0.001f, 100)) {
-						component.m_Material.Set("tiling", tiling);
-					}
 					if (ImGui::ColorEdit4("Albedo", glm::value_ptr(color), ImGuiColorEditFlags_NoInputs)) {
 						component.m_Material.Set("push.material.color", color);
 					}
@@ -522,31 +458,19 @@ namespace Syndra {
 				//metal factor
 				if (sampler.binding == 1) {
 					float metal = buffer.material.MetallicFactor;
-					ImGui::AlignTextToFramePadding();
-					ImGui::Text("Metallic\0");
-					ImGui::SameLine();
-					ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
-					if (ImGui::SliderFloat("##Metallic", &metal, 0, 1)) {
+					if (UI::SliderFloat("Metallic", &metal, 0.0f, 1.0f)) {
 						component.m_Material.Set("push.material.MetallicFactor", metal);
 					}
 				}
 				if (sampler.binding == 3) {
 					float roughness = buffer.material.RoughnessFactor;
-					ImGui::AlignTextToFramePadding();
-					ImGui::Text("Roughness\0");
-					ImGui::SameLine();
-					ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
-					if (ImGui::SliderFloat("##Roughness", &roughness, 0, 1)) {
+					if (UI::SliderFloat("Roughness", &roughness, 0.0f, 1.0f)) {
 						component.m_Material.Set("push.material.RoughnessFactor", roughness);
 					}
 				}
 				if (sampler.binding == 4) {
 					float AO = buffer.material.AO;
-					ImGui::AlignTextToFramePadding();
-					ImGui::Text("Ambient Occlusion\0");
-					ImGui::SameLine();
-					ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
-					if (ImGui::SliderFloat("##Ambient Occlusion", &AO, 0, 1)) {
+					if (UI::SliderFloat("Ambient Occlusion", &AO, 0.0f, 1.0f)) {
 						component.m_Material.Set("push.material.AO", AO);
 					}
 				}
@@ -593,30 +517,30 @@ namespace Syndra {
 			if (camera.GetProjectionType() == SceneCamera::ProjectionType::Perspective)
 			{
 				float perspectiveVerticalFov = glm::degrees(camera.GetPerspectiveVerticalFOV());
-				if (ImGui::DragFloat("Vertical FOV", &perspectiveVerticalFov))
+				if(UI::DragFloat("Vertical FOV", &perspectiveVerticalFov,0.5F,10,189.0f))
 					camera.SetPerspectiveVerticalFOV(glm::radians(perspectiveVerticalFov));
-
+					
 				float perspectiveNear = camera.GetPerspectiveNearClip();
-				if (ImGui::DragFloat("Near", &perspectiveNear))
+				if(UI::DragFloat("Near", &perspectiveNear,0.1f,0.001f,100.0f))
 					camera.SetPerspectiveNearClip(perspectiveNear);
 
 				float perspectiveFar = camera.GetPerspectiveFarClip();
-				if (ImGui::DragFloat("Far", &perspectiveFar))
+				if (UI::DragFloat("Far", &perspectiveFar, 0.1f, 100.0f, 10000.0f))
 					camera.SetPerspectiveFarClip(perspectiveFar);
 			}
 
 			if (camera.GetProjectionType() == SceneCamera::ProjectionType::Orthographic)
 			{
 				float orthoSize = camera.GetOrthographicSize();
-				if (ImGui::DragFloat("Size", &orthoSize))
+				if (UI::DragFloat("Size", &orthoSize, 0.5f, 0.01f, 100.0f))
 					camera.SetOrthographicSize(orthoSize);
 
 				float orthoNear = camera.GetOrthographicNearClip();
-				if (ImGui::DragFloat("Near", &orthoNear))
+				if (UI::DragFloat("Near", &orthoNear, 0.5f, 0.01f, 100.0f))
 					camera.SetOrthographicNearClip(orthoNear);
 
 				float orthoFar = camera.GetOrthographicFarClip();
-				if (ImGui::DragFloat("Far", &orthoFar))
+				if (UI::DragFloat("Far", &orthoFar, 0.5f, 0.01f, 100.0f))
 					camera.SetOrthographicFarClip(orthoFar);
 
 				ImGui::Checkbox("Fixed Aspect Ratio", &component.FixedAspectRatio);
