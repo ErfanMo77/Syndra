@@ -20,14 +20,14 @@ namespace Syndra {
 
 	private:
 		glm::vec3 m_Color = { 1.0,1.0,1.0 };
-		float m_Intensity = 1.0f;
+		float m_Intensity = 10.0f;
 	};
 
 
 	class DirectionalLight : public Light {
 	public:
 		DirectionalLight() = default;
-		DirectionalLight(const glm::vec3& color) : Light(color,1.0f) {}
+		DirectionalLight(const glm::vec3& color) : Light(color,10.0f) {}
 		DirectionalLight(const glm::vec3& color, float intensity) : Light(color, intensity){}
 		DirectionalLight(const glm::vec3& color, float intensity, const glm::vec3& dir)
 			:Light(color, intensity), m_Direction(dir){}
@@ -51,7 +51,7 @@ namespace Syndra {
 	class PointLight : public Light {
 	public:
 		PointLight() = default;
-		PointLight(const glm::vec3& color) : Light(color,1.0f) {}
+		PointLight(const glm::vec3& color) : Light(color,10.0f) {}
 		PointLight(const glm::vec3& color, float intensity) : Light(color, intensity) {}
 		PointLight(const glm::vec3 & color, const glm::vec3& pos)
 			:Light(color,1.0f), m_Position(pos) {}
@@ -80,7 +80,7 @@ namespace Syndra {
 	class SpotLight : public Light {
 	public:
 		SpotLight() = default;
-		SpotLight(const glm::vec3 & color) : Light(color,1.0f) {}
+		SpotLight(const glm::vec3 & color) : Light(color,10.0f) {}
 		SpotLight(const glm::vec3& color, float intensity) : Light(color, intensity) {}
 		SpotLight(const glm::vec3& color, float intensity, const glm::vec3& pos, const glm::vec3& dir, float cutOff, float outerCutOff)
 			:Light(color, intensity), m_Position(pos), m_Direction(dir), m_CutOff(cutOff), m_OuterCutOff(outerCutOff) {}

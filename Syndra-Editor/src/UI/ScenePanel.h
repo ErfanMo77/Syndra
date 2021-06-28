@@ -20,7 +20,6 @@ namespace Syndra {
 		Entity GetSelectedEntity() const { return m_SelectionContext; }
 
 		void SetSelectedEntity(Entity entity){ m_SelectionContext = entity; }
-		static void DrawVec3Control(const std::string& label, glm::vec3& values, float resetValue = 0.0f, float columnWidth = 100.0f);
 	private:
 		void DrawEntity(Ref<Entity>& entity);
 		void DrawComponents(Entity entity);

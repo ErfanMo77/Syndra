@@ -384,7 +384,7 @@ namespace Syndra {
 		int mouseX = (int)mx;
 		int mouseY = (int)my;
 		altIsDown = Input::IsKeyPressed(Key::LeftAlt);
-		if (mouseX >= 0 && mouseY >= 0 && mouseX < (int)viewportSize.x && mouseY < (int)viewportSize.y && !altIsDown && m_ViewportHovered && !ImGuizmo::IsOver())
+		if (mouseX >= 0 && mouseY >= 0 && mouseX < (int)viewportSize.x && mouseY < (int)viewportSize.y -35.0f && !altIsDown && m_ViewportHovered && !ImGuizmo::IsOver())
 		{
 			auto& mousePickFB = m_ActiveScene->GetMainFrameBuffer();
 			mousePickFB->Bind();
@@ -394,9 +394,9 @@ namespace Syndra {
 			}
 			else
 			{
-				if (m_GizmosChanged) {
+				if (!m_GizmosChanged) {
 					m_ScenePanel->SetSelectedEntity({});
-					m_GizmosChanged = false;
+					m_GizmosChanged = true;
 				}
 			}
 			//SN_CORE_WARN("pixel data: {0}", pixelData);
