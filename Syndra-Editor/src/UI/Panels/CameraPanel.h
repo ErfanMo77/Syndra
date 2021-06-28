@@ -7,13 +7,13 @@
 
 namespace Syndra {
 
-	class MaterialPanel {
+	class CameraPanel {
 
 	public:
-		MaterialPanel();
-		~MaterialPanel() = default;
+		CameraPanel();
+		~CameraPanel() = default;
 
-		void DrawMaterial(Entity& entity);
+		void DrawCamera(Entity& entity);
 
 	private:
 		Ref<Texture2D> m_EmptyTexture;

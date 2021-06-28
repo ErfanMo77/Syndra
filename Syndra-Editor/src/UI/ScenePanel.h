@@ -8,6 +8,7 @@
 #include "Panels/MaterialPanel.h"
 #include "Panels/MeshPanel.h"
 #include "Panels/LightPanel.h"
+#include "Panels/CameraPanel.h"
 
 #include <imgui/imgui.h>
 #include <imgui/imgui_internal.h>
@@ -35,6 +36,7 @@ namespace Syndra {
 		Ref<MaterialPanel> m_MaterialPanel;
 		Ref<MeshPanel> m_MeshPanel;
 		Ref<LightPanel> m_LightPanel;
+		Ref<CameraPanel> m_CameraPanel;
 	
 		Ref<Scene> m_Context;
 		Entity m_SelectionContext;
