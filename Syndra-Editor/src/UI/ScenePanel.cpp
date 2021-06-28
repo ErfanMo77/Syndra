@@ -21,9 +21,7 @@ namespace Syndra {
 		{
 			m_ShaderNames.push_back(name);
 		}
-		m_EmptyTexture = Texture2D::Create("assets/Models/cube/default.png");
-		m_TextureId = reinterpret_cast<void*>(m_EmptyTexture->GetRendererID());
-		m_SelectedShader = "GeometryPass";
+		m_MaterialPanel = CreateRef<MaterialPanel>();
 	}
 
 	void ScenePanel::SetContext(const Ref<Scene>& scene)
@@ -103,43 +101,6 @@ namespace Syndra {
 		ImGui::End();
 	}
 
-	template<typename T>
-	static bool DrawComponent(const std::string& name, Entity entity, bool removable, bool* removed)
-	{
-		const ImGuiTreeNodeFlags treeNodeFlags = ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed |ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_AllowItemOverlap | ImGuiTreeNodeFlags_FramePadding;
-		if (entity.HasComponent<T>())
-		{
-			auto& component = entity.GetComponent<T>();
-			ImVec2 contentRegionAvailable = ImGui::GetContentRegionAvail();
-
-			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2{ 4, 4 });
-			float lineHeight = GImGui->Font->FontSize + GImGui->Style.FramePadding.y * 2.0f;
-			bool open = ImGui::TreeNodeEx((void*)typeid(T).hash_code(), treeNodeFlags, name.c_str());
-			ImGui::PopStyleVar();
-			ImGui::SameLine(contentRegionAvailable.x - lineHeight * 0.5f);
-			if (ImGui::Button("...", ImVec2{ lineHeight, lineHeight }))
-			{
-				ImGui::OpenPopup("ComponentSettings");
-			}
-
-			bool removeComponent = false;
-			if (ImGui::BeginPopup("ComponentSettings"))
-			{
-				if (removable) {
-					if (ImGui::MenuItem("Remove component"))
-						removeComponent = true;
-				}
-				ImGui::EndPopup();
-			}
-
-			if (removeComponent)
-				*removed = true;
-			
-			return open;
-		}
-		return false;
-	}
-
 
 	void ScenePanel::DrawEntity(Ref<Entity>& entity)
 	{
@@ -202,12 +163,12 @@ namespace Syndra {
 
 	}
 
-	void ScenePanel::DrawComponents(Entity entity)
+	void ScenePanel::DrawComponents(Entity& entity)
 	{
 		ImGui::Separator();
 
 		static bool TagRemoved = false;
-		if (DrawComponent<TagComponent>("Tag", entity, false, &TagRemoved)) {
+		if (UI::DrawComponent<TagComponent>("Tag", entity, false, &TagRemoved)) {
 			auto& tag = entity.GetComponent<TagComponent>().Tag;
 
 			char buffer[256];
@@ -226,7 +187,7 @@ namespace Syndra {
 		ImGui::Separator();
 
 		static bool TransformRemoved = false;
-		if (DrawComponent<TransformComponent>("Transform", entity, false, &TransformRemoved)) {
+		if (UI::DrawComponent<TransformComponent>("Transform", entity, false, &TransformRemoved)) {
 			auto& component = entity.GetComponent<TransformComponent>();
 			ImGui::Separator();
 			UI::DrawVec3Control("Translation", component.Translation);
@@ -238,7 +199,7 @@ namespace Syndra {
 		}
 
 		static bool MeshRemoved = false;
-		if (DrawComponent<MeshComponent>("Mesh", entity, true, &MeshRemoved)) {
+		if (UI::DrawComponent<MeshComponent>("Mesh", entity, true, &MeshRemoved)) {
 			ImGui::Separator();
 			auto& tag = entity.GetComponent<MeshComponent>().path;
 
@@ -277,8 +238,10 @@ namespace Syndra {
 			}
 		}
 
+		m_MaterialPanel->DrawMaterial(entity);
+
 		static bool LightRemoved = false;
-		if (DrawComponent<LightComponent>("Light", entity, true, &LightRemoved)) {
+		if (UI::DrawComponent<LightComponent>("Light", entity, true, &LightRemoved)) {
 			auto& component = entity.GetComponent<LightComponent>();
 
 			ImGui::Separator();
@@ -391,103 +354,9 @@ namespace Syndra {
 			}
 		}
 
-		static bool MaterialRemoved = false;
-		ImGui::Separator();
-		if (DrawComponent<MaterialComponent>("Material", entity, true, &MaterialRemoved))
-		{
-			auto& component = entity.GetComponent<MaterialComponent>();
-
-			ImGui::Separator();
-			ImGui::Columns(2);
-			ImGui::SetColumnWidth(0, 80);
-			ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{ 0, 0 });
-			ImGui::Text("Shader\0");
-
-			ImGui::PopStyleVar();
-			ImGui::NextColumn();
-			ImGui::PushItemWidth(ImGui::GetContentRegionAvailWidth());
-			ImGui::Text("PBR shader\0");
-			ImGui::PopItemWidth();
-			ImGui::Columns(1);
-
-			ImGui::Separator();
-
-			ImGuiIO& io = ImGui::GetIO();
-			std::vector<Sampler>& samplers = component.m_Material.GetSamplers();
-			auto& materialTextures = component.m_Material.GetTextures();
-			const auto& buffer = component.m_Material.GetCBuffer();
-
-			float tiling = buffer.tiling;
-			if (UI::DragFloat("Tiling", &tiling, 0.05f, 0.001f, 100)) {
-				component.m_Material.Set("tiling", tiling);
-			}
-
-			for (auto& sampler : samplers)
-			{	
-				ImGui::PushID(sampler.name.c_str());
-				ImGui::Separator();
-				int frame_padding = -1 + 0;                             // -1 == uses default padding (style.FramePadding)
-				ImVec2 size = ImVec2(64.0f,64.0f);                      // Size of the image we want to make visible
-				ImGui::Checkbox("Use", &sampler.isUsed);
-				ImGui::SameLine();
-				ImGui::Text(sampler.name.c_str());
-
-				m_TextureId = reinterpret_cast<void*>(m_EmptyTexture->GetRendererID());
-				auto& texture = component.m_Material.GetTexture(sampler);
-				if (texture)
-				{
-					m_TextureId = reinterpret_cast<void*>(texture->GetRendererID());
-				}
-
-				if (ImGui::ImageButton(m_TextureId, size, ImVec2{ 0, 1 }, ImVec2{ 1, 0 })) {
-
-					auto path = FileDialogs::OpenFile("Syndra Texture (*.*)\0*.*\0");
-					if (path) {
-						//Add texture as sRGB color space if it is binded to 0 (diffuse texture binding)
-						materialTextures[sampler.binding] = Texture2D::Create(*path);
-					}
-				}
-
-				//Albedo color
-				if (sampler.binding == 0) {
-					glm::vec4 color = buffer.material.color;
-					if (ImGui::ColorEdit4("Albedo", glm::value_ptr(color), ImGuiColorEditFlags_NoInputs)) {
-						component.m_Material.Set("push.material.color", color);
-					}
-				}
-				//metal factor
-				if (sampler.binding == 1) {
-					float metal = buffer.material.MetallicFactor;
-					if (UI::SliderFloat("Metallic", &metal, 0.0f, 1.0f)) {
-						component.m_Material.Set("push.material.MetallicFactor", metal);
-					}
-				}
-				if (sampler.binding == 3) {
-					float roughness = buffer.material.RoughnessFactor;
-					if (UI::SliderFloat("Roughness", &roughness, 0.0f, 1.0f)) {
-						component.m_Material.Set("push.material.RoughnessFactor", roughness);
-					}
-				}
-				if (sampler.binding == 4) {
-					float AO = buffer.material.AO;
-					if (UI::SliderFloat("Ambient Occlusion", &AO, 0.0f, 1.0f)) {
-						component.m_Material.Set("push.material.AO", AO);
-					}
-				}
-
-				ImGui::PopID();
-			}
-			ImGui::TreePop();
-
-			if (MaterialRemoved) {
-				entity.RemoveComponent<MaterialComponent>();
-				MaterialRemoved = false;
-			}
-			ImGui::Separator();
-		}
 
 		static bool CameraRemoved = false;
-		if (DrawComponent<CameraComponent>("Camera", entity, true, &CameraRemoved))
+		if (UI::DrawComponent<CameraComponent>("Camera", entity, true, &CameraRemoved))
 		{
 			auto& component = entity.GetComponent<CameraComponent>();
 			auto& camera = component.Camera;

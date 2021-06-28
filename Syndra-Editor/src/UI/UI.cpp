@@ -1,8 +1,26 @@
 #include "lpch.h"
 #include "UI.h"
 
+
 namespace Syndra {
 
+	bool UI::SliderFloat(const std::string& name, float* value, float min, float max)
+	{
+		ImGui::AlignTextToFramePadding();
+		ImGui::Text(name.c_str());
+		ImGui::SameLine();
+		ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+		return ImGui::SliderFloat("##value", value, min, max);
+	}
+
+	bool UI::DragFloat(const std::string& name, float* value, float speed, float min, float max)
+	{
+		ImGui::AlignTextToFramePadding();
+		ImGui::Text(name.c_str());
+		ImGui::SameLine();
+		ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+		return ImGui::DragFloat("##drag", value, speed, min, max);
+	}
 
 	void UI::DrawVec3Control(const std::string& label, glm::vec3& values, float resetValue, float columnWidth)
 	{
@@ -72,22 +90,5 @@ namespace Syndra {
 		ImGui::PopID();
 	}
 
-	bool UI::SliderFloat(const std::string& name, float* value, float min, float max)
-	{
-		ImGui::AlignTextToFramePadding();
-		ImGui::Text(name.c_str());
-		ImGui::SameLine();
-		ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
-		return ImGui::SliderFloat("##value", value, min, max);
-	}
-
-	bool UI::DragFloat(const std::string& name, float* value, float speed, float min, float max)
-	{
-		ImGui::AlignTextToFramePadding();
-		ImGui::Text(name.c_str());
-		ImGui::SameLine();
-		ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
-		return ImGui::DragFloat("##drag", value, speed, min, max);
-	}
 
 }
