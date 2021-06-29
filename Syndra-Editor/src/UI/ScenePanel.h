@@ -4,6 +4,12 @@
 #include "Engine/Scene/Entity.h"
 #include "Engine/Scene/Components.h"
 #include "Engine/Core/Input.h"
+
+#include "Panels/MaterialPanel.h"
+#include "Panels/MeshPanel.h"
+#include "Panels/LightPanel.h"
+#include "Panels/CameraPanel.h"
+
 #include <imgui/imgui.h>
 #include <imgui/imgui_internal.h>
 
@@ -22,15 +28,16 @@ namespace Syndra {
 		void SetSelectedEntity(Entity entity){ m_SelectionContext = entity; }
 	private:
 		void DrawEntity(Ref<Entity>& entity);
-		void DrawComponents(Entity entity);
+		void DrawComponents(Entity& entity);
 
 	private:
 		std::vector<std::string> m_ShaderNames;
-		
-		Ref<Texture2D> m_EmptyTexture;
 
-		std::string m_SelectedShader;
-		ImTextureID m_TextureId;
+		Ref<MaterialPanel> m_MaterialPanel;
+		Ref<MeshPanel> m_MeshPanel;
+		Ref<LightPanel> m_LightPanel;
+		Ref<CameraPanel> m_CameraPanel;
+	
 		Ref<Scene> m_Context;
 		Entity m_SelectionContext;
 		ShaderLibrary m_Shaders;

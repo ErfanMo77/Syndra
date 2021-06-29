@@ -162,6 +162,7 @@ namespace Syndra {
 			ImGui::EndMenuBar();
 		}
 
+		//--------------------------------------------------Scene Panel---------------------------------------------//
 		if (!m_FullScreen) {
 			m_ScenePanel->OnImGuiRender();
 		}
