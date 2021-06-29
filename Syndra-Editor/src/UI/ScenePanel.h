@@ -26,6 +26,8 @@ namespace Syndra {
 		Entity GetSelectedEntity() const { return m_SelectionContext; }
 
 		void SetSelectedEntity(Entity entity){ m_SelectionContext = entity; }
+
+		void CreateDuplicate();
 	private:
 		void DrawEntity(Ref<Entity>& entity);
 		void DrawComponents(Entity& entity);

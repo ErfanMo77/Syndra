@@ -105,6 +105,11 @@ namespace Syndra {
 	}
 
 
+	void ScenePanel::CreateDuplicate()
+	{
+		m_EntityCreated = true;
+	}
+
 	void ScenePanel::DrawEntity(Ref<Entity>& entity)
 	{
 		auto& tag = entity->GetComponent<TagComponent>();
@@ -255,11 +260,6 @@ namespace Syndra {
 			ImGui::EndPopup();
 		}
 		ImGui::PopItemWidth();
-
-
-
 	}
-
-	
 
 }

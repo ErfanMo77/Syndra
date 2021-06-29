@@ -116,9 +116,7 @@ namespace Syndra {
 				ImGui::PushID(name.c_str());
 				if (ImGui::Button("...", ImVec2{ lineHeight, lineHeight }))
 				{
-
 					ImGui::OpenPopup("ComponentSettings");
-
 				}
 
 				bool removeComponent = false;
