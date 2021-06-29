@@ -44,10 +44,10 @@ namespace Syndra {
 			}
 			ImGui::PopStyleVar();
 			ImGui::TreePop();
-			if (MeshRemoved) {
-				entity.RemoveComponent<MeshComponent>();
-				MeshRemoved = false;
-			}
+		}
+		if (MeshRemoved) {
+			entity.RemoveComponent<MeshComponent>();
+			MeshRemoved = false;
 		}
 	}
 

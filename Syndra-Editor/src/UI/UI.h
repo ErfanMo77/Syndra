@@ -113,12 +113,16 @@ namespace Syndra {
 				bool open = ImGui::TreeNodeEx((void*)typeid(T).hash_code(), treeNodeFlags, name.c_str());
 				ImGui::PopStyleVar();
 				ImGui::SameLine(contentRegionAvailable.x - lineHeight * 0.5f);
+				ImGui::PushID(name.c_str());
 				if (ImGui::Button("...", ImVec2{ lineHeight, lineHeight }))
 				{
+
 					ImGui::OpenPopup("ComponentSettings");
+
 				}
 
 				bool removeComponent = false;
+
 				if (ImGui::BeginPopup("ComponentSettings"))
 				{
 					if (removable) {
@@ -127,7 +131,7 @@ namespace Syndra {
 					}
 					ImGui::EndPopup();
 				}
-
+				ImGui::PopID();
 				if (removeComponent)
 					*removed = true;
 

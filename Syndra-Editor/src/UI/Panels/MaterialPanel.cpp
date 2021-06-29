@@ -101,12 +101,12 @@ namespace Syndra {
 				ImGui::PopID();
 			}
 			ImGui::TreePop();
-
-			if (MaterialRemoved) {
-				entity.RemoveComponent<MaterialComponent>();
-				MaterialRemoved = false;
-			}
 			ImGui::Separator();
+		}
+
+		if (MaterialRemoved) {
+			entity.RemoveComponent<MaterialComponent>();
+			MaterialRemoved = false;
 		}
 	}
 

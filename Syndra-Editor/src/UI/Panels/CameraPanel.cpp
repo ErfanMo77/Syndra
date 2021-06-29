@@ -71,11 +71,10 @@ namespace Syndra {
 			}
 			ImGui::Separator();
 			ImGui::TreePop();
-
-			if (CameraRemoved) {
-				entity.RemoveComponent<CameraComponent>();
-				CameraRemoved = false;
-			}
+		}
+		if (CameraRemoved) {
+			entity.RemoveComponent<CameraComponent>();
+			CameraRemoved = false;
 		}
 	}
 
