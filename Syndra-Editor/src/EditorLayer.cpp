@@ -16,8 +16,7 @@ namespace Syndra {
 
 	EditorLayer::EditorLayer()
 		:Layer("Editor Layer")
-	{
-		
+	{	
 		m_Info = RenderCommand::GetInfo();
 	}
 
@@ -334,6 +333,14 @@ namespace Syndra {
 			break;
 		}
 
+		//Duplicate entity
+		case Key::D:
+		{
+			if (control) {
+				m_ScenePanel->CreateDuplicate();
+			}
+			break;
+		}
 		// Gizmos
 		case Key::Q:
 		{

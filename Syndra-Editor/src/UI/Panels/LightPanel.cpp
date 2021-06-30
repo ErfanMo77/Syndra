@@ -116,11 +116,10 @@ namespace Syndra {
 			}
 
 			ImGui::TreePop();
-
-			if (LightRemoved) {
-				entity.RemoveComponent<LightComponent>();
-				LightRemoved = false;
-			}
+		}
+		if (LightRemoved) {
+			entity.RemoveComponent<LightComponent>();
+			LightRemoved = false;
 		}
 	}
 
