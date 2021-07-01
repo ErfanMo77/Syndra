@@ -7,6 +7,8 @@
 #include "backends/imgui_impl_opengl3.h"
 #include "ImGuizmo.h"
 
+#include "IconsFontAwesome5.h"
+
 namespace  Syndra {
 
 
@@ -39,6 +41,13 @@ namespace  Syndra {
 		io.Fonts->AddFontFromFileTTF("assets/fonts/Montserrat-Black.ttf", 16.0f);
 		io.Fonts->AddFontFromFileTTF("assets/fonts/Montserrat-Bold.ttf", 16.0f);
 		io.FontDefault = io.Fonts->AddFontFromFileTTF("assets/fonts/Montserrat-Medium.ttf", 16.0f);
+
+		// merge in icons from Font Awesome
+		static const ImWchar icons_ranges[] = { ICON_MIN_FA, ICON_MAX_FA, 0 };
+		ImFontConfig icons_config; icons_config.MergeMode = true; icons_config.PixelSnapH = true;
+		io.Fonts->AddFontFromFileTTF("assets/fonts/fa-solid-900.ttf", 16.0f, &icons_config, icons_ranges);
+		// use FONT_ICON_FILE_NAME_FAR if you want regular instead of solid
+
 		// Setup Dear ImGui style
 		ImGui::StyleColorsDark(); 
 		SetDarkThemeColors();

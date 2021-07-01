@@ -61,7 +61,7 @@ namespace Syndra {
 			ImGui::PopStyleColor(3);
 
 			ImGui::SameLine();
-			ImGui::DragFloat("##X", &values.x, 0.1f, 0.0f, 0.0f, "%.2f");
+			ImGui::DragFloat("##X", &values.x, 0.1f, 0.01f, 0.0f, "%.2f");
 			ImGui::PopItemWidth();
 			ImGui::SameLine();
 
@@ -75,7 +75,7 @@ namespace Syndra {
 			ImGui::PopStyleColor(3);
 
 			ImGui::SameLine();
-			ImGui::DragFloat("##Y", &values.y, 0.1f, 0.0f, 0.0f, "%.2f");
+			ImGui::DragFloat("##Y", &values.y, 0.1f, 0.01f, 0.0f, "%.2f");
 			ImGui::PopItemWidth();
 			ImGui::SameLine();
 
@@ -89,7 +89,7 @@ namespace Syndra {
 			ImGui::PopStyleColor(3);
 
 			ImGui::SameLine();
-			ImGui::DragFloat("##Z", &values.z, 0.1f, 0.0f, 0.0f, "%.2f");
+			ImGui::DragFloat("##Z", &values.z, 0.1f, 0.01f, 0.0f, "%.2f");
 			ImGui::PopItemWidth();
 
 			ImGui::PopStyleVar();
