@@ -42,7 +42,7 @@ namespace Syndra {
 		ImGui::ShowStyleEditor();
 		ImGui::End();
 		//---------------------------------------------Scene hierarchy-------------------------------//
-		ImGui::Begin("Scene hierarchy");
+		ImGui::Begin(ICON_FA_LIST_UL " Scene hierarchy");
 
 		for (auto ent:m_Context->m_Entities)
 		{
@@ -61,10 +61,10 @@ namespace Syndra {
 
 		if (ImGui::BeginPopupContextWindow(0, 1, false))
 		{
-			if (ImGui::MenuItem("Create empty entity")) {
+			if (ImGui::MenuItem(ICON_FA_FILE" Create empty entity")) {
 				m_SelectionContext = *m_Context->CreateEntity();
 			}
-			if (ImGui::BeginMenu("Add primitive")) {
+			if (ImGui::BeginMenu(ICON_FA_CUBE" Add primitive")) {
 				if (ImGui::MenuItem("Add Sphere")) {
 					m_SelectionContext = *m_Context->CreatePrimitive(PrimitiveType::Sphere);
 				}
@@ -76,7 +76,7 @@ namespace Syndra {
 				}
 				ImGui::EndMenu();
 			}
-			if (ImGui::BeginMenu("Add Light")) {
+			if (ImGui::BeginMenu(ICON_FA_LIGHTBULB" Add Light")) {
 				if (ImGui::MenuItem("Add Point Light")) {
 					m_SelectionContext = *m_Context->CreateLight(LightType::Point);
 				}
@@ -94,7 +94,7 @@ namespace Syndra {
 
 		ImGui::End();
 		//-------------------------------------------Properties--------------------------------------//
-		ImGui::Begin("Properties");
+		ImGui::Begin(ICON_FA_SLIDERS_H " Properties");
 
 		if (m_SelectionContext)
 		{
@@ -115,7 +115,15 @@ namespace Syndra {
 		auto& tag = entity->GetComponent<TagComponent>();
 		ImGuiTreeNodeFlags flags = ((m_SelectionContext == *entity) ? ImGuiTreeNodeFlags_Selected : 0) | ImGuiTreeNodeFlags_OpenOnArrow;
 		flags |= ImGuiTreeNodeFlags_SpanAvailWidth;
-		bool opened = ImGui::TreeNodeEx((void*)(uint64_t)(uint32_t)*entity, flags, tag.Tag.c_str());
+		const char* name="";
+		if (entity->HasComponent<MeshComponent>()) {
+			name = ICON_FA_CUBE;
+		}
+		if (entity->HasComponent<LightComponent>()) {
+			name = ICON_FA_LIGHTBULB;
+		}
+
+		bool opened = ImGui::TreeNodeEx((void*)(uint64_t)(uint32_t)*entity, flags, (std::string(name) + " " + tag.Tag).c_str());
 
 		if (ImGui::IsItemClicked()) {
 			m_SelectionContext = *entity;
@@ -124,11 +132,11 @@ namespace Syndra {
 		bool entityDeleted = false;
 		if (ImGui::BeginPopupContextItem())
 		{
-			if (ImGui::MenuItem("Delete entity")) {
+			if (ImGui::MenuItem(ICON_FA_TRASH" Delete entity")) {
 				entityDeleted = true;
 			}
 
-			if (ImGui::MenuItem("Duplicate entity")) {
+			if (ImGui::MenuItem(ICON_FA_CLONE" Duplicate entity")) {
 				m_SelectionContext = *entity;
 				m_EntityCreated = true;
 			}

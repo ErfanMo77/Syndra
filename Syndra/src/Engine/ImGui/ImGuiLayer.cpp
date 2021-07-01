@@ -45,7 +45,10 @@ namespace  Syndra {
 		// merge in icons from Font Awesome
 		static const ImWchar icons_ranges[] = { ICON_MIN_FA, ICON_MAX_FA, 0 };
 		ImFontConfig icons_config; icons_config.MergeMode = true; icons_config.PixelSnapH = true;
-		io.Fonts->AddFontFromFileTTF("assets/fonts/fa-solid-900.ttf", 16.0f, &icons_config, icons_ranges);
+		//io.Fonts->AddFontFromFileTTF("assets/fonts/fa-solid-900.ttf", 16.0f, &icons_config, icons_ranges);
+		io.Fonts->AddFontFromFileTTF("assets/fonts/fa-regular-400.ttf", 16.0f, &icons_config, icons_ranges);
+		io.Fonts->AddFontFromFileTTF("assets/fonts/fa-light-300.ttf", 16.0f, &icons_config, icons_ranges);
+
 		// use FONT_ICON_FILE_NAME_FAR if you want regular instead of solid
 
 		// Setup Dear ImGui style
@@ -113,6 +116,7 @@ namespace  Syndra {
 		style.ChildRounding = { 5 };
 		style.FrameRounding = { 6 };
 		style.GrabRounding = { 4 };
+		style.FramePadding = { 4, 5 };
 
 
 		colors[ImGuiCol_WindowBg] = ImVec4{ 0.25f, 0.25f, 0.25f, 1.000f };
