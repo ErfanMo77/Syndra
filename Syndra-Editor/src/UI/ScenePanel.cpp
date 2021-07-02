@@ -184,7 +184,7 @@ namespace Syndra {
 		ImGui::Separator();
 
 		static bool TagRemoved = false;
-		if (UI::DrawComponent<TagComponent>("Tag", entity, false, &TagRemoved)) {
+		if (UI::DrawComponent<TagComponent>(ICON_FA_PEN " Tag", entity, false, &TagRemoved)) {
 			auto& tag = entity.GetComponent<TagComponent>().Tag;
 
 			char buffer[256];
@@ -203,7 +203,7 @@ namespace Syndra {
 		ImGui::Separator();
 
 		static bool TransformRemoved = false;
-		if (UI::DrawComponent<TransformComponent>("Transform", entity, false, &TransformRemoved)) {
+		if (UI::DrawComponent<TransformComponent>(ICON_FA_PENCIL_RULER" Transform", entity, false, &TransformRemoved)) {
 			auto& component = entity.GetComponent<TransformComponent>();
 			ImGui::Separator();
 			UI::DrawVec3Control("Translation", component.Translation);

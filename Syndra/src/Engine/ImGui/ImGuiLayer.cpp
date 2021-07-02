@@ -49,8 +49,6 @@ namespace  Syndra {
 		io.Fonts->AddFontFromFileTTF("assets/fonts/fa-regular-400.ttf", 16.0f, &icons_config, icons_ranges);
 		io.Fonts->AddFontFromFileTTF("assets/fonts/fa-light-300.ttf", 16.0f, &icons_config, icons_ranges);
 
-		// use FONT_ICON_FILE_NAME_FAR if you want regular instead of solid
-
 		// Setup Dear ImGui style
 		ImGui::StyleColorsDark(); 
 		SetDarkThemeColors();

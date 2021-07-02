@@ -11,7 +11,7 @@ namespace Syndra {
 	void MeshPanel::DrawMesh(Entity& entity)
 	{
 		static bool MeshRemoved = false;
-		if (UI::DrawComponent<MeshComponent>("Mesh", entity, true, &MeshRemoved)) {
+		if (UI::DrawComponent<MeshComponent>(ICON_FA_CUBE" Mesh", entity, true, &MeshRemoved)) {
 			ImGui::Separator();
 			auto& tag = entity.GetComponent<MeshComponent>().path;
 

@@ -4,6 +4,7 @@
 #include <string>
 
 #include "Engine/Scene/Entity.h"
+#include "Engine/ImGui/IconsFontAwesome5.h"
 
 #include <glm/gtc/type_ptr.hpp>
 

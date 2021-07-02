@@ -10,7 +10,7 @@ namespace Syndra {
 	void LightPanel::DrawLight(Entity& entity)
 	{
 		static bool LightRemoved = false;
-		if (UI::DrawComponent<LightComponent>("Light", entity, true, &LightRemoved)) {
+		if (UI::DrawComponent<LightComponent>(ICON_FA_LIGHTBULB" Light", entity, true, &LightRemoved)) {
 			auto& component = entity.GetComponent<LightComponent>();
 
 			ImGui::Separator();

@@ -227,12 +227,13 @@ namespace Syndra {
 		//ImGui::PopStyleVar();
 		ImGui::SameLine(40);
 		//Global or local gizmos button
-		ImGui::PushID("gizmos Type\0");
 
-		if (ImGui::ImageButton(io.Fonts->TexID, { 20,20 })) {
+		ImGui::PushID("gizmos Type\0");
+		if (ImGui::Button(ICON_FA_HAMMER, { 20,20 })) {
 			m_GizmosChanged = true;
 			m_GizmoMode == 0 ? m_GizmoMode = 1 : m_GizmoMode = 0;
 		}
+
 		ImGui::PopID();
 
 		auto viewportMinRegion = ImGui::GetWindowContentRegionMin();
