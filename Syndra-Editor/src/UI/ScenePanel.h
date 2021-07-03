@@ -4,6 +4,7 @@
 #include "Engine/Scene/Entity.h"
 #include "Engine/Scene/Components.h"
 #include "Engine/Core/Input.h"
+#include "Engine/ImGui/IconsFontAwesome5.h"
 
 #include "Panels/MaterialPanel.h"
 #include "Panels/MeshPanel.h"

@@ -11,7 +11,7 @@ namespace Syndra {
 	void CameraPanel::DrawCamera(Entity& entity)
 	{
 		static bool CameraRemoved = false;
-		if (UI::DrawComponent<CameraComponent>("Camera", entity, true, &CameraRemoved))
+		if (UI::DrawComponent<CameraComponent>(ICON_FA_CAMERA" Camera", entity, true, &CameraRemoved))
 		{
 			auto& component = entity.GetComponent<CameraComponent>();
 			auto& camera = component.Camera;

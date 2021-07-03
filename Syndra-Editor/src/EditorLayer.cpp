@@ -9,7 +9,7 @@
 #include "Engine/Utils/Math.h"
 #include "Engine/Scene/SceneSerializer.h"
 #include "Engine/Utils/PlatformUtils.h"
-
+#include "Engine/ImGui/IconsFontAwesome5.h"
 
 
 namespace Syndra {
@@ -123,19 +123,19 @@ namespace Syndra {
 		{
 			if (ImGui::BeginMenu("File"))
 			{
-				if (ImGui::MenuItem("New", "Ctrl+N")) {
+				if (ImGui::MenuItem(ICON_FA_PLUS"   New", "Ctrl+N")) {
 					NewScene();
 				}
 				ImGui::Separator();
-				if (ImGui::MenuItem("Open...", "Ctrl+O")) {
+				if (ImGui::MenuItem(ICON_FA_FOLDER_OPEN " Open...", "Ctrl+O")) {
 					OpenScene();
 				}
 				ImGui::Separator();
-				if (ImGui::MenuItem("Save As...", "Ctrl+Shift+S")) {
+				if (ImGui::MenuItem(ICON_FA_SAVE "  Save As...", "Ctrl+Shift+S")) {
 					SaveSceneAs();
 				}
 				ImGui::Separator();
-				if (ImGui::MenuItem("Exit"))
+				if (ImGui::MenuItem(ICON_FA_WINDOW_CLOSE" Exit"))
 				{
 					Application::Get().Close();
 				}
@@ -196,7 +196,7 @@ namespace Syndra {
 		}
 	
 		//----------------------------------------------Renderer info-----------------------------------//
-		ImGui::Begin("Renderer info");
+		ImGui::Begin(ICON_FA_INFO" Renderer info");
 		ImGui::Text(m_Info.c_str());
 		ImGui::Text("\nApplication average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
 		ImGui::Text("%d vertices, %d indices (%d triangles)", io.MetricsRenderVertices, io.MetricsRenderIndices, io.MetricsRenderIndices / 3);
@@ -208,7 +208,7 @@ namespace Syndra {
 		//----------------------------------------------Viewport----------------------------------------//
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{ 0, 0 });
 		static bool viewOpen = true;
-		ImGui::Begin("Viewport", &viewOpen);
+		ImGui::Begin(ICON_FA_IMAGE" Viewport", &viewOpen);
 		ImGuiWindow* window = ImGui::GetCurrentWindow();
 		const ImGuiID id = window->GetID("Viewport");
 
@@ -216,20 +216,24 @@ namespace Syndra {
 		m_ViewportHovered = ImGui::IsWindowHovered();
 
 		ImGui::Dummy({ 0,3 });
-		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, { 0,5 });
+		//ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, { 0,5 });
 		//Full screen button
+		ImGui::PushStyleColor(ImGuiCol_Text, { 1,1,1,1 });
 		if (ImGui::ImageButton(io.Fonts->TexID, { 20,20 })) {
 			m_FullScreen = !m_FullScreen;
 		}
-		ImGui::PopStyleVar();
+
+		ImGui::PopStyleColor();
+		//ImGui::PopStyleVar();
 		ImGui::SameLine(40);
 		//Global or local gizmos button
-		ImGui::PushID("gizmos Type\0");
 
-		if (ImGui::ImageButton(io.Fonts->TexID, { 20,20 })) {
+		ImGui::PushID("gizmos Type\0");
+		if (ImGui::Button(ICON_FA_HAMMER, { 20,20 })) {
 			m_GizmosChanged = true;
 			m_GizmoMode == 0 ? m_GizmoMode = 1 : m_GizmoMode = 0;
 		}
+
 		ImGui::PopID();
 
 		auto viewportMinRegion = ImGui::GetWindowContentRegionMin();

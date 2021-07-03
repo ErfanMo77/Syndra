@@ -15,7 +15,7 @@ namespace Syndra {
 	{
 		static bool MaterialRemoved = false;
 		ImGui::Separator();
-		if (UI::DrawComponent<MaterialComponent>("Material", entity, true, &MaterialRemoved))
+		if (UI::DrawComponent<MaterialComponent>(ICON_FA_PAINT_BRUSH" Material", entity, true, &MaterialRemoved))
 		{
 			auto& component = entity.GetComponent<MaterialComponent>();
 
