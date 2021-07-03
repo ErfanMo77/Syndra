@@ -125,7 +125,7 @@ namespace Syndra {
 				if (ImGui::BeginPopup("ComponentSettings"))
 				{
 					if (removable) {
-						if (ImGui::MenuItem("Remove component"))
+						if (ImGui::MenuItem(ICON_FA_TRASH" Remove component"))
 							removeComponent = true;
 					}
 					ImGui::EndPopup();

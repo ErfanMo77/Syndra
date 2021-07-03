@@ -41,6 +41,8 @@ namespace Syndra {
 
 		auto& app = Application::Get();
 		m_ActiveScene->m_Camera->SetViewportSize((float)app.GetWindow().GetWidth(), (float)app.GetWindow().GetHeight());
+		m_FullScreenIcon = Texture2D::Create("assets/Textures/fullscreen.png",false);
+		m_GizmosIcon = Texture2D::Create("assets/Textures/globe.png",false);
 	}
 
 	void EditorLayer::OnDetach()
@@ -123,7 +125,7 @@ namespace Syndra {
 		{
 			if (ImGui::BeginMenu("File"))
 			{
-				if (ImGui::MenuItem(ICON_FA_PLUS"   New", "Ctrl+N")) {
+				if (ImGui::MenuItem(ICON_FA_PLUS"  New", "Ctrl+N")) {
 					NewScene();
 				}
 				ImGui::Separator();
@@ -145,7 +147,7 @@ namespace Syndra {
 
 			if (ImGui::BeginMenu("View")) {
 				//TODO : showing different tabs
-				if (ImGui::MenuItem("Scene hierarchy")) {
+				if (ImGui::MenuItem(ICON_FA_LIST_UL " Scene hierarchy")) {
 					//TODO
 				}
 				ImGui::EndMenu();
@@ -155,6 +157,15 @@ namespace Syndra {
 				//TODO : showing different tabs
 				if (ImGui::MenuItem("Add Entity")) {
 					m_ActiveScene->CreateEntity();
+				}
+				if (ImGui::MenuItem("Add Cube")) {
+					m_ActiveScene->CreatePrimitive(PrimitiveType::Cube);
+				}
+				if (ImGui::MenuItem("Add Sphere")) {
+					m_ActiveScene->CreatePrimitive(PrimitiveType::Sphere);
+				}
+				if (ImGui::MenuItem("Add Plane")) {
+					m_ActiveScene->CreatePrimitive(PrimitiveType::Plane);
 				}
 				ImGui::EndMenu();
 			}
@@ -216,24 +227,26 @@ namespace Syndra {
 		m_ViewportHovered = ImGui::IsWindowHovered();
 
 		ImGui::Dummy({ 0,3 });
-		//ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, { 0,5 });
+		ImGui::PushMultiItemsWidths(2, ImGui::CalcItemWidth()+5);
+		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 0,0 });
+		ImGui::Indent(5);
 		//Full screen button
-		ImGui::PushStyleColor(ImGuiCol_Text, { 1,1,1,1 });
-		if (ImGui::ImageButton(io.Fonts->TexID, { 20,20 })) {
+		if (ImGui::ImageButton(reinterpret_cast<void*>(m_FullScreenIcon->GetRendererID()), { 35,35 })) {
 			m_FullScreen = !m_FullScreen;
 		}
+		ImGui::PopItemWidth();
+		ImGui::SameLine();
 
-		ImGui::PopStyleColor();
-		//ImGui::PopStyleVar();
-		ImGui::SameLine(40);
 		//Global or local gizmos button
-
 		ImGui::PushID("gizmos Type\0");
-		if (ImGui::Button(ICON_FA_HAMMER, { 20,20 })) {
+			
+		if (ImGui::ImageButton(reinterpret_cast<void*>(m_GizmosIcon->GetRendererID()), { 35,35 })) {
 			m_GizmosChanged = true;
 			m_GizmoMode == 0 ? m_GizmoMode = 1 : m_GizmoMode = 0;
 		}
-
+		ImGui::PopItemWidth();
+		ImGui::Unindent();
+		ImGui::PopStyleVar();
 		ImGui::PopID();
 
 		auto viewportMinRegion = ImGui::GetWindowContentRegionMin();

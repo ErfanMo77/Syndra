@@ -33,9 +33,12 @@ namespace Syndra {
 		int m_GizmoType = -1;
 		int m_GizmoMode = 0;
 		bool m_GizmosChanged = true;
+		Ref<Texture2D> m_GizmosIcon;
 
 		bool altIsDown=false;
 		bool m_FullScreen = false;
+		Ref<Texture2D> m_FullScreenIcon;
+
 		std::string m_Info;
 
 		bool m_ViewportFocused = false;
