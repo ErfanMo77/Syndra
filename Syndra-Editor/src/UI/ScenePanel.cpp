@@ -42,7 +42,7 @@ namespace Syndra {
 		ImGui::ShowStyleEditor();
 		ImGui::End();
 		//---------------------------------------------Scene hierarchy-------------------------------//
-		ImGui::Begin(ICON_FA_LIST_UL " Scene hierarchy");
+		ImGui::Begin(ICON_FA_LIST_UL " Scene Hierarchy");
 
 		for (auto ent:m_Context->m_Entities)
 		{
@@ -113,7 +113,7 @@ namespace Syndra {
 	void ScenePanel::DrawEntity(Ref<Entity>& entity)
 	{
 		auto& tag = entity->GetComponent<TagComponent>();
-		ImGuiTreeNodeFlags flags = ((m_SelectionContext == *entity) ? ImGuiTreeNodeFlags_Selected : 0) | ImGuiTreeNodeFlags_OpenOnArrow;
+		ImGuiTreeNodeFlags flags = ((m_SelectionContext == *entity) ? ImGuiTreeNodeFlags_Selected : 0) | ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_FramePadding;
 		flags |= ImGuiTreeNodeFlags_SpanAvailWidth;
 		const char* name="";
 		if (entity->HasComponent<MeshComponent>()) {
@@ -122,9 +122,9 @@ namespace Syndra {
 		if (entity->HasComponent<LightComponent>()) {
 			name = ICON_FA_LIGHTBULB;
 		}
-
+		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 0,2 });
 		bool opened = ImGui::TreeNodeEx((void*)(uint64_t)(uint32_t)*entity, flags, (std::string(name) + " " + tag.Tag).c_str());
-
+		ImGui::PopStyleVar();
 		if (ImGui::IsItemClicked()) {
 			m_SelectionContext = *entity;
 		}
@@ -136,7 +136,7 @@ namespace Syndra {
 				entityDeleted = true;
 			}
 
-			if (ImGui::MenuItem(ICON_FA_CLONE" Duplicate entity")) {
+			if (ImGui::MenuItem(ICON_FA_CLONE"  Duplicate entity")) {
 				m_SelectionContext = *entity;
 				m_EntityCreated = true;
 			}
