@@ -21,6 +21,8 @@ namespace Syndra {
 		bool OnKeyPressed(KeyPressedEvent& e);
 		bool OnMouseButtonPressed(MouseButtonPressedEvent& e);
 
+		void OnLoadEditor();
+
 		void NewScene();
 		void OpenScene();
 		void SaveSceneAs();

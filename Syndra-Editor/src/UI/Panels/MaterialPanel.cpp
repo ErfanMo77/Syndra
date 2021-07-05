@@ -51,6 +51,7 @@ namespace Syndra {
 				int frame_padding = -1 + 0;                              // -1 == uses default padding (style.FramePadding)
 				ImVec2 size = ImVec2(64.0f, 64.0f);                      // Size of the image we want to make visible
 				ImGui::Checkbox("Use", &sampler.isUsed);
+				
 				ImGui::SameLine();
 				ImGui::Text(sampler.name.c_str());
 
@@ -76,6 +77,7 @@ namespace Syndra {
 					if (ImGui::ColorEdit4("Albedo", glm::value_ptr(color), ImGuiColorEditFlags_NoInputs)) {
 						component.m_Material.Set("push.material.color", color);
 					}
+					component.m_Material.Set("HasAlbedoMap", sampler.isUsed);
 				}
 				//metal factor
 				if (sampler.binding == 1) {
@@ -83,6 +85,11 @@ namespace Syndra {
 					if (UI::SliderFloat("Metallic", &metal, 0.0f, 1.0f)) {
 						component.m_Material.Set("push.material.MetallicFactor", metal);
 					}
+					component.m_Material.Set("HasMetallicMap", sampler.isUsed);
+				}
+				//Use Normal map
+				if (sampler.binding == 2) {
+					component.m_Material.Set("HasNormalMap", sampler.isUsed);
 				}
 				//Roughness factor
 				if (sampler.binding == 3) {
@@ -90,6 +97,7 @@ namespace Syndra {
 					if (UI::SliderFloat("Roughness", &roughness, 0.0f, 1.0f)) {
 						component.m_Material.Set("push.material.RoughnessFactor", roughness);
 					}
+					component.m_Material.Set("HasRoughnessMap", sampler.isUsed);
 				}
 				//Ambient Occlusion factor
 				if (sampler.binding == 4) {
@@ -97,6 +105,7 @@ namespace Syndra {
 					if (UI::SliderFloat("Ambient Occlusion", &AO, 0.0f, 1.0f)) {
 						component.m_Material.Set("push.material.AO", AO);
 					}
+					component.m_Material.Set("HasAOMap", sampler.isUsed);
 				}
 				ImGui::PopID();
 			}

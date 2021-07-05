@@ -58,9 +58,9 @@ namespace Syndra {
 
 	void Renderer::Submit(Material& material, const Model& model)
 	{	
+		material.Bind();
 		auto& meshes = model.meshes;
 		for (auto& mesh : meshes) {
-			material.Bind();
 			auto vertexArray = mesh.GetVertexArray();
 			vertexArray->Bind();
 			RenderCommand::DrawIndexed(vertexArray);
