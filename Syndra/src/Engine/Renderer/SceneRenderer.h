@@ -84,8 +84,8 @@ namespace Syndra {
 			Ref<UniformBuffer> CameraUniformBuffer, ShadowBuffer;
 			//Shadow
 			bool softShadow = false;
-			float numPCF = 8;
-			float numBlocker = 3;
+			float numPCF = 16;
+			float numBlocker = 2;
 			glm::mat4 lightProj;
 			glm::mat4 lightView;
 			ShadowData shadowData;

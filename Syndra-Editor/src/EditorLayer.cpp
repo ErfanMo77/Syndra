@@ -38,6 +38,7 @@ namespace Syndra {
 
 		m_ViewportSize = { fbSpec.Width,fbSpec.Height };
 		RenderCommand::Init();
+		OnLoadEditor();
 
 		auto& app = Application::Get();
 		m_ActiveScene->m_Camera->SetViewportSize((float)app.GetWindow().GetWidth(), (float)app.GetWindow().GetHeight());
@@ -429,6 +430,20 @@ namespace Syndra {
 			
 		}
 		return false;
+	}
+
+	// Load the default syndra scene when starting the engine
+	void EditorLayer::OnLoadEditor()
+	{
+		m_ActiveScene = CreateRef<Scene>();
+		m_ActiveScene->OnViewportResize((uint32_t)m_ViewportSize.x, (uint32_t)m_ViewportSize.y);
+		m_ScenePanel->SetContext(m_ActiveScene);
+
+		SceneSerializer serializer(m_ActiveScene);
+		serializer.Deserialize("assets/Scenes/Default.syndra");
+
+		SceneRenderer::SetScene(m_ActiveScene);
+		Application::Get().GetWindow().SetTitle("Syndra Editor " + m_ActiveScene->m_Name + " scene");
 	}
 
 	void EditorLayer::NewScene()

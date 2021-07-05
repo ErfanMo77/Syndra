@@ -27,7 +27,7 @@ namespace Syndra {
 			int HasAOMap;
 
 			CBuffer() :
-				id(-1), HasAOMap(0), HasNormalMap(0), HasRoughnessMap(0), HasAlbedoMap(0), tiling(1) {}
+				id(-1), HasAOMap(1), HasNormalMap(1), HasRoughnessMap(1), HasAlbedoMap(1), HasMetallicMap(1),tiling(1) {}
 		};
 
 		Material() = default;
@@ -37,6 +37,7 @@ namespace Syndra {
 			m_PushConstants = m_Shader->GetPushConstants();
 			m_Textures = material.m_Textures;
 			m_Cbuffer = material.m_Cbuffer;
+			SetSamplersUsed();
 		};
 		Material(Ref<Shader>& shader);
 
@@ -48,6 +49,7 @@ namespace Syndra {
 		
 		void AddTexture(const Sampler& sampler, Ref<Texture2D>& texture);
 
+		Ref<Shader> GetShader() const { return m_Shader; }
 		Ref<Texture2D> GetTexture(const Sampler& sampler);
 		CBuffer GetCBuffer() { return m_Cbuffer; }
 
@@ -59,6 +61,10 @@ namespace Syndra {
 		void Set(const std::string& name, const glm::vec3& value);
 
 		static Ref<Material> Create(Ref<Shader>& shader);
+
+	private:
+		void SetSamplersUsed();
+
 
 	private:
 

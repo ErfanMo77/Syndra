@@ -2,11 +2,14 @@
 #include "imgui.h"
 #include "imgui_internal.h"
 
+#include "Engine/Renderer/SceneRenderer.h"
+
 #include "Engine/Utils/PlatformUtils.h"
 #include "Engine/Core/Application.h"
-#include "Engine/Renderer/SceneRenderer.h"
+
 #include "Engine/Scene/Entity.h"
 #include "Engine/Scene/Scene.h"
+
 #include "Engine/Utils/PoissonGenerator.h"
 #include <glad/glad.h>
 
@@ -146,7 +149,7 @@ namespace Syndra {
 		s_Data.lightSize = 2.0f;
 		s_Data.orthoSize = 10.0f;
 		s_Data.lightNear = 20.0f;
-		s_Data.lightFar = 300.0f;
+		s_Data.lightFar = 200.0f;
 		//Light uniform Buffer layout: -- point lights -- spotlights -- directional light--Binding point 2
 		s_Data.lightManager = CreateRef<LightManager>(2);
 		

@@ -59,6 +59,22 @@ namespace Syndra {
 
 	}
 
+	void Material::SetSamplersUsed()
+	{
+		for (auto& sampler : m_Samplers) {
+			if (sampler.binding == 0)
+				sampler.isUsed = m_Cbuffer.HasAlbedoMap;
+			if (sampler.binding == 1)
+				sampler.isUsed = m_Cbuffer.HasMetallicMap;
+			if (sampler.binding == 2)
+				sampler.isUsed = m_Cbuffer.HasNormalMap;
+			if (sampler.binding == 3)
+				sampler.isUsed = m_Cbuffer.HasRoughnessMap;
+			if (sampler.binding == 4)
+				sampler.isUsed = m_Cbuffer.HasAOMap;
+		}
+	}
+
 	Ref<Material> Material::Create(Ref<Shader>& shader)
 	{
 		return CreateRef<Material>(shader);
