@@ -60,15 +60,11 @@ namespace Syndra {
 			m_ActiveScene->OnViewportResize((uint32_t)m_ViewportSize.x, (uint32_t)m_ViewportSize.y);
 		}
 
-		if (Input::IsKeyPressed(Key::Escape)) {
-			Application::Get().Close();
-		}
 		if (m_ViewportFocused && m_ViewportHovered) {
 			m_ActiveScene->OnCameraUpdate(ts);
 		}
 
 		m_ActiveScene->OnUpdateEditor(ts);
-
 
 	}
 
@@ -312,7 +308,9 @@ namespace Syndra {
 
 	void EditorLayer::OnEvent(Event& event)
 	{
-		m_ActiveScene->m_Camera->OnEvent(event);
+		if (m_ViewportFocused && m_ViewportHovered) {
+			m_ActiveScene->m_Camera->OnEvent(event);
+		}
 		EventDispatcher dispatcher(event);
 		dispatcher.Dispatch<KeyPressedEvent>(SN_BIND_EVENT_FN(EditorLayer::OnKeyPressed));
 		dispatcher.Dispatch<MouseButtonPressedEvent>(SN_BIND_EVENT_FN(EditorLayer::OnMouseButtonPressed));
@@ -394,6 +392,10 @@ namespace Syndra {
 				m_ActiveScene->m_Camera->SetFocalPoint(m_ScenePanel->GetSelectedEntity().GetComponent<TransformComponent>().Translation);
 			}
 			break;
+		}
+		case Key::Escape:
+		{
+			Application::Get().Close();
 		}
 		default: break;
 		}
