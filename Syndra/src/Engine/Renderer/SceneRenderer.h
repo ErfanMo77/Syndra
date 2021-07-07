@@ -7,6 +7,7 @@
 #include "Engine/Renderer/Environment.h"
 #include "Engine/Renderer/LightManager.h"
 #include "Engine/Renderer/RenderPass.h"
+#include "Engine/ImGui/IconsFontAwesome5.h"
 
 #include "entt.hpp"
 
@@ -75,7 +76,7 @@ namespace Syndra {
 			float intensity;
 			Ref<Environment> environment;
 			//Anti ALiasing
-			bool useFxaa = true;
+			bool useFxaa = false;
 			//Light
 			Ref<LightManager> lightManager;
 			float exposure;
