@@ -7,6 +7,7 @@
 #include "Engine/Renderer/Environment.h"
 #include "Engine/Renderer/LightManager.h"
 #include "Engine/Renderer/RenderPass.h"
+
 #include "entt.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
@@ -73,6 +74,8 @@ namespace Syndra {
 			//Environment
 			float intensity;
 			Ref<Environment> environment;
+			//Anti ALiasing
+			bool useFxaa = true;
 			//Light
 			Ref<LightManager> lightManager;
 			float exposure;
@@ -101,5 +104,4 @@ namespace Syndra {
 		};
 
 	};
-
 }
