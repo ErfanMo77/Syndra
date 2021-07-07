@@ -45,7 +45,7 @@ namespace Syndra {
 		//------------------------------------------------Deferred Geometry Render Pass----------------------------------------//
 		FramebufferSpecification GeoFbSpec;
 		GeoFbSpec.Attachments =
-		{ 
+		{
 			FramebufferTextureFormat::RGBA16F,			// Position texture attachment
 			FramebufferTextureFormat::RGBA16F,			// Normal texture attachment
 			FramebufferTextureFormat::RGBA16F,			// Albedo-specular texture attachment
@@ -73,14 +73,14 @@ namespace Syndra {
 		RenderPassSpecification finalPassSpec;
 		finalPassSpec.TargetFrameBuffer = FrameBuffer::Create(postProcFB);
 		s_Data.lightingPass = RenderPass::Create(finalPassSpec);
-		
+
 		//-----------------------------------------------Shadow Pass---------------------------------------------//
 		FramebufferSpecification shadowSpec;
 		shadowSpec.Attachments = { FramebufferTextureFormat::DEPTH32 };
 		shadowSpec.Width = 4096;
 		shadowSpec.Height = 4096;
 		shadowSpec.Samples = 1;
-		shadowSpec.ClearColor = {0.0f, 0.0f, 0.0f, 1.0f};
+		shadowSpec.ClearColor = { 0.0f, 0.0f, 0.0f, 1.0f };
 
 		RenderPassSpecification shadowPassSpec;
 		shadowPassSpec.TargetFrameBuffer = FrameBuffer::Create(shadowSpec);
@@ -97,9 +97,9 @@ namespace Syndra {
 		RenderPassSpecification aaPassSpec;
 		aaPassSpec.TargetFrameBuffer = FrameBuffer::Create(aaFB);
 		s_Data.aaPass = RenderPass::Create(aaPassSpec);
-		
+
 		//------------------------------------------------Shaders-----------------------------------------------//
-		
+
 		//s_Data.fxaa = Shader::Create("assets/shaders/FXAA.glsl");
 
 		if (!s_Data.main) {
@@ -152,7 +152,7 @@ namespace Syndra {
 		s_Data.lightFar = 200.0f;
 		//Light uniform Buffer layout: -- point lights -- spotlights -- directional light--Binding point 2
 		s_Data.lightManager = CreateRef<LightManager>(2);
-		
+
 		GeneratePoissonDisk(s_Data.distributionSampler0, 64);
 		GeneratePoissonDisk(s_Data.distributionSampler1, 64);
 
@@ -188,7 +188,7 @@ namespace Syndra {
 		Renderer::BeginScene(camera);
 	}
 
-	void SceneRenderer::UpdateLights() 
+	void SceneRenderer::UpdateLights()
 	{
 		auto viewLights = s_Data.scene->m_Registry.view<TransformComponent, LightComponent>();
 		//point light index
@@ -248,7 +248,7 @@ namespace Syndra {
 		{
 			auto& tc = view.get<TransformComponent>(ent);
 			auto& mc = view.get<MeshComponent>(ent);
-			if (!mc.path.empty()) 
+			if (!mc.path.empty())
 			{
 				s_Data.depth->SetMat4("transform.u_trans", tc.GetTransform());
 				SceneRenderer::RenderEntity(ent, mc, s_Data.depth);
@@ -267,7 +267,7 @@ namespace Syndra {
 		{
 			auto& tc = view.get<TransformComponent>(ent);
 			auto& mc = view.get<MeshComponent>(ent);
-			if (!mc.path.empty()) 
+			if (!mc.path.empty())
 			{
 				if (s_Data.scene->m_Registry.has<MaterialComponent>(ent)) {
 					auto& mat = s_Data.scene->m_Registry.get<MaterialComponent>(ent);
@@ -296,7 +296,7 @@ namespace Syndra {
 		s_Data.geoPass->UnbindTargetFrameBuffer();
 	}
 
-	void SceneRenderer::RenderEntity(const entt::entity& entity, MeshComponent& mc,const Ref<Shader>& shader)
+	void SceneRenderer::RenderEntity(const entt::entity& entity, MeshComponent& mc, const Ref<Shader>& shader)
 	{
 		//RenderCommand::SetState(RenderState::CULL, false);
 		Renderer::Submit(shader, mc.model);
@@ -324,7 +324,7 @@ namespace Syndra {
 		Texture1D::BindTexture(s_Data.distributionSampler1->GetRendererID(), 5);
 
 		//Push constant variables
-		s_Data.deferredLighting->SetFloat("pc.size", s_Data.lightSize*0.0001f);
+		s_Data.deferredLighting->SetFloat("pc.size", s_Data.lightSize * 0.0001f);
 		s_Data.deferredLighting->SetInt("pc.numPCFSamples", s_Data.numPCF);
 		s_Data.deferredLighting->SetInt("pc.numBlockerSearchSamples", s_Data.numBlocker);
 		s_Data.deferredLighting->SetInt("pc.softShadow", (int)s_Data.softShadow);
@@ -362,15 +362,17 @@ namespace Syndra {
 
 		s_Data.lightingPass->UnbindTargetFrameBuffer();
 		//-------------------------------------------------ANTI ALIASING PASS------------------------------------------------------------------//
-		
-		s_Data.aaPass->BindTargetFrameBuffer();
-		s_Data.fxaa->Bind();
-		s_Data.fxaa->SetFloat("pc.width", (float)s_Data.aaPass->GetSpecification().TargetFrameBuffer->GetSpecification().Width);
-		s_Data.fxaa->SetFloat("pc.height", (float)s_Data.aaPass->GetSpecification().TargetFrameBuffer->GetSpecification().Height);
-		Texture2D::BindTexture(s_Data.lightingPass->GetFrameBufferTextureID(0), 0);
-		Renderer::Submit(s_Data.fxaa, s_Data.screenVao);
-		s_Data.fxaa->Unbind();
-		s_Data.aaPass->UnbindTargetFrameBuffer();
+
+		if (s_Data.useFxaa) {
+			s_Data.aaPass->BindTargetFrameBuffer();
+			s_Data.fxaa->Bind();
+			s_Data.fxaa->SetFloat("pc.width", (float)s_Data.aaPass->GetSpecification().TargetFrameBuffer->GetSpecification().Width);
+			s_Data.fxaa->SetFloat("pc.height", (float)s_Data.aaPass->GetSpecification().TargetFrameBuffer->GetSpecification().Height);
+			Texture2D::BindTexture(s_Data.lightingPass->GetFrameBufferTextureID(0), 0);
+			Renderer::Submit(s_Data.fxaa, s_Data.screenVao);
+			s_Data.fxaa->Unbind();
+			s_Data.aaPass->UnbindTargetFrameBuffer();
+		}
 
 		Renderer::EndScene();
 	}
@@ -437,12 +439,16 @@ namespace Syndra {
 			ImGui::Image(reinterpret_cast<void*>(s_Data.geoPass->GetFrameBufferTextureID(3)), frameSize, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
 			ImGui::End();
 		}
-
-		ImGui::NewLine();
+		ImGui::Separator();
 		//V-Sync
 		static bool vSync = true;
 		ImGui::Checkbox("V-Sync", &vSync);
 		Application::Get().GetWindow().SetVSync(vSync);
+		ImGui::Separator();
+
+		ImGui::Text("Anti Aliasing");
+		ImGui::Checkbox("FXAA", &s_Data.useFxaa);
+		ImGui::Separator();
 
 		//Exposure
 		ImGui::DragFloat("exposure", &s_Data.exposure, 0.01f, -2, 4);
@@ -453,10 +459,10 @@ namespace Syndra {
 
 		//shadow
 		ImGui::Checkbox("Soft Shadow", &s_Data.softShadow);
-		ImGui::DragFloat("PCF samples", &s_Data.numPCF,1,1,64);
-		ImGui::DragFloat("blocker samples", &s_Data.numBlocker,1,1,64);
+		ImGui::DragFloat("PCF samples", &s_Data.numPCF, 1, 1, 64);
+		ImGui::DragFloat("blocker samples", &s_Data.numBlocker, 1, 1, 64);
 		ImGui::DragFloat("Size", &s_Data.lightSize, 0.01f, 0, 100);
-		
+
 		ImGui::PushMultiItemsWidths(2, ImGui::CalcItemWidth());
 		if (ImGui::DragFloat("near", &s_Data.lightNear, 0.01f, 0.1f, 100.0f)) {
 			s_Data.lightProj = glm::perspective(45.0f, 1.0f, s_Data.lightNear, s_Data.lightFar);
@@ -469,7 +475,7 @@ namespace Syndra {
 		ImGui::PopItemWidth();
 		ImGui::NewLine();
 		ImGui::Separator();
-		std::string label =	"shader";
+		std::string label = "shader";
 		static Ref<Shader> selectedShader;
 		if (selectedShader) {
 			label = selectedShader->GetName();
@@ -478,7 +484,7 @@ namespace Syndra {
 		static int index = 0;
 		if (ImGui::BeginCombo("##Shaders", label.c_str()))
 		{
-			for(auto& shader : s_Data.shaders.GetShaders())
+			for (auto& shader : s_Data.shaders.GetShaders())
 			{
 				//const bool is_selected = (item_current_idx == n);
 				if (ImGui::Selectable(shader.first.c_str(), true)) {
@@ -503,12 +509,12 @@ namespace Syndra {
 				//Add texture as sRGB color space if it is binded to 0 (diffuse texture binding)
 				s_Data.environment = CreateRef<Environment>(Texture2D::CreateHDR(*path, false, true));
 				s_Data.scene->m_EnvironmentPath = *path;
-			}	
+			}
 		}
 		if (s_Data.environment) {
 			ImGui::Image(reinterpret_cast<void*>(s_Data.environment->GetBackgroundTextureID()), { 300, 150 }, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
 		}
-		if (ImGui::DragFloat("Intensity", &s_Data.intensity, 0.01f, 1,20)) {
+		if (ImGui::DragFloat("Intensity", &s_Data.intensity, 0.01f, 1, 20)) {
 			if (s_Data.environment) {
 				s_Data.environment->SetIntensity(s_Data.intensity);
 			}
@@ -530,7 +536,13 @@ namespace Syndra {
 
 	uint32_t SceneRenderer::GetTextureID(int index)
 	{
-		return s_Data.aaPass->GetSpecification().TargetFrameBuffer->GetColorAttachmentRendererID(index);
+		if (s_Data.useFxaa) {
+			return s_Data.aaPass->GetSpecification().TargetFrameBuffer->GetColorAttachmentRendererID(index);
+		}
+		else
+		{
+			return s_Data.lightingPass->GetSpecification().TargetFrameBuffer->GetColorAttachmentRendererID(index);
+		}
 	}
 
 	Syndra::FramebufferSpecification SceneRenderer::GetMainFrameSpec()
