@@ -35,12 +35,15 @@ namespace Syndra {
 
 	void ScenePanel::OnImGuiRender()
 	{
-
+		//Show these tabs only in debug mode
+#ifdef SN_DEBUG
 		ImGui::ShowDemoWindow();
-		
+
 		ImGui::Begin("Style editor");
 		ImGui::ShowStyleEditor();
 		ImGui::End();
+#endif // SN_DEBUG
+
 		//---------------------------------------------Scene hierarchy-------------------------------//
 		ImGui::Begin(ICON_FA_LIST_UL " Scene Hierarchy");
 
