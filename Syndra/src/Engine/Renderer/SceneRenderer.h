@@ -37,7 +37,7 @@ namespace Syndra {
 
 		static void OnViewPortResize(uint32_t width, uint32_t height);
 
-		static void OnImGuiUpdate();
+		static void OnImGuiRender(bool* rendererOpen, bool* environmentOpen);
 
 		static void SetScene(const Ref<Scene>& scene);
 

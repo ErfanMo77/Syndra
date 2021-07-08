@@ -25,6 +25,7 @@ namespace Syndra {
 		m_MeshPanel = CreateRef<MeshPanel>();
 		m_LightPanel = CreateRef<LightPanel>();
 		m_CameraPanel = CreateRef<CameraPanel>();
+		m_ContentBrowser = CreateRef<ContentBrowser>();
 	}
 
 	void ScenePanel::SetContext(const Ref<Scene>& scene)
@@ -33,7 +34,7 @@ namespace Syndra {
 		m_SelectionContext = {};
 	}
 
-	void ScenePanel::OnImGuiRender()
+	void ScenePanel::OnImGuiRender(bool* sceneHierarchyOpen, bool* propertiesOpen)
 	{
 		//Show these tabs only in debug mode
 #ifdef SN_DEBUG
@@ -45,66 +46,73 @@ namespace Syndra {
 #endif // SN_DEBUG
 
 		//---------------------------------------------Scene hierarchy-------------------------------//
-		ImGui::Begin(ICON_FA_LIST_UL " Scene Hierarchy");
+		if (*sceneHierarchyOpen) {
+			ImGui::Begin(ICON_FA_LIST_UL " Scene Hierarchy", sceneHierarchyOpen);
 
-		for (auto ent:m_Context->m_Entities)
-		{
-			if (ent) {
-				DrawEntity(ent);
+			for (auto ent : m_Context->m_Entities)
+			{
+				if (ent) {
+					DrawEntity(ent);
+				}
 			}
+
+			if (m_EntityCreated) {
+				m_Context->CreateEntity(m_SelectionContext);
+				m_EntityCreated = false;
+			}
+
+			if (ImGui::IsMouseDown(0) && ImGui::IsWindowHovered())
+				m_SelectionContext = {};
+
+			if (ImGui::BeginPopupContextWindow(0, 1, false))
+			{
+				if (ImGui::MenuItem(ICON_FA_FILE" Create empty entity")) {
+					m_SelectionContext = *m_Context->CreateEntity();
+				}
+				if (ImGui::BeginMenu(ICON_FA_CUBE" Add primitive")) {
+					if (ImGui::MenuItem("Add Sphere")) {
+						m_SelectionContext = *m_Context->CreatePrimitive(PrimitiveType::Sphere);
+					}
+					if (ImGui::MenuItem("Add Cube")) {
+						m_SelectionContext = *m_Context->CreatePrimitive(PrimitiveType::Cube);
+					}
+					if (ImGui::MenuItem("Add Plane")) {
+						m_SelectionContext = *m_Context->CreatePrimitive(PrimitiveType::Plane);
+					}
+					ImGui::EndMenu();
+				}
+				if (ImGui::BeginMenu(ICON_FA_LIGHTBULB" Add Light")) {
+					if (ImGui::MenuItem("Add Point Light")) {
+						m_SelectionContext = *m_Context->CreateLight(LightType::Point);
+					}
+					if (ImGui::MenuItem("Add Directional Light")) {
+						m_SelectionContext = *m_Context->CreateLight(LightType::Directional);
+					}
+					if (ImGui::MenuItem("Add SpotLight")) {
+						m_SelectionContext = *m_Context->CreateLight(LightType::Spot);
+					}
+					ImGui::EndMenu();
+				}
+
+				ImGui::EndPopup();
+			}
+
+			ImGui::End();
 		}
-
-		if (m_EntityCreated) {
-			m_Context->CreateEntity(m_SelectionContext);
-			m_EntityCreated = false;
-		}
-
-		if (ImGui::IsMouseDown(0) && ImGui::IsWindowHovered())
-			m_SelectionContext = {};
-
-		if (ImGui::BeginPopupContextWindow(0, 1, false))
-		{
-			if (ImGui::MenuItem(ICON_FA_FILE" Create empty entity")) {
-				m_SelectionContext = *m_Context->CreateEntity();
-			}
-			if (ImGui::BeginMenu(ICON_FA_CUBE" Add primitive")) {
-				if (ImGui::MenuItem("Add Sphere")) {
-					m_SelectionContext = *m_Context->CreatePrimitive(PrimitiveType::Sphere);
-				}
-				if (ImGui::MenuItem("Add Cube")) {
-					m_SelectionContext = *m_Context->CreatePrimitive(PrimitiveType::Cube);
-				}
-				if (ImGui::MenuItem("Add Plane")) {
-					m_SelectionContext = *m_Context->CreatePrimitive(PrimitiveType::Plane);
-				}
-				ImGui::EndMenu();
-			}
-			if (ImGui::BeginMenu(ICON_FA_LIGHTBULB" Add Light")) {
-				if (ImGui::MenuItem("Add Point Light")) {
-					m_SelectionContext = *m_Context->CreateLight(LightType::Point);
-				}
-				if (ImGui::MenuItem("Add Directional Light")) {
-					m_SelectionContext = *m_Context->CreateLight(LightType::Directional);
-				}
-				if (ImGui::MenuItem("Add SpotLight")) {
-					m_SelectionContext = *m_Context->CreateLight(LightType::Spot);
-				}
-				ImGui::EndMenu();
-			}
-
-			ImGui::EndPopup();
-		}
-
-		ImGui::End();
 		//-------------------------------------------Properties--------------------------------------//
-		ImGui::Begin(ICON_FA_SLIDERS_H " Properties");
+		if (*propertiesOpen) {
+			ImGui::Begin(ICON_FA_SLIDERS_H " Properties", propertiesOpen);
 
-		if (m_SelectionContext)
-		{
-			DrawComponents(m_SelectionContext);
+			if (m_SelectionContext)
+			{
+				DrawComponents(m_SelectionContext);
+			}
+
+			ImGui::End();
 		}
+		//Content Browser
+		//m_ContentBrowser->OnImGuiRender();
 
-		ImGui::End();
 	}
 
 

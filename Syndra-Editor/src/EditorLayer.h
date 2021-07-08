@@ -22,6 +22,7 @@ namespace Syndra {
 		bool OnMouseButtonPressed(MouseButtonPressedEvent& e);
 
 		void OnLoadEditor();
+		void ResetLayout();
 
 		void NewScene();
 		void OpenScene();
@@ -32,7 +33,7 @@ namespace Syndra {
 		Ref<Scene> m_ActiveScene;
 		Ref<ScenePanel> m_ScenePanel;
 
-		int m_GizmoType = -1;
+		int m_GizmoType = 7;
 		int m_GizmoMode = 0;
 		bool m_GizmosChanged = true;
 		Ref<Texture2D> m_GizmosIcon;
@@ -45,6 +46,15 @@ namespace Syndra {
 
 		bool m_ViewportFocused = false;
 		bool m_ViewportHovered = false;
+
+		//Showing and controlling tabs
+		bool m_InfoOpen = true;
+		bool m_ViewportOpen = true;
+		bool m_CameraSettingOpen = false;
+		bool m_SceneHierarchyOpen = true;
+		bool m_PropertiesOpen = true;
+		bool m_RendererOpen = true;
+		bool m_EnvironmentOpen = true;
 
 		glm::vec2 m_ViewportBounds[2];
 		glm::vec2 m_ViewportSize = { 200.0f,200.0f};
