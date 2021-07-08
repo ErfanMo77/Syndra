@@ -134,7 +134,7 @@ namespace Syndra {
 					SaveSceneAs();
 				}
 				ImGui::Separator();
-				if (ImGui::MenuItem(ICON_FA_WINDOW_CLOSE" Exit"))
+				if (ImGui::MenuItem(ICON_FA_WINDOW_CLOSE"  Exit"))
 				{
 					Application::Get().Close();
 				}
@@ -144,9 +144,19 @@ namespace Syndra {
 
 			if (ImGui::BeginMenu("View")) {
 				//TODO : showing different tabs
-				if (ImGui::MenuItem(ICON_FA_LIST_UL " Scene hierarchy")) {
-					//TODO
-				}
+				if (ImGui::MenuItem(ICON_FA_LIST_UL "  Scene hierarchy"))
+					m_SceneHierarchyOpen = true;
+				if (ImGui::MenuItem(ICON_FA_SLIDERS_H "  Properties"))
+					m_PropertiesOpen = true;
+				if (ImGui::MenuItem(ICON_FA_INFO "  Renderer Info"))
+					m_InfoOpen = true;
+				if (ImGui::MenuItem(ICON_FA_TREE"  Environment"))
+					m_EnvironmentOpen = true;
+				if (ImGui::MenuItem(ICON_FA_COGS" Renderer settings"))
+					m_RendererOpen = true;
+				if (ImGui::MenuItem(ICON_FA_SYNC"  Reset Layout"))
+					ResetLayout();
+
 				ImGui::EndMenu();
 			}
 
@@ -171,14 +181,13 @@ namespace Syndra {
 
 		//--------------------------------------------------Scene Panel---------------------------------------------//
 		if (!m_FullScreen) {
-			m_ScenePanel->OnImGuiRender();
+			m_ScenePanel->OnImGuiRender(&m_SceneHierarchyOpen, &m_PropertiesOpen);
 		}
 
 		//-----------------------------------------------Editor camera settings-------------------------------------//
-		static bool camerSettings = true;
 		if (!m_FullScreen) {
-			if (camerSettings) {
-				ImGui::Begin(ICON_FA_CAMERA" Camera settings", &camerSettings);
+			if (m_CameraSettingOpen) {
+				ImGui::Begin(ICON_FA_CAMERA" Camera settings", &m_CameraSettingOpen);
 				//FOV
 				float fov = m_ActiveScene->m_Camera->GetFOV();
 				if (ImGui::SliderFloat("Fov", &fov, 10, 180)) {
@@ -200,23 +209,23 @@ namespace Syndra {
 		}
 		//---------------------------------------------Renderer settings---------------------------------//
 		if (!m_FullScreen) {
-			SceneRenderer::OnImGuiUpdate();
+			SceneRenderer::OnImGuiRender(&m_RendererOpen, &m_EnvironmentOpen);
 		}
 	
-		//----------------------------------------------Renderer info-----------------------------------//
-		ImGui::Begin(ICON_FA_INFO" Renderer info");
-		ImGui::Text(m_Info.c_str());
-		ImGui::Text("\nApplication average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
-		ImGui::Text("%d vertices, %d indices (%d triangles)", io.MetricsRenderVertices, io.MetricsRenderIndices, io.MetricsRenderIndices / 3);
-		ImGui::Text("%d active windows (%d visible)", io.MetricsActiveWindows, io.MetricsRenderWindows);
-		ImGui::Text("%d active allocations", io.MetricsActiveAllocations);
-		ImGui::End();
-
+		//----------------------------------------------Renderer info-----------------------------------//	
+		if (m_InfoOpen) {
+			ImGui::Begin(ICON_FA_INFO" Renderer info", &m_InfoOpen);
+			ImGui::Text(m_Info.c_str());
+			ImGui::Text("\nApplication average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
+			ImGui::Text("%d vertices, %d indices (%d triangles)", io.MetricsRenderVertices, io.MetricsRenderIndices, io.MetricsRenderIndices / 3);
+			ImGui::Text("%d active windows (%d visible)", io.MetricsActiveWindows, io.MetricsRenderWindows);
+			ImGui::Text("%d active allocations", io.MetricsActiveAllocations);
+			ImGui::End();
+		}
 
 		//----------------------------------------------Viewport----------------------------------------//
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{ 0, 0 });
-		static bool viewOpen = true;
-		ImGui::Begin(ICON_FA_IMAGE" Viewport", &viewOpen);
+		ImGui::Begin(ICON_FA_IMAGE" Viewport");
 		ImGuiWindow* window = ImGui::GetCurrentWindow();
 		const ImGuiID id = window->GetID("Viewport");
 
@@ -228,7 +237,7 @@ namespace Syndra {
 		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 0,0 });
 		ImGui::Indent(5);
 		//Full screen button
-		if (ImGui::ImageButton(reinterpret_cast<void*>(m_FullScreenIcon->GetRendererID()), { 35,35 })) {
+		if (ImGui::ImageButton((ImTextureID)m_FullScreenIcon->GetRendererID(), { 35,35 })) {
 			m_FullScreen = !m_FullScreen;
 		}
 		ImGui::PopItemWidth();
@@ -237,7 +246,7 @@ namespace Syndra {
 		//Global or local gizmos button
 		ImGui::PushID("gizmos Type\0");
 			
-		if (ImGui::ImageButton(reinterpret_cast<void*>(m_GizmosIcon->GetRendererID()), { 35,35 })) {
+		if (ImGui::ImageButton((ImTextureID)m_GizmosIcon->GetRendererID(), { 35,35 })) {
 			m_GizmosChanged = true;
 			m_GizmoMode == 0 ? m_GizmoMode = 1 : m_GizmoMode = 0;
 		}
@@ -258,7 +267,7 @@ namespace Syndra {
 
 		m_ViewportSize = { viewportPanelSize.x, viewportPanelSize.y };
 		uint64_t textureID = m_ActiveScene->GetMainTextureID();
-		ImGui::Image(reinterpret_cast<void*>(textureID), ImVec2{ m_ViewportSize.x, m_ViewportSize.y }, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
+		ImGui::Image((ImTextureID)textureID, ImVec2{ m_ViewportSize.x, m_ViewportSize.y }, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
 		
 		ImGuizmo::SetOrthographic(false);
 		ImGuizmo::SetDrawlist();
@@ -395,7 +404,8 @@ namespace Syndra {
 		}
 		case Key::Escape:
 		{
-			Application::Get().Close();
+			/*Application::Get().Close();*/
+			m_ScenePanel->SetSelectedEntity({});
 		}
 		default: break;
 		}
@@ -444,11 +454,22 @@ namespace Syndra {
 		SceneSerializer serializer(m_ActiveScene);
 #ifdef SN_DEBUG
 		serializer.Deserialize("assets/Scenes/Default.syndra");
-#endif // SN_DEBUG
+#else
 		serializer.Deserialize("assets/Scenes/Default_R.syndra");
-
+#endif // SN_DEBUG
 		SceneRenderer::SetScene(m_ActiveScene);
 		Application::Get().GetWindow().SetTitle("Syndra Editor " + m_ActiveScene->m_Name + " scene");
+	}
+
+	void EditorLayer::ResetLayout()
+	{
+		m_InfoOpen = true;
+		m_ViewportOpen = true;
+		m_CameraSettingOpen = false;
+		m_SceneHierarchyOpen = true;
+		m_PropertiesOpen = true;
+		m_RendererOpen = true;
+		m_EnvironmentOpen = true;
 	}
 
 	void EditorLayer::NewScene()

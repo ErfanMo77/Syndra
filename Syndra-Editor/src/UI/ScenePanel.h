@@ -10,6 +10,7 @@
 #include "Panels/MeshPanel.h"
 #include "Panels/LightPanel.h"
 #include "Panels/CameraPanel.h"
+#include "Panels/ContentBrowser.h"
 
 #include <imgui/imgui.h>
 #include <imgui/imgui_internal.h>
@@ -22,7 +23,7 @@ namespace Syndra {
 		ScenePanel() = default;
 		ScenePanel(const Ref<Scene>& scene);
 		void SetContext(const Ref<Scene>& scene);
-		void OnImGuiRender();
+		void OnImGuiRender(bool* sceneHierarchyOpen, bool* propertiesOpen);
 
 		Entity GetSelectedEntity() const { return m_SelectionContext; }
 
@@ -40,7 +41,8 @@ namespace Syndra {
 		Ref<MeshPanel> m_MeshPanel;
 		Ref<LightPanel> m_LightPanel;
 		Ref<CameraPanel> m_CameraPanel;
-	
+		Ref<ContentBrowser> m_ContentBrowser;
+
 		Ref<Scene> m_Context;
 		Entity m_SelectionContext;
 		ShaderLibrary m_Shaders;

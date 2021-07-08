@@ -8,7 +8,7 @@ namespace Syndra {
 	MaterialPanel::MaterialPanel()
 	{
 		m_EmptyTexture = Texture2D::Create("assets/Models/cube/default.png");
-		m_TextureId = reinterpret_cast<void*>(m_EmptyTexture->GetRendererID());
+		m_TextureId = (ImTextureID)m_EmptyTexture->GetRendererID();
 	}
 
 	void MaterialPanel::DrawMaterial(Entity& entity)

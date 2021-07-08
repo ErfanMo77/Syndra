@@ -389,143 +389,148 @@ namespace Syndra {
 		s_Data.aaPass->GetSpecification().TargetFrameBuffer->Resize(width, height);
 	}
 
-	void SceneRenderer::OnImGuiUpdate()
+	void SceneRenderer::OnImGuiRender(bool* rendererOpen, bool* environmentOpen)
 	{
-		ImGui::Begin(ICON_FA_COGS" Renderer settings");
+		//Renderer settings
+		if (*rendererOpen) {
+			ImGui::Begin(ICON_FA_COGS" Renderer settings", rendererOpen);
 
-		ImGui::Text("Geometry pass debugger");
-		static bool showAlbedo = false;
-		static bool showNormal = false;
-		static bool showPosition = false;
-		static bool showRoughMetalAO = false;
-		if (ImGui::Button("Albedo")) {
-			showAlbedo = !showAlbedo;
-		}
-		ImGui::SameLine();
-		if (ImGui::Button("Normal")) {
-			showNormal = !showNormal;
-		}
-		ImGui::SameLine();
-		if (ImGui::Button("Position")) {
-			showPosition = !showPosition;
-		}
-		ImGui::SameLine();
-		if (ImGui::Button("RoughMetalAO")) {
-			showRoughMetalAO = !showRoughMetalAO;
-		}
-		auto width = s_Data.geoPass->GetSpecification().TargetFrameBuffer->GetSpecification().Width * 0.5f;
-		auto height = s_Data.geoPass->GetSpecification().TargetFrameBuffer->GetSpecification().Height * 0.5f;
-		ImVec2 frameSize = ImVec2{ width,height };
-		if (showAlbedo) {
-			ImGui::Begin("Albedo");
-			ImGui::Image(reinterpret_cast<void*>(s_Data.geoPass->GetFrameBufferTextureID(2)), frameSize, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
-			ImGui::End();
-		}
+			ImGui::Text("Geometry pass debugger");
+			static bool showAlbedo = false;
+			static bool showNormal = false;
+			static bool showPosition = false;
+			static bool showRoughMetalAO = false;
+			if (ImGui::Button("Albedo")) {
+				showAlbedo = !showAlbedo;
+			}
+			ImGui::SameLine();
+			if (ImGui::Button("Normal")) {
+				showNormal = !showNormal;
+			}
+			ImGui::SameLine();
+			if (ImGui::Button("Position")) {
+				showPosition = !showPosition;
+			}
+			ImGui::SameLine();
+			if (ImGui::Button("RoughMetalAO")) {
+				showRoughMetalAO = !showRoughMetalAO;
+			}
+			auto width = s_Data.geoPass->GetSpecification().TargetFrameBuffer->GetSpecification().Width * 0.5f;
+			auto height = s_Data.geoPass->GetSpecification().TargetFrameBuffer->GetSpecification().Height * 0.5f;
+			ImVec2 frameSize = ImVec2{ width,height };
+			if (showAlbedo) {
+				ImGui::Begin("Albedo");
+				ImGui::Image((ImTextureID)s_Data.geoPass->GetFrameBufferTextureID(2), frameSize, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
+				ImGui::End();
+			}
 
-		if (showNormal) {
-			ImGui::Begin("Normal");
-			ImGui::Image(reinterpret_cast<void*>(s_Data.geoPass->GetFrameBufferTextureID(1)), frameSize, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
-			ImGui::End();
-		}
+			if (showNormal) {
+				ImGui::Begin("Normal");
+				ImGui::Image((ImTextureID)s_Data.geoPass->GetFrameBufferTextureID(1), frameSize, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
+				ImGui::End();
+			}
 
-		if (showPosition) {
-			ImGui::Begin("Position");
-			ImGui::Image(reinterpret_cast<void*>(s_Data.geoPass->GetFrameBufferTextureID(0)), frameSize, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
-			ImGui::End();
-		}
+			if (showPosition) {
+				ImGui::Begin("Position");
+				ImGui::Image((ImTextureID)s_Data.geoPass->GetFrameBufferTextureID(0), frameSize, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
+				ImGui::End();
+			}
 
-		if (showRoughMetalAO) {
-			ImGui::Begin("RoughMetalAO");
-			ImGui::Image(reinterpret_cast<void*>(s_Data.geoPass->GetFrameBufferTextureID(3)), frameSize, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
-			ImGui::End();
-		}
-		ImGui::Separator();
-		//V-Sync
-		static bool vSync = true;
-		ImGui::Checkbox("V-Sync", &vSync);
-		Application::Get().GetWindow().SetVSync(vSync);
-		ImGui::Separator();
+			if (showRoughMetalAO) {
+				ImGui::Begin("RoughMetalAO");
+				ImGui::Image((ImTextureID)s_Data.geoPass->GetFrameBufferTextureID(3), frameSize, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
+				ImGui::End();
+			}
+			ImGui::Separator();
+			//V-Sync
+			static bool vSync = true;
+			ImGui::Checkbox("V-Sync", &vSync);
+			Application::Get().GetWindow().SetVSync(vSync);
+			ImGui::Separator();
 
-		ImGui::Text("Anti Aliasing");
-		ImGui::Checkbox("FXAA", &s_Data.useFxaa);
-		ImGui::Separator();
+			ImGui::Text("Anti Aliasing");
+			ImGui::Checkbox("FXAA", &s_Data.useFxaa);
+			ImGui::Separator();
 
-		//Exposure
-		ImGui::DragFloat("exposure", &s_Data.exposure, 0.01f, -2, 4);
+			//Exposure
+			ImGui::DragFloat("exposure", &s_Data.exposure, 0.01f, -2, 4);
 
-		//Gamma
-		ImGui::DragFloat("gamma", &s_Data.gamma, 0.01f, 0, 4);
+			//Gamma
+			ImGui::DragFloat("gamma", &s_Data.gamma, 0.01f, 0, 4);
 
 
-		//shadow
-		ImGui::Checkbox("Soft Shadow", &s_Data.softShadow);
-		ImGui::DragFloat("PCF samples", &s_Data.numPCF, 1, 1, 64);
-		ImGui::DragFloat("blocker samples", &s_Data.numBlocker, 1, 1, 64);
-		ImGui::DragFloat("Light Size", &s_Data.lightSize, 0.01f, 0, 100);
+			//shadow
+			ImGui::Checkbox("Soft Shadow", &s_Data.softShadow);
+			ImGui::DragFloat("PCF samples", &s_Data.numPCF, 1, 1, 64);
+			ImGui::DragFloat("blocker samples", &s_Data.numBlocker, 1, 1, 64);
+			ImGui::DragFloat("Light Size", &s_Data.lightSize, 0.01f, 0, 100);
 
-		if (ImGui::DragFloat("Ortho Size", &s_Data.orthoSize, 0.1f, 1, 100)) {
-			s_Data.lightProj = glm::ortho(-s_Data.orthoSize, s_Data.orthoSize, -s_Data.orthoSize, s_Data.orthoSize, s_Data.lightNear, s_Data.lightFar);
-		}
+			if (ImGui::DragFloat("Ortho Size", &s_Data.orthoSize, 0.1f, 1, 100)) {
+				s_Data.lightProj = glm::ortho(-s_Data.orthoSize, s_Data.orthoSize, -s_Data.orthoSize, s_Data.orthoSize, s_Data.lightNear, s_Data.lightFar);
+			}
 
-		ImGui::PushMultiItemsWidths(2, ImGui::CalcItemWidth());
-		if (ImGui::DragFloat("near", &s_Data.lightNear, 0.01f, 0.1f, 100.0f)) {
-			//s_Data.lightProj = glm::perspective(45.0f, 1.0f, s_Data.lightNear, s_Data.lightFar);
-			s_Data.lightProj = glm::ortho(-s_Data.orthoSize, s_Data.orthoSize, -s_Data.orthoSize, s_Data.orthoSize, s_Data.lightNear, s_Data.lightFar);
-		}
-		ImGui::PopItemWidth();
-		ImGui::SameLine();
-		if (ImGui::DragFloat("far", &s_Data.lightFar, 0.1f, 100.0f, 10000.0f)) {
-			//s_Data.lightProj = glm::perspective(45.0f, 1.0f, s_Data.lightNear, s_Data.lightFar);
-			s_Data.lightProj = glm::ortho(-s_Data.orthoSize, s_Data.orthoSize, -s_Data.orthoSize, s_Data.orthoSize, s_Data.lightNear, s_Data.lightFar);
-		}
-		ImGui::PopItemWidth();
-		ImGui::NewLine();
-		ImGui::Separator();
-		std::string label = "shader";
-		static Ref<Shader> selectedShader;
-		if (selectedShader) {
-			label = selectedShader->GetName();
-		}
-		static int item_current_idx = 0;
-		static int index = 0;
-		if (ImGui::BeginCombo("##Shaders", label.c_str()))
-		{
-			for (auto& shader : s_Data.shaders.GetShaders())
+			ImGui::PushMultiItemsWidths(2, ImGui::CalcItemWidth());
+			if (ImGui::DragFloat("near", &s_Data.lightNear, 0.01f, 0.1f, 100.0f)) {
+				//s_Data.lightProj = glm::perspective(45.0f, 1.0f, s_Data.lightNear, s_Data.lightFar);
+				s_Data.lightProj = glm::ortho(-s_Data.orthoSize, s_Data.orthoSize, -s_Data.orthoSize, s_Data.orthoSize, s_Data.lightNear, s_Data.lightFar);
+			}
+			ImGui::PopItemWidth();
+			ImGui::SameLine();
+			if (ImGui::DragFloat("far", &s_Data.lightFar, 0.1f, 100.0f, 10000.0f)) {
+				//s_Data.lightProj = glm::perspective(45.0f, 1.0f, s_Data.lightNear, s_Data.lightFar);
+				s_Data.lightProj = glm::ortho(-s_Data.orthoSize, s_Data.orthoSize, -s_Data.orthoSize, s_Data.orthoSize, s_Data.lightNear, s_Data.lightFar);
+			}
+			ImGui::PopItemWidth();
+			ImGui::NewLine();
+			ImGui::Separator();
+			std::string label = "shader";
+			static Ref<Shader> selectedShader;
+			if (selectedShader) {
+				label = selectedShader->GetName();
+			}
+			static int item_current_idx = 0;
+			static int index = 0;
+			if (ImGui::BeginCombo("##Shaders", label.c_str()))
 			{
-				//const bool is_selected = (item_current_idx == n);
-				if (ImGui::Selectable(shader.first.c_str(), true)) {
-					selectedShader = shader.second;
+				for (auto& shader : s_Data.shaders.GetShaders())
+				{
+					//const bool is_selected = (item_current_idx == n);
+					if (ImGui::Selectable(shader.first.c_str(), true)) {
+						selectedShader = shader.second;
+					}
+
+					ImGui::SetItemDefaultFocus();
 				}
-
-				ImGui::SetItemDefaultFocus();
+				ImGui::EndCombo();
 			}
-			ImGui::EndCombo();
-		}
-		ImGui::SameLine();
-		if (ImGui::Button("Reload shader")) {
-			Reload(selectedShader);
-		}
-		ImGui::Separator();
-		ImGui::End();
-
-		ImGui::Begin(ICON_FA_TREE" Environment");
-		if (ImGui::Button("HDR", { 40,30 })) {
-			auto path = FileDialogs::OpenFile("HDR (*.hdr)\0*.hdr\0");
-			if (path) {
-				//Add texture as sRGB color space if it is binded to 0 (diffuse texture binding)
-				s_Data.environment = CreateRef<Environment>(Texture2D::CreateHDR(*path, false, true));
-				s_Data.scene->m_EnvironmentPath = *path;
+			ImGui::SameLine();
+			if (ImGui::Button("Reload shader")) {
+				Reload(selectedShader);
 			}
+			ImGui::Separator();
+			ImGui::End();
 		}
-		if (s_Data.environment) {
-			ImGui::Image(reinterpret_cast<void*>(s_Data.environment->GetBackgroundTextureID()), { 300, 150 }, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
-		}
-		if (ImGui::DragFloat("Intensity", &s_Data.intensity, 0.01f, 1, 20)) {
+		//Environment settings
+		if (*environmentOpen) {
+			ImGui::Begin(ICON_FA_TREE" Environment", environmentOpen);
+			if (ImGui::Button("HDR", { 40,30 })) {
+				auto path = FileDialogs::OpenFile("HDR (*.hdr)\0*.hdr\0");
+				if (path) {
+					//Add texture as sRGB color space if it is binded to 0 (diffuse texture binding)
+					s_Data.environment = CreateRef<Environment>(Texture2D::CreateHDR(*path, false, true));
+					s_Data.scene->m_EnvironmentPath = *path;
+				}
+			}
 			if (s_Data.environment) {
-				s_Data.environment->SetIntensity(s_Data.intensity);
+				ImGui::Image((ImTextureID)s_Data.environment->GetBackgroundTextureID(), { 300, 150 }, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
 			}
+			if (ImGui::DragFloat("Intensity", &s_Data.intensity, 0.01f, 1, 20)) {
+				if (s_Data.environment) {
+					s_Data.environment->SetIntensity(s_Data.intensity);
+				}
+			}
+			ImGui::End();
 		}
-		ImGui::End();
 	}
 
 	void SceneRenderer::SetScene(const Ref<Scene>& scene)

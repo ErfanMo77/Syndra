@@ -5,16 +5,17 @@ namespace Syndra {
 
 
 	ContentBrowser::ContentBrowser()
-		:m_Directory("assets/Scenes")
+		:m_Directory("assets")
 	{
-		m_SceneTexture = Texture2D::Create("assets/Textures/scene.png");
+		m_SceneTexture = Texture2D::Create("assets/Textures/globe.png");
+		m_DirIterator = std::filesystem::directory_iterator(m_Directory);
 	}
 
 	void ContentBrowser::OnImGuiRender()
 	{
 		ImGui::Begin(ICON_FA_BOOK" Content Browser");
 
-		if (m_Directory != std::filesystem::path("assets/Scenes"))
+		if (m_Directory != std::filesystem::path("assets"))
 		{
 			if (ImGui::Button("<-"))
 			{
@@ -24,25 +25,24 @@ namespace Syndra {
 
 		for (auto& directoryEntry : std::filesystem::directory_iterator(m_Directory))
 		{
-
 			const auto& path = directoryEntry.path();
-			auto relativePath = std::filesystem::relative(path, "assets/Scenes");
+			auto relativePath = std::filesystem::relative(path, "assets");
 			std::string filenameString = relativePath.filename().string();
+			ImGui::Text(filenameString.c_str());
 			if (directoryEntry.is_directory())
 			{
 				if (ImGui::Button(filenameString.c_str()))
 				{
 					m_Directory /= path.filename();
+					//m_DirIterator = std::filesystem::directory_iterator(m_Directory);
 				}
 			}
 			else
-			{
-				ImGui::Text(filenameString.c_str());
-				if (ImGui::ImageButton(reinterpret_cast<void*>(m_SceneTexture->GetRendererID()), { 40,40 }))
+			{		
+				if (ImGui::ImageButton((ImTextureID)m_SceneTexture->GetRendererID(), { 40,40 }))
 				{
 
 				}
-				ImGui::SameLine();
 			}
 
 		}
