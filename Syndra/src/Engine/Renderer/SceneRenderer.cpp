@@ -146,8 +146,8 @@ namespace Syndra {
 
 		s_Data.exposure = 0.5f;
 		s_Data.gamma = 1.9f;
-		s_Data.lightSize = 2.0f;
-		s_Data.orthoSize = 10.0f;
+		s_Data.lightSize = 1.0f;
+		s_Data.orthoSize = 20.0f;
 		s_Data.lightNear = 20.0f;
 		s_Data.lightFar = 200.0f;
 		//Light uniform Buffer layout: -- point lights -- spotlights -- directional light--Binding point 2
@@ -165,8 +165,8 @@ namespace Syndra {
 		s_Data.diffuse->Unbind();
 
 		float dSize = s_Data.orthoSize;
-		//s_Data.lightProj = glm::ortho(-dSize, dSize, -dSize, dSize, s_Data.lightNear, s_Data.lightFar);
-		s_Data.lightProj = glm::perspective(45.0f, 1.0f, s_Data.lightNear, s_Data.lightFar);
+		s_Data.lightProj = glm::ortho(-dSize, dSize, -dSize, dSize, s_Data.lightNear, s_Data.lightFar);
+		//s_Data.lightProj = glm::perspective(45.0f, 1.0f, s_Data.lightNear, s_Data.lightFar);
 		s_Data.ShadowBuffer = UniformBuffer::Create(sizeof(glm::mat4), 3);
 		s_Data.intensity = 1.0f;
 
@@ -391,7 +391,7 @@ namespace Syndra {
 
 	void SceneRenderer::OnImGuiUpdate()
 	{
-		ImGui::Begin("Renderer settings");
+		ImGui::Begin(ICON_FA_COGS" Renderer settings");
 
 		ImGui::Text("Geometry pass debugger");
 		static bool showAlbedo = false;
@@ -461,16 +461,22 @@ namespace Syndra {
 		ImGui::Checkbox("Soft Shadow", &s_Data.softShadow);
 		ImGui::DragFloat("PCF samples", &s_Data.numPCF, 1, 1, 64);
 		ImGui::DragFloat("blocker samples", &s_Data.numBlocker, 1, 1, 64);
-		ImGui::DragFloat("Size", &s_Data.lightSize, 0.01f, 0, 100);
+		ImGui::DragFloat("Light Size", &s_Data.lightSize, 0.01f, 0, 100);
+
+		if (ImGui::DragFloat("Ortho Size", &s_Data.orthoSize, 0.1f, 1, 100)) {
+			s_Data.lightProj = glm::ortho(-s_Data.orthoSize, s_Data.orthoSize, -s_Data.orthoSize, s_Data.orthoSize, s_Data.lightNear, s_Data.lightFar);
+		}
 
 		ImGui::PushMultiItemsWidths(2, ImGui::CalcItemWidth());
 		if (ImGui::DragFloat("near", &s_Data.lightNear, 0.01f, 0.1f, 100.0f)) {
-			s_Data.lightProj = glm::perspective(45.0f, 1.0f, s_Data.lightNear, s_Data.lightFar);
+			//s_Data.lightProj = glm::perspective(45.0f, 1.0f, s_Data.lightNear, s_Data.lightFar);
+			s_Data.lightProj = glm::ortho(-s_Data.orthoSize, s_Data.orthoSize, -s_Data.orthoSize, s_Data.orthoSize, s_Data.lightNear, s_Data.lightFar);
 		}
 		ImGui::PopItemWidth();
 		ImGui::SameLine();
 		if (ImGui::DragFloat("far", &s_Data.lightFar, 0.1f, 100.0f, 10000.0f)) {
-			s_Data.lightProj = glm::perspective(45.0f, 1.0f, s_Data.lightNear, s_Data.lightFar);
+			//s_Data.lightProj = glm::perspective(45.0f, 1.0f, s_Data.lightNear, s_Data.lightFar);
+			s_Data.lightProj = glm::ortho(-s_Data.orthoSize, s_Data.orthoSize, -s_Data.orthoSize, s_Data.orthoSize, s_Data.lightNear, s_Data.lightFar);
 		}
 		ImGui::PopItemWidth();
 		ImGui::NewLine();
@@ -502,8 +508,8 @@ namespace Syndra {
 		ImGui::Separator();
 		ImGui::End();
 
-		ImGui::Begin("Environment");
-		if (ImGui::Button("HDR", { 40,20 })) {
+		ImGui::Begin(ICON_FA_TREE" Environment");
+		if (ImGui::Button("HDR", { 40,30 })) {
 			auto path = FileDialogs::OpenFile("HDR (*.hdr)\0*.hdr\0");
 			if (path) {
 				//Add texture as sRGB color space if it is binded to 0 (diffuse texture binding)

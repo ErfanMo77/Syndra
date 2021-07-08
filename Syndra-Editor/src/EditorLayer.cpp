@@ -178,7 +178,7 @@ namespace Syndra {
 		static bool camerSettings = true;
 		if (!m_FullScreen) {
 			if (camerSettings) {
-				ImGui::Begin("Camera settings", &camerSettings);
+				ImGui::Begin(ICON_FA_CAMERA" Camera settings", &camerSettings);
 				//FOV
 				float fov = m_ActiveScene->m_Camera->GetFOV();
 				if (ImGui::SliderFloat("Fov", &fov, 10, 180)) {
@@ -442,7 +442,10 @@ namespace Syndra {
 		m_ScenePanel->SetContext(m_ActiveScene);
 
 		SceneSerializer serializer(m_ActiveScene);
+#ifdef SN_DEBUG
 		serializer.Deserialize("assets/Scenes/Default.syndra");
+#endif // SN_DEBUG
+		serializer.Deserialize("assets/Scenes/Default_R.syndra");
 
 		SceneRenderer::SetScene(m_ActiveScene);
 		Application::Get().GetWindow().SetTitle("Syndra Editor " + m_ActiveScene->m_Name + " scene");
