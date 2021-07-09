@@ -216,7 +216,6 @@ namespace Syndra {
 		static bool TransformRemoved = false;
 		if (UI::DrawComponent<TransformComponent>(ICON_FA_PENCIL_RULER" Transform", entity, false, &TransformRemoved)) {
 			auto& component = entity.GetComponent<TransformComponent>();
-			ImGui::Separator();
 			UI::DrawVec3Control("Translation", component.Translation);
 			glm::vec3 Rot = glm::degrees(component.Rotation);
 			UI::DrawVec3Control("Rotation", Rot);
@@ -232,7 +231,7 @@ namespace Syndra {
 		
 		float buttonSz = 100;
 		ImGui::PushItemWidth(buttonSz);
-
+		ImGui::Separator();
 		ImGui::Dummy({0,10});
 		ImGui::NewLine();
 		ImGui::SameLine(ImGui::GetContentRegionAvail().x/2.0f - buttonSz/2.0f );

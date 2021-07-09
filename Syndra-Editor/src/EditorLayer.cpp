@@ -198,8 +198,14 @@ namespace Syndra {
 		}
 		case Key::E:
 		{
-			if (!ImGuizmo::IsUsing())
+			if (!ImGuizmo::IsUsing()) {
 				m_GizmoType = ImGuizmo::OPERATION::ROTATE;
+				if (m_ScenePanel->GetSelectedEntity().HasComponent<LightComponent>()) {
+					auto lc = m_ScenePanel->GetSelectedEntity().GetComponent<LightComponent>();
+					if (lc.type == LightType::Directional)
+						m_GizmoType = 127;
+				}
+			}
 			break;
 		}
 		case Key::R:
@@ -299,7 +305,7 @@ namespace Syndra {
 					m_EnvironmentOpen = true;
 				if (ImGui::MenuItem(ICON_FA_COGS" Renderer settings"))
 					m_RendererOpen = true;
-				if (ImGui::MenuItem(ICON_FA_CAMERA" Camera settings"))
+				if (ImGui::MenuItem(ICON_FA_CAMERA"  Camera settings"))
 					m_CameraSettingOpen = true;
 				if (ImGui::MenuItem(ICON_FA_SYNC"  Reset Layout"))
 					ResetLayout();
@@ -351,7 +357,7 @@ namespace Syndra {
 			m_GizmoMode == 0 ? m_GizmoMode = 1 : m_GizmoMode = 0;
 		}
 		if (ImGui::IsItemHovered()) {
-			UI::Tooltip("Local - World gizmos");
+			UI::Tooltip("Local - World gizmos (T)");
 		}
 		ImGui::PopItemWidth();
 		ImGui::Unindent();
@@ -363,7 +369,7 @@ namespace Syndra {
 			m_GizmoType = 7;
 		}
 		if (ImGui::IsItemHovered()) {
-			UI::Tooltip("Translate");
+			UI::Tooltip("Translate (W)");
 		}
 		ImGui::PopItemWidth();
 		ImGui::SameLine();
@@ -371,7 +377,7 @@ namespace Syndra {
 			m_GizmoType = 120;
 		}
 		if (ImGui::IsItemHovered()) {
-			UI::Tooltip("Rotation");
+			UI::Tooltip("Rotation (E)");
 		}
 		ImGui::PopItemWidth();
 		ImGui::SameLine();
@@ -379,7 +385,7 @@ namespace Syndra {
 			m_GizmoType = 896;
 		}
 		if (ImGui::IsItemHovered()) {
-			UI::Tooltip("Scale");
+			UI::Tooltip("Scale (R)");
 		}
 		ImGui::PopItemWidth();
 		ImGui::PopStyleVar();

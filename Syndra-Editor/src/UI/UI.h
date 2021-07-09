@@ -25,11 +25,17 @@ namespace Syndra {
 
 		static bool DragFloat(const std::string& name, float* value, float speed=0.1f, float min=0.0f, float max=100.0f)
 		{
+			ImGui::Columns(2, 0, false);
+			ImGui::SetColumnWidth(0, 80);
 			ImGui::AlignTextToFramePadding();
 			ImGui::Text(name.c_str());
 			ImGui::SameLine();
-			ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
-			return ImGui::DragFloat("##drag", value, speed, min, max);
+			ImGui::NextColumn();
+			ImGui::PushItemWidth(ImGui::GetContentRegionAvailWidth());
+			auto res = ImGui::DragFloat("##drag", value, speed, min, max);
+			ImGui::PopItemWidth();
+			ImGui::Columns(1);
+			return res;
 		}
 
 		static void Tooltip(const std::string& text)
@@ -102,6 +108,7 @@ namespace Syndra {
 			ImGui::Columns(2);
 			ImGui::SetColumnWidth(0, columnWidth);
 			ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{ 0, 5 });
+			ImGui::AlignTextToFramePadding();
 			ImGui::Text(label.c_str());
 			ImGui::PopStyleVar();
 			ImGui::NextColumn();
