@@ -42,8 +42,11 @@ namespace Syndra {
 
 		auto& app = Application::Get();
 		m_ActiveScene->m_Camera->SetViewportSize((float)app.GetWindow().GetWidth(), (float)app.GetWindow().GetHeight());
-		m_FullScreenIcon = Texture2D::Create("assets/Textures/fullscreen.png",false);
-		m_GizmosIcon = Texture2D::Create("assets/Textures/globe.png",false);
+		m_FullScreenIcon = Texture2D::Create("assets/Icons/fullscreen.png",false);
+		m_GizmosIcon = Texture2D::Create("assets/Icons/globe.png",false);
+		m_TransformIcon = Texture2D::Create("assets/Icons/Transform.png",false);
+		m_RotationIcon = Texture2D::Create("assets/Icons/Rotation.png",false);
+		m_ScaleIcon = Texture2D::Create("assets/Icons/scale.png",false);
 	}
 
 	void EditorLayer::OnDetach()
@@ -70,160 +73,34 @@ namespace Syndra {
 
 	void EditorLayer::OnImGuiRender()
 	{
-		static bool open = true;
-		static bool opt_fullscreen = true;
-		static bool opt_padding = false;
-		static ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_None;
+		//Dock Space
+		UI::BeginDockSpace();
 
-		// We are using the ImGuiWindowFlags_NoDocking flag to make the parent window not dockable into,
-		// because it would be confusing to have two docking targets within each others.
-		ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
-		if (opt_fullscreen)
-		{
-			ImGuiViewport* viewport = ImGui::GetMainViewport();
-			ImGui::SetNextWindowPos(viewport->GetWorkPos());
-			ImGui::SetNextWindowSize(viewport->GetWorkSize());
-			ImGui::SetNextWindowViewport(viewport->ID);
-			ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
-			ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
-			window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
-			window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
-		}
-		else
-		{
-			dockspace_flags &= ~ImGuiDockNodeFlags_PassthruCentralNode;
-		}
+		//--------------------------------------------------MENU BARS-----------------------------------------//
+		ShowMenuBars();
 
-		if (dockspace_flags & ImGuiDockNodeFlags_PassthruCentralNode)
-			window_flags |= ImGuiWindowFlags_NoBackground;
-
-		if (!opt_padding)
-			ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
-		ImGui::Begin("DockSpace Demo", &open, window_flags);
-		if (!opt_padding)
-			ImGui::PopStyleVar();
-
-		if (opt_fullscreen)
-			ImGui::PopStyleVar(2);
-
-		// DockSpace
-		ImGuiIO& io = ImGui::GetIO();
-		ImGuiStyle& style = ImGui::GetStyle();
-		float minWinSizeX = style.WindowMinSize.x;
-		style.WindowMinSize.x = 370.0f;
-		if (io.ConfigFlags & ImGuiConfigFlags_DockingEnable)
-		{
-			ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
-			ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
-		}
-		style.WindowMinSize.x = minWinSizeX;
-
-		if (ImGui::BeginMenuBar())
-		{
-			if (ImGui::BeginMenu("File"))
-			{
-				if (ImGui::MenuItem(ICON_FA_PLUS"  New", "Ctrl+N")) {
-					NewScene();
-				}
-				ImGui::Separator();
-				if (ImGui::MenuItem(ICON_FA_FOLDER_OPEN " Open...", "Ctrl+O")) {
-					OpenScene();
-				}
-				ImGui::Separator();
-				if (ImGui::MenuItem(ICON_FA_SAVE "  Save As...", "Ctrl+Shift+S")) {
-					SaveSceneAs();
-				}
-				ImGui::Separator();
-				if (ImGui::MenuItem(ICON_FA_WINDOW_CLOSE"  Exit"))
-				{
-					Application::Get().Close();
-				}
-
-				ImGui::EndMenu();
-			}
-
-			if (ImGui::BeginMenu("View")) {
-				//TODO : showing different tabs
-				if (ImGui::MenuItem(ICON_FA_LIST_UL "  Scene hierarchy"))
-					m_SceneHierarchyOpen = true;
-				if (ImGui::MenuItem(ICON_FA_SLIDERS_H "  Properties"))
-					m_PropertiesOpen = true;
-				if (ImGui::MenuItem(ICON_FA_INFO "  Renderer Info"))
-					m_InfoOpen = true;
-				if (ImGui::MenuItem(ICON_FA_TREE"  Environment"))
-					m_EnvironmentOpen = true;
-				if (ImGui::MenuItem(ICON_FA_COGS" Renderer settings"))
-					m_RendererOpen = true;
-				if (ImGui::MenuItem(ICON_FA_SYNC"  Reset Layout"))
-					ResetLayout();
-
-				ImGui::EndMenu();
-			}
-
-			if (ImGui::BeginMenu("Entity")) {
-				//TODO : showing different tabs
-				if (ImGui::MenuItem("Add Entity")) {
-					m_ActiveScene->CreateEntity();
-				}
-				if (ImGui::MenuItem("Add Cube")) {
-					m_ActiveScene->CreatePrimitive(PrimitiveType::Cube);
-				}
-				if (ImGui::MenuItem("Add Sphere")) {
-					m_ActiveScene->CreatePrimitive(PrimitiveType::Sphere);
-				}
-				if (ImGui::MenuItem("Add Plane")) {
-					m_ActiveScene->CreatePrimitive(PrimitiveType::Plane);
-				}
-				ImGui::EndMenu();
-			}
-			ImGui::EndMenuBar();
-		}
-
-		//--------------------------------------------------Scene Panel---------------------------------------------//
+		//--------------------------------------------------Scene Panel---------------------------------------//
 		if (!m_FullScreen) {
 			m_ScenePanel->OnImGuiRender(&m_SceneHierarchyOpen, &m_PropertiesOpen);
 		}
 
-		//-----------------------------------------------Editor camera settings-------------------------------------//
+		//---------------------------------------------Editor's Camera settings--------------------------- ---//
 		if (!m_FullScreen) {
 			if (m_CameraSettingOpen) {
-				ImGui::Begin(ICON_FA_CAMERA" Camera settings", &m_CameraSettingOpen);
-				//FOV
-				float fov = m_ActiveScene->m_Camera->GetFOV();
-				if (ImGui::SliderFloat("Fov", &fov, 10, 180)) {
-					m_ActiveScene->m_Camera->SetFov(fov);
-				}
-				ImGui::Separator();
-				//near-far clip
-				float nearClip = m_ActiveScene->m_Camera->GetNear();
-				float farClip = m_ActiveScene->m_Camera->GetFar();
-				if (ImGui::SliderFloat("Far clip", &farClip, 10, 10000)) {
-					m_ActiveScene->m_Camera->SetFarClip(farClip);
-				}
-				ImGui::Separator();
-				if (ImGui::SliderFloat("Near clip", &nearClip, 0.0001f, 1)) {
-					m_ActiveScene->m_Camera->SetNearClip(nearClip);
-				}
-				ImGui::End();
+				ShowCameraSettings();
 			}
 		}
-		//---------------------------------------------Renderer settings---------------------------------//
+		//---------------------------------------------Renderer Settings--------------------------------------//
 		if (!m_FullScreen) {
 			SceneRenderer::OnImGuiRender(&m_RendererOpen, &m_EnvironmentOpen);
 		}
 	
-		//----------------------------------------------Renderer info-----------------------------------//	
+		//---------------------------------------------Renderer Info------------------------------------------//	
 		if (m_InfoOpen) {
-			ImGui::Begin(ICON_FA_INFO" Renderer info", &m_InfoOpen);
-			ImGui::Text(m_Info.c_str());
-			ImGui::Text("\nApplication average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
-			ImGui::Text("%d vertices, %d indices (%d triangles)", io.MetricsRenderVertices, io.MetricsRenderIndices, io.MetricsRenderIndices / 3);
-			ImGui::Text("%d active windows (%d visible)", io.MetricsActiveWindows, io.MetricsRenderWindows);
-			ImGui::Text("%d active allocations", io.MetricsActiveAllocations);
-			ImGui::End();
+			ShowRendererInfo();
 		}
 
-		//----------------------------------------------Viewport----------------------------------------//
+		//----------------------------------------------Viewport----------------------------------------------//
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{ 0, 0 });
 		ImGui::Begin(ICON_FA_IMAGE" Viewport");
 		ImGuiWindow* window = ImGui::GetCurrentWindow();
@@ -232,28 +109,8 @@ namespace Syndra {
 		m_ViewportFocused = ImGui::IsWindowFocused();
 		m_ViewportHovered = ImGui::IsWindowHovered();
 
-		ImGui::Dummy({ 0,3 });
-		ImGui::PushMultiItemsWidths(2, ImGui::CalcItemWidth()+5);
-		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 0,0 });
-		ImGui::Indent(5);
-		//Full screen button
-		if (ImGui::ImageButton((ImTextureID)m_FullScreenIcon->GetRendererID(), { 35,35 })) {
-			m_FullScreen = !m_FullScreen;
-		}
-		ImGui::PopItemWidth();
-		ImGui::SameLine();
-
-		//Global or local gizmos button
-		ImGui::PushID("gizmos Type\0");
-			
-		if (ImGui::ImageButton((ImTextureID)m_GizmosIcon->GetRendererID(), { 35,35 })) {
-			m_GizmosChanged = true;
-			m_GizmoMode == 0 ? m_GizmoMode = 1 : m_GizmoMode = 0;
-		}
-		ImGui::PopItemWidth();
-		ImGui::Unindent();
-		ImGui::PopStyleVar();
-		ImGui::PopID();
+		//Gizmos Icons
+		ShowIcons();
 
 		auto viewportMinRegion = ImGui::GetWindowContentRegionMin();
 		auto viewportMaxRegion = ImGui::GetWindowContentRegionMax();
@@ -269,45 +126,8 @@ namespace Syndra {
 		uint64_t textureID = m_ActiveScene->GetMainTextureID();
 		ImGui::Image((ImTextureID)textureID, ImVec2{ m_ViewportSize.x, m_ViewportSize.y }, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
 		
-		ImGuizmo::SetOrthographic(false);
-		ImGuizmo::SetDrawlist();
-
-		ImGuizmo::SetRect(m_ViewportBounds[0].x, m_ViewportBounds[0].y, m_ViewportBounds[1].x - m_ViewportBounds[0].x, m_ViewportBounds[1].y - m_ViewportBounds[0].y);
-		const glm::mat4& cameraProjection = m_ActiveScene->m_Camera->GetProjection();
-		glm::mat4 cameraView = m_ActiveScene->m_Camera->GetViewMatrix();
-		
-		// Gizmos
-		Entity selectedEntity = m_ScenePanel->GetSelectedEntity();
-		if (selectedEntity && m_GizmoType != -1)
-		{
-			// Entity transform
-			auto& tc = selectedEntity.GetComponent<TransformComponent>();
-			glm::mat4 transform = tc.GetTransform();
-
-			// Snapping
-			bool snap = Input::IsKeyPressed(Key::LeftControl);
-			float snapValue = 1.0f; // Snap to 0.5m for translation/scale
-			// Snap to 45 degrees for rotation
-			if (m_GizmoType == ImGuizmo::OPERATION::ROTATE)
-				snapValue = 45.0f;
-
-			float snapValues[3] = { snapValue, snapValue, snapValue };
-
-			ImGuizmo::Manipulate(glm::value_ptr(cameraView), glm::value_ptr(cameraProjection),
-				(ImGuizmo::OPERATION)m_GizmoType, (ImGuizmo::MODE)m_GizmoMode, glm::value_ptr(transform),
-				nullptr, snap ? snapValues : nullptr);
-
-			if (ImGuizmo::IsUsing())
-			{
-				glm::vec3 translation, rotation, scale;
-				Math::DecomposeTransform(transform, translation,rotation, scale);
-
-				glm::vec3 deltaRotation = rotation - tc.Rotation;
-				tc.Translation = translation;
-				tc.Rotation += deltaRotation;
-				tc.Scale = scale;
-			}
-		}
+		//Gizmos
+		ShowGizmos();
 
 		ImGui::End();
 		ImGui::PopStyleVar();
@@ -340,21 +160,18 @@ namespace Syndra {
 		{
 			if (control)
 				NewScene();
-
 			break;
 		}
 		case Key::O:
 		{
 			if (control)
 				OpenScene();
-
 			break;
 		}
 		case Key::S:
 		{
 			if (control && shift)
 				SaveSceneAs();
-
 			break;
 		}
 
@@ -442,6 +259,206 @@ namespace Syndra {
 			
 		}
 		return false;
+	}
+
+	void EditorLayer::ShowMenuBars()
+	{
+		if (ImGui::BeginMenuBar())
+		{
+			if (ImGui::BeginMenu("File"))
+			{
+				if (ImGui::MenuItem(ICON_FA_PLUS"  New", "Ctrl+N")) {
+					NewScene();
+				}
+				ImGui::Separator();
+				if (ImGui::MenuItem(ICON_FA_FOLDER_OPEN " Open...", "Ctrl+O")) {
+					OpenScene();
+				}
+				ImGui::Separator();
+				if (ImGui::MenuItem(ICON_FA_SAVE "  Save As...", "Ctrl+Shift+S")) {
+					SaveSceneAs();
+				}
+				ImGui::Separator();
+				if (ImGui::MenuItem(ICON_FA_WINDOW_CLOSE"  Exit"))
+				{
+					Application::Get().Close();
+				}
+
+				ImGui::EndMenu();
+			}
+
+			if (ImGui::BeginMenu("View")) {
+				//TODO : showing different tabs
+				if (ImGui::MenuItem(ICON_FA_LIST_UL "  Scene hierarchy"))
+					m_SceneHierarchyOpen = true;
+				if (ImGui::MenuItem(ICON_FA_SLIDERS_H "  Properties"))
+					m_PropertiesOpen = true;
+				if (ImGui::MenuItem(ICON_FA_INFO "  Renderer Info"))
+					m_InfoOpen = true;
+				if (ImGui::MenuItem(ICON_FA_TREE"  Environment"))
+					m_EnvironmentOpen = true;
+				if (ImGui::MenuItem(ICON_FA_COGS" Renderer settings"))
+					m_RendererOpen = true;
+				if (ImGui::MenuItem(ICON_FA_CAMERA" Camera settings"))
+					m_CameraSettingOpen = true;
+				if (ImGui::MenuItem(ICON_FA_SYNC"  Reset Layout"))
+					ResetLayout();
+
+				ImGui::EndMenu();
+			}
+
+			if (ImGui::BeginMenu("Entity")) {
+				//TODO : showing different tabs
+				if (ImGui::MenuItem("Add Entity")) {
+					m_ActiveScene->CreateEntity();
+				}
+				if (ImGui::MenuItem("Add Cube")) {
+					m_ActiveScene->CreatePrimitive(PrimitiveType::Cube);
+				}
+				if (ImGui::MenuItem("Add Sphere")) {
+					m_ActiveScene->CreatePrimitive(PrimitiveType::Sphere);
+				}
+				if (ImGui::MenuItem("Add Plane")) {
+					m_ActiveScene->CreatePrimitive(PrimitiveType::Plane);
+				}
+				ImGui::EndMenu();
+			}
+			ImGui::EndMenuBar();
+		}
+	}
+
+	void EditorLayer::ShowIcons()
+	{
+		ImGui::Dummy({ 0,3 });
+		ImGui::PushMultiItemsWidths(5, ImGui::CalcItemWidth() + 5);
+		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 0,0 });
+		ImGui::Indent(5);
+		//Full screen button
+		if (ImGui::ImageButton((ImTextureID)m_FullScreenIcon->GetRendererID(), { 35,35 })) {
+			m_FullScreen = !m_FullScreen;
+		}
+		if (ImGui::IsItemHovered()) {
+			UI::Tooltip("Full screen");
+		}
+		ImGui::PopItemWidth();
+		ImGui::SameLine();
+
+		//Global or local gizmos button
+		ImGui::PushID("gizmos Type\0");
+
+		if (ImGui::ImageButton((ImTextureID)m_GizmosIcon->GetRendererID(), { 35,35 })) {
+			m_GizmosChanged = true;
+			m_GizmoMode == 0 ? m_GizmoMode = 1 : m_GizmoMode = 0;
+		}
+		if (ImGui::IsItemHovered()) {
+			UI::Tooltip("Local - World gizmos");
+		}
+		ImGui::PopItemWidth();
+		ImGui::Unindent();
+		ImGui::PopID();
+
+		//Gizmos Icons
+		ImGui::SameLine();
+		if (ImGui::ImageButton((ImTextureID)m_TransformIcon->GetRendererID(), { 35,35 }, { 0, 1 }, { 1, 0 })) {
+			m_GizmoType = 7;
+		}
+		if (ImGui::IsItemHovered()) {
+			UI::Tooltip("Translate");
+		}
+		ImGui::PopItemWidth();
+		ImGui::SameLine();
+		if (ImGui::ImageButton((ImTextureID)m_RotationIcon->GetRendererID(), { 35,35 }, { 0, 1 }, { 1, 0 })) {
+			m_GizmoType = 120;
+		}
+		if (ImGui::IsItemHovered()) {
+			UI::Tooltip("Rotation");
+		}
+		ImGui::PopItemWidth();
+		ImGui::SameLine();
+		if (ImGui::ImageButton((ImTextureID)m_ScaleIcon->GetRendererID(), { 35,35 }, { 0, 1 }, { 1, 0 })) {
+			m_GizmoType = 896;
+		}
+		if (ImGui::IsItemHovered()) {
+			UI::Tooltip("Scale");
+		}
+		ImGui::PopItemWidth();
+		ImGui::PopStyleVar();
+	}
+
+	void EditorLayer::ShowGizmos()
+	{
+		ImGuizmo::SetOrthographic(false);
+		ImGuizmo::SetDrawlist();
+
+		ImGuizmo::SetRect(m_ViewportBounds[0].x, m_ViewportBounds[0].y, m_ViewportBounds[1].x - m_ViewportBounds[0].x, m_ViewportBounds[1].y - m_ViewportBounds[0].y);
+		const glm::mat4& cameraProjection = m_ActiveScene->m_Camera->GetProjection();
+		glm::mat4 cameraView = m_ActiveScene->m_Camera->GetViewMatrix();
+
+		Entity selectedEntity = m_ScenePanel->GetSelectedEntity();
+		if (selectedEntity && m_GizmoType != -1)
+		{
+			// Entity transform
+			auto& tc = selectedEntity.GetComponent<TransformComponent>();
+			glm::mat4 transform = tc.GetTransform();
+
+			// Snapping
+			bool snap = Input::IsKeyPressed(Key::LeftControl);
+			float snapValue = 1.0f; // Snap to 0.5m for translation/scale
+			// Snap to 45 degrees for rotation
+			if (m_GizmoType == ImGuizmo::OPERATION::ROTATE)
+				snapValue = 45.0f;
+
+			float snapValues[3] = { snapValue, snapValue, snapValue };
+
+			ImGuizmo::Manipulate(glm::value_ptr(cameraView), glm::value_ptr(cameraProjection),
+				(ImGuizmo::OPERATION)m_GizmoType, (ImGuizmo::MODE)m_GizmoMode, glm::value_ptr(transform),
+				nullptr, snap ? snapValues : nullptr);
+
+			if (ImGuizmo::IsUsing())
+			{
+				glm::vec3 translation, rotation, scale;
+				Math::DecomposeTransform(transform, translation, rotation, scale);
+
+				glm::vec3 deltaRotation = rotation - tc.Rotation;
+				tc.Translation = translation;
+				tc.Rotation += deltaRotation;
+				tc.Scale = scale;
+			}
+		}
+	}
+
+	void EditorLayer::ShowCameraSettings()
+	{
+		ImGui::Begin(ICON_FA_CAMERA" Camera settings", &m_CameraSettingOpen);
+		//FOV
+		float fov = m_ActiveScene->m_Camera->GetFOV();
+		if (ImGui::SliderFloat("Fov", &fov, 10, 180)) {
+			m_ActiveScene->m_Camera->SetFov(fov);
+		}
+		ImGui::Separator();
+		//near-far clip
+		float nearClip = m_ActiveScene->m_Camera->GetNear();
+		float farClip = m_ActiveScene->m_Camera->GetFar();
+		if (ImGui::SliderFloat("Far clip", &farClip, 10, 10000)) {
+			m_ActiveScene->m_Camera->SetFarClip(farClip);
+		}
+		ImGui::Separator();
+		if (ImGui::SliderFloat("Near clip", &nearClip, 0.0001f, 1)) {
+			m_ActiveScene->m_Camera->SetNearClip(nearClip);
+		}
+		ImGui::End();
+	}
+
+	void EditorLayer::ShowRendererInfo()
+	{
+		ImGuiIO& io = ImGui::GetIO();
+		ImGui::Begin(ICON_FA_INFO" Renderer info", &m_InfoOpen);
+		ImGui::Text(m_Info.c_str());
+		ImGui::Text("\nApplication average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
+		ImGui::Text("%d vertices, %d indices (%d triangles)", io.MetricsRenderVertices, io.MetricsRenderIndices, io.MetricsRenderIndices / 3);
+		ImGui::Text("%d active windows (%d visible)", io.MetricsActiveWindows, io.MetricsRenderWindows);
+		ImGui::Text("%d active allocations", io.MetricsActiveAllocations);
+		ImGui::End();
 	}
 
 	// Load the default syndra scene when starting the engine

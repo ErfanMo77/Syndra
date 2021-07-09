@@ -48,7 +48,7 @@ namespace Syndra {
 		{
 			FramebufferTextureFormat::RGBA16F,			// Position texture attachment
 			FramebufferTextureFormat::RGBA16F,			// Normal texture attachment
-			FramebufferTextureFormat::RGBA16F,			// Albedo-specular texture attachment
+			FramebufferTextureFormat::RGBA16F,			// Albedo texture attachment
 			FramebufferTextureFormat::RGBA16F,		    // Roughness-Metallic-AO texture attachment
 			FramebufferTextureFormat::RED_INTEGER,		// Entities ID texture attachment
 			FramebufferTextureFormat::DEPTH24STENCIL8	// default depth map
@@ -393,7 +393,7 @@ namespace Syndra {
 	{
 		//Renderer settings
 		if (*rendererOpen) {
-			ImGui::Begin(ICON_FA_COGS" Renderer settings", rendererOpen);
+			ImGui::Begin(ICON_FA_COGS" Renderer Settings", rendererOpen);
 
 			ImGui::Text("Geometry pass debugger");
 			static bool showAlbedo = false;
@@ -401,44 +401,54 @@ namespace Syndra {
 			static bool showPosition = false;
 			static bool showRoughMetalAO = false;
 			if (ImGui::Button("Albedo")) {
-				showAlbedo = !showAlbedo;
+				showAlbedo = true;
 			}
 			ImGui::SameLine();
 			if (ImGui::Button("Normal")) {
-				showNormal = !showNormal;
+				showNormal = true;
 			}
 			ImGui::SameLine();
 			if (ImGui::Button("Position")) {
-				showPosition = !showPosition;
+				showPosition = true;
 			}
 			ImGui::SameLine();
 			if (ImGui::Button("RoughMetalAO")) {
-				showRoughMetalAO = !showRoughMetalAO;
+				showRoughMetalAO = true;
 			}
 			auto width = s_Data.geoPass->GetSpecification().TargetFrameBuffer->GetSpecification().Width * 0.5f;
 			auto height = s_Data.geoPass->GetSpecification().TargetFrameBuffer->GetSpecification().Height * 0.5f;
-			ImVec2 frameSize = ImVec2{ width,height };
+			auto ratio = height / width;
+			width = ImGui::GetContentRegionAvail().x;
+			height = ratio * width;
 			if (showAlbedo) {
-				ImGui::Begin("Albedo");
-				ImGui::Image((ImTextureID)s_Data.geoPass->GetFrameBufferTextureID(2), frameSize, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
+				ImGui::Begin("Albedo", &showAlbedo);
+				width = ImGui::GetContentRegionAvail().x;
+				height = ratio * width;
+				ImGui::Image((ImTextureID)s_Data.geoPass->GetFrameBufferTextureID(2), {width, height}, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
 				ImGui::End();
 			}
 
 			if (showNormal) {
-				ImGui::Begin("Normal");
-				ImGui::Image((ImTextureID)s_Data.geoPass->GetFrameBufferTextureID(1), frameSize, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
+				ImGui::Begin("Normal", &showNormal);
+				width = ImGui::GetContentRegionAvail().x;
+				height = ratio * width;
+				ImGui::Image((ImTextureID)s_Data.geoPass->GetFrameBufferTextureID(1), { width, height }, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
 				ImGui::End();
 			}
 
 			if (showPosition) {
-				ImGui::Begin("Position");
-				ImGui::Image((ImTextureID)s_Data.geoPass->GetFrameBufferTextureID(0), frameSize, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
+				ImGui::Begin("Position", &showPosition);
+				width = ImGui::GetContentRegionAvail().x;
+				height = ratio * width;
+				ImGui::Image((ImTextureID)s_Data.geoPass->GetFrameBufferTextureID(0), { width, height }, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
 				ImGui::End();
 			}
 
 			if (showRoughMetalAO) {
-				ImGui::Begin("RoughMetalAO");
-				ImGui::Image((ImTextureID)s_Data.geoPass->GetFrameBufferTextureID(3), frameSize, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
+				ImGui::Begin("RoughMetalAO", &showRoughMetalAO);
+				width = ImGui::GetContentRegionAvail().x;
+				height = ratio * width;
+				ImGui::Image((ImTextureID)s_Data.geoPass->GetFrameBufferTextureID(3), { width, height }, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
 				ImGui::End();
 			}
 			ImGui::Separator();
@@ -481,7 +491,7 @@ namespace Syndra {
 				s_Data.lightProj = glm::ortho(-s_Data.orthoSize, s_Data.orthoSize, -s_Data.orthoSize, s_Data.orthoSize, s_Data.lightNear, s_Data.lightFar);
 			}
 			ImGui::PopItemWidth();
-			ImGui::NewLine();
+
 			ImGui::Separator();
 			std::string label = "shader";
 			static Ref<Shader> selectedShader;
