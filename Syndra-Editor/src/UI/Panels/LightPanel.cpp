@@ -12,8 +12,6 @@ namespace Syndra {
 		static bool LightRemoved = false;
 		if (UI::DrawComponent<LightComponent>(ICON_FA_LIGHTBULB" Light", entity, true, &LightRemoved)) {
 			auto& component = entity.GetComponent<LightComponent>();
-
-			ImGui::Separator();
 			ImGui::Columns(2);
 			ImGui::SetColumnWidth(0, 80);
 			ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{ 0, 0 });
@@ -56,19 +54,32 @@ namespace Syndra {
 
 			auto& color4 = glm::vec4(component.light->GetColor(), 1);
 
-			ImGui::SetNextItemWidth(60);
+			ImGui::Columns(2,0,false);
+			ImGui::SetColumnWidth(0, 80);
+			ImGui::AlignTextToFramePadding();
 			//light's color
 			ImGui::Text("Color\0");
 			ImGui::SameLine();
+			ImGui::NextColumn();
+			ImGui::PushItemWidth(ImGui::GetContentRegionAvailWidth());
 			ImGuiColorEditFlags colorFlags = ImGuiColorEditFlags_HDR;
 			ImGui::ColorEdit4("##color", glm::value_ptr(color4), colorFlags);
+			ImGui::PopItemWidth();
+			ImGui::Columns(1);
 			component.light->SetColor(glm::vec3(color4));
 
+			ImGui::Columns(2, 0, false);
+			ImGui::SetColumnWidth(0, 80);
+			ImGui::AlignTextToFramePadding();
 			//light's intensity
 			float intensity = component.light->GetIntensity();
 			ImGui::Text("Intensity\0");
 			ImGui::SameLine();
+			ImGui::NextColumn();
+			ImGui::PushItemWidth(ImGui::GetContentRegionAvailWidth());
 			ImGui::DragFloat("##Intensity", &intensity, 0.1, 0, 100);
+			ImGui::PopItemWidth();
+			ImGui::Columns(1);
 			component.light->SetIntensity(intensity);
 
 			auto PI = glm::pi<float>();
@@ -76,10 +87,16 @@ namespace Syndra {
 			if (component.type == LightType::Directional) {
 				auto p = dynamic_cast<DirectionalLight*>(component.light.get());
 				auto dir = p->GetDirection();
-				ImGui::SetNextItemWidth(60);
+				ImGui::Columns(2, 0, false);
+				ImGui::SetColumnWidth(0, 80);
+				ImGui::AlignTextToFramePadding();
 				ImGui::Text("Direction\0");
 				ImGui::SameLine();
+				ImGui::NextColumn();
+				ImGui::PushItemWidth(ImGui::GetContentRegionAvailWidth());
 				ImGui::SliderFloat3("##direction", glm::value_ptr(dir), -2 * PI, 2 * PI, "%.3f");
+				ImGui::PopItemWidth();
+				ImGui::Columns(1);
 				p->SetDirection(dir);
 				p = nullptr;
 			}
@@ -98,11 +115,17 @@ namespace Syndra {
 			if (component.type == LightType::Spot)
 			{
 				auto p = dynamic_cast<SpotLight*>(component.light.get());
-				ImGui::SetNextItemWidth(60);
 				auto dir = p->GetDirection();
+				ImGui::Columns(2, 0, false);
+				ImGui::SetColumnWidth(0, 80);
+				ImGui::AlignTextToFramePadding();
 				ImGui::Text("Direction\0");
 				ImGui::SameLine();
+				ImGui::NextColumn();
+				ImGui::PushItemWidth(ImGui::GetContentRegionAvailWidth());
 				ImGui::SliderFloat3("##direction", glm::value_ptr(dir), -2 * PI, 2 * PI, "%.3f");
+				ImGui::PopItemWidth();
+				ImGui::Columns(1);
 				p->SetDirection(dir);
 
 				float iCut = p->GetInnerCutOff();

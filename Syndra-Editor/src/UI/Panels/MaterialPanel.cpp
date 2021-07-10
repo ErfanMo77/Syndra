@@ -14,12 +14,10 @@ namespace Syndra {
 	void MaterialPanel::DrawMaterial(Entity& entity)
 	{
 		static bool MaterialRemoved = false;
-		ImGui::Separator();
 		if (UI::DrawComponent<MaterialComponent>(ICON_FA_PAINT_BRUSH" Material", entity, true, &MaterialRemoved))
 		{
 			auto& component = entity.GetComponent<MaterialComponent>();
 
-			ImGui::Separator();
 			ImGui::Columns(2);
 			ImGui::SetColumnWidth(0, 80);
 			ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{ 0, 0 });
@@ -110,7 +108,6 @@ namespace Syndra {
 				ImGui::PopID();
 			}
 			ImGui::TreePop();
-			ImGui::Separator();
 		}
 
 		if (MaterialRemoved) {

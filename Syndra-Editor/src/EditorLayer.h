@@ -21,6 +21,12 @@ namespace Syndra {
 		bool OnKeyPressed(KeyPressedEvent& e);
 		bool OnMouseButtonPressed(MouseButtonPressedEvent& e);
 
+		void ShowMenuBars();
+		void ShowIcons();
+		void ShowGizmos();
+		void ShowCameraSettings();
+		void ShowRendererInfo();
+
 		void OnLoadEditor();
 		void ResetLayout();
 
@@ -41,6 +47,10 @@ namespace Syndra {
 		bool altIsDown=false;
 		bool m_FullScreen = false;
 		Ref<Texture2D> m_FullScreenIcon;
+
+		Ref<Texture2D> m_TransformIcon;
+		Ref<Texture2D> m_RotationIcon;
+		Ref<Texture2D> m_ScaleIcon;
 
 		std::string m_Info;
 
