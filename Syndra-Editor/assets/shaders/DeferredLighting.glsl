@@ -45,6 +45,7 @@ layout(binding = 0) uniform camera
 layout(binding = 3) uniform ShadowData
 {
 	 mat4 lightViewProj;
+	 mat4 pointLightViewProj[4][6];
 } shadow;
 
 #define constant 1.0

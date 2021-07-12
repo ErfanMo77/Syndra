@@ -184,20 +184,21 @@ namespace Syndra {
 				break;
 			}
 		}
-
+		//Point Light shadows depth map using cube map
 		if (m_CubeMapAttachmentSpecification.TextureFormat != FramebufferTextureFormat::None) 
 		{
 			glCreateTextures(GL_TEXTURE_CUBE_MAP, 1, &m_CubemapAttachment);
 			glBindTexture(GL_TEXTURE_CUBE_MAP, m_CubemapAttachment);
 			for (unsigned int i = 0; i < 6; ++i)
 			{
-				glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB16F, m_Specification.Width, m_Specification.Height, 0, GL_RGB, GL_FLOAT, nullptr);
+				glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_DEPTH_COMPONENT32F, m_Specification.Width, m_Specification.Height, 0, GL_DEPTH_COMPONENT32F, GL_FLOAT, nullptr);
 			}
 			glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 			glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 			glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-			glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-			glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+			glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+			glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+			glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, m_CubemapAttachment, 0);
 		}
 		
 		if (m_ColorAttachments.size() > 1)
@@ -208,15 +209,9 @@ namespace Syndra {
 		}
 		else if (m_ColorAttachments.empty())
 		{
-			if (m_CubeMapAttachmentSpecification.TextureFormat == FramebufferTextureFormat::None) {
-				// Only depth-pass
-				glDrawBuffer(GL_NONE);
-				glReadBuffer(GL_NONE);
-			}
-			else {
-				GLenum buffer = GL_COLOR_ATTACHMENT0;
-				glDrawBuffers(1, &buffer);
-			}
+			// Only depth-pass
+			glDrawBuffer(GL_NONE);
+			glReadBuffer(GL_NONE);
 		}
 
 		SN_CORE_ASSERT(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE, "Framebuffer is incomplete!");
@@ -280,7 +275,7 @@ namespace Syndra {
 
 	void OpenGLFrameBuffer::BindCubemapFace(uint32_t index) const
 	{
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + index, m_CubemapAttachment, 0);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_CUBE_MAP_POSITIVE_X + index, m_CubemapAttachment, 0);
 	}
 
 	uint32_t OpenGLFrameBuffer::GetRendererID() const
