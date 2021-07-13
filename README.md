@@ -33,7 +33,7 @@ my main motivation for making syndra, is to test and learn new algorithms and te
   
 * Rendering
   * Deferred Rendering
-  * PBR Rendering (Cook–Torrance GGX)
+  * PBR Rendering (Cook–Torrance BRDF)
   * Materials (with texture loading)
   * Dynamic shadows
   * different light types (directional, point lights and spot lights)
