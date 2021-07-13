@@ -86,7 +86,6 @@ Then, you can execute GenerateProjects.bat to generate visual studio solution fi
 * [Microsoft Visual C++ Redistributable for Visual Studio 2019](https://aka.ms/vs/16/release/VC_redist.x64.exe).
 
 # Authors
-
 [ErfanMo77](https://github.com/ErfanMo77) - **Erfan Momeni** 
 
 # Acknowledgments
