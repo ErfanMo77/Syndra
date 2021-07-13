@@ -12,7 +12,7 @@ my main motivation for making syndra, is to test and learn new algorithms and te
 [Syndra-Engine](https://github.com/ErfanMo77/Syndra/releases/download/v1.1.0-alpha/Syndra-v1.1.0-alpha.zip) v1.1.0-alpha
 
 # Showcase
-<img align="center" src="https://raw.githubusercontent.com/ErfanMo77/Syndra/master/Showcase/Screenshot1.png"/>
+<img align="center" src="https://raw.githubusercontent.com/ErfanMo77/Syndra/develop/Showcase/Screenshot1.png"/>
 <img align="center" src="https://raw.githubusercontent.com/ErfanMo77/Syndra/master/Showcase/Screenshot2.png"/>
 <img align="center" src="https://raw.githubusercontent.com/ErfanMo77/Syndra/master/Showcase/Screenshot3.png"/>
 
