@@ -88,18 +88,6 @@ namespace Syndra {
 		shadowPassSpec.TargetFrameBuffer = FrameBuffer::Create(shadowSpec);
 		s_Data.shadowPass = RenderPass::Create(shadowPassSpec);
 
-		//Point Lights shadow maps
-		FramebufferSpecification pointShadowSpec;
-		pointShadowSpec.Attachments = { FramebufferTextureFormat::Cubemap };
-		pointShadowSpec.Width = 2048;
-		pointShadowSpec.Height = 2048;
-		pointShadowSpec.Samples = 1;
-		pointShadowSpec.ClearColor = { 0.0f, 0.0f, 0.0f, 1.0f };
-		
-		RenderPassSpecification pointShadowPassSpec;
-		pointShadowPassSpec.TargetFrameBuffer = FrameBuffer::Create(pointShadowSpec);
-		s_Data.pointShadowPass = RenderPass::Create(pointShadowPassSpec);
-
 		//-----------------------------------------------Anti Aliasing------------------------------------------//
 		FramebufferSpecification aaFB;
 		aaFB.Attachments = { FramebufferTextureFormat::RGBA8 };
@@ -164,9 +152,7 @@ namespace Syndra {
 		s_Data.orthoSize = 20.0f;
 		s_Data.lightNear = 20.0f;
 		s_Data.lightFar = 200.0f;
-		float nearPlane = 1.0f;
-		float farPlane = 100.0f;
-		s_Data.pointLightProj = glm::perspective(glm::radians(90.0f), (float)pointShadowSpec.Width / pointShadowSpec.Height, nearPlane, farPlane);
+	
 		//Light uniform Buffer layout: -- point lights -- spotlights -- directional light--Binding point 2
 		s_Data.lightManager = CreateRef<LightManager>(2);
 
@@ -231,14 +217,6 @@ namespace Syndra {
 				if (pIndex < 4) {
 					auto p = dynamic_cast<PointLight*>(lc.light.get());
 					s_Data.lightManager->UpdatePointLights(p, tc.Translation, pIndex);
-					s_Data.shadowData.pointLightViewProj[pIndex][0] = s_Data.pointLightProj * glm::lookAt(tc.Translation, tc.Translation + glm::vec3(1.0f, 0.0f, 0.0f),  glm::vec3(0.0f, -1.0f, 0.0f));
-					s_Data.shadowData.pointLightViewProj[pIndex][0] = s_Data.pointLightProj * glm::lookAt(tc.Translation, tc.Translation + glm::vec3(-1.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f));
-					s_Data.shadowData.pointLightViewProj[pIndex][0] = s_Data.pointLightProj * glm::lookAt(tc.Translation, tc.Translation + glm::vec3(0.0f, 1.0f, 0.0f),  glm::vec3(0.0f, 0.0f, 1.0f));
-					s_Data.shadowData.pointLightViewProj[pIndex][0] = s_Data.pointLightProj * glm::lookAt(tc.Translation, tc.Translation + glm::vec3(0.0f, -1.0f, 0.0f), glm::vec3(0.0f, 0.0f, -1.0f));
-					s_Data.shadowData.pointLightViewProj[pIndex][0] = s_Data.pointLightProj * glm::lookAt(tc.Translation, tc.Translation + glm::vec3(0.0f, 0.0f, 1.0f),  glm::vec3(0.0f, -1.0f, 0.0f));
-					s_Data.shadowData.pointLightViewProj[pIndex][0] = s_Data.pointLightProj * glm::lookAt(tc.Translation, tc.Translation + glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, -1.0f, 0.0f));
-
-					s_Data.ShadowBuffer->SetData(&s_Data.shadowData.pointLightViewProj, sizeof(glm::mat4)*24);
 					pIndex++;
 					p = nullptr;
 				}

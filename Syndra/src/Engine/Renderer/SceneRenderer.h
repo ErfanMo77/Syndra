@@ -93,7 +93,6 @@ namespace Syndra {
 			float numBlocker = 2;
 			glm::mat4 lightProj;
 			glm::mat4 lightView;
-			glm::mat4 pointLightProj;
 			ShadowData shadowData;
 			//Poisson
 			Ref<Texture1D> distributionSampler0, distributionSampler1;
@@ -101,7 +100,7 @@ namespace Syndra {
 			ShaderLibrary shaders;
 			Ref<Shader> diffuse, geoShader, outline, mouseShader, fxaa, main, depth, deferredLighting, hdrToCubeShader;
 			//Render passes
-			Ref<RenderPass> geoPass, shadowPass, pointShadowPass, lightingPass, aaPass;
+			Ref<RenderPass> geoPass, shadowPass, lightingPass, aaPass;
 			//Scene quad VBO
 			Ref<VertexArray> screenVao;
 		};
