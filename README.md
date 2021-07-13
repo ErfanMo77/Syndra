@@ -1,29 +1,64 @@
+<img align="left" width="128" src="https://github.com/ErfanMo77/Syndra/blob/master/Syndra-Editor/assets/Logo/GITLOGO.png"/>
+
 # Syndra Engine
-<p align="center">
-  <img src="https://github.com/ErfanMo77/Syndra/blob/master/Syndra-Editor/assets/Logo/GITLOGO.png" width="400" height="400" align="center">
-</p>
-Syndra is an early-stage 3D real-time rendering engine being developed for windows platform.
 
-## Motivation
-Syndra is my university's final year project and I wanted to study how to build 3d game engines.
+Syndra is an early-stage 3D game engine with a focus on real-time rendering. Syndra uses **OpenGL** graphics API and is being developed for windows platform.
 
-## Getting Syndra
+# Download
+[Syndra-Engine](https://github.com/ErfanMo77/Syndra/releases/download/v1.1.0-alpha/Syndra-v1.1.0-alpha.zip) version 1.1.0-alpha
+
+# Showcase
+
+
+
+# Features
+* Engine
+  * Editor (with docking support)
+  * Entity Component System (ECS)
+  * Event system
+  * Console logging
+  * Model and texture loading (40+ model file formats support using Assimp)
+  * Scene saving and loading using YAML serialization and deserialization
+  * Debug visualizer (GBuffer, HDRI map, ...)
+  * Immediate mode GUI
+  * Component editor (material, mesh, light, tag and camera)
+  * Viewport gizmos
+  * HDRI skymap loading
+  
+* Rendering
+  * Deferred Rendering
+  * PBR Rendering (Cook–Torrance GGX)
+  * Materials (with texture loading)
+  * Dynamic shadows
+  * Soft shadows using **PCSS** algorithm
+  * Image Based Lighting (IBL)
+  * Fast Aproximate Anti Aliasing (FXAA)
+  * Normal mapping
+  
+  
+# Compiling
 Syndra only supports windows for now.
 Visual Studio 2019 is recommended.
 
 Start by cloning the repository with `git clone --recursive https://github.com/ErfanMo77/Syndra-Engine`.
-
 If the repository was cloned non-recursively previously, use `git submodule update --init` to clone the necessary submodules.
 
+Syndra requires vulkan sdk to compile shaders, so first, you have to run **scripts/setup.py** to install vulkan sdk on your device.
 Then, you can execute GenerateProjects.bat to generate visual studio solution file.
 
-There is also a ready to use build version of syndra available at [Syndra Build](https://github.com/ErfanMo77/Syndra-Build).
 
-## Authors
+# Dependencies
+* Windows 10.
+* [Microsoft Visual C++ Redistributable for Visual Studio 2019](https://aka.ms/vs/16/release/VC_redist.x64.exe).
+
+# Authors
 
 * **Erfan Momeni** - [erfanmo](https://github.com/ErfanMo77)
 
-## Acknowledgments
+# Acknowledgments
 [The Cherno](https://www.youtube.com/channel/UCQ-W1KE9EYfdxhL6S4twUNw) game engine series
 
 Logo design : [AmirMohammad Abedini](https://gitlab.com/musashi1997)
+
+# License
+Licensed under the MIT license, see [LICENSE](https://github.com/ErfanMo77/Syndra/blob/master/LICENSE) for details.
