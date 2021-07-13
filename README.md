@@ -8,7 +8,7 @@ Syndra is an early-stage 3D game engine with a focus on real-time rendering. Syn
 Syndra is my bachelor's thesis project, where I wanted to study how to build 3D game engines. The purpose of this project is not to make 3D games; rather, my primary motivation for making Syndra is to test and learn new algorithms and techniques used mainly in graphics and real-time rendering. Also, I've made this project open source, hoping that it would be useful to someone.
 
 # Download
-[Syndra-Engine](https://github.com/ErfanMo77/Syndra/releases/download/v1.1.0-alpha/Syndra-v1.1.0-alpha.zip) v1.1.0-alpha
+[Syndra-Engine](https://github.com/ErfanMo77/Syndra/releases/download/v1.1.1-alpha/Syndra-v1.1.1-alpha.rar) v1.1.1-alpha
 
 # Showcase
 <img align="center" src="https://raw.githubusercontent.com/ErfanMo77/Syndra/develop/Showcase/Screenshot1.png"/>
