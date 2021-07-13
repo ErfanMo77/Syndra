@@ -1,4 +1,4 @@
-// Basic diffuse Shader
+// Depth map generator
 #type vertex
 
 #version 460

@@ -1,8 +1,8 @@
 Scene: sponza
-Environment path: C:\dev\Syndra\Syndra-Editor\assets\HDRI\GCanyon_C_YumaPoint_3k.hdr
+Environment path: C:\Users\MSI\Desktop\fireplace_8k.hdr
 Camera:
-  Yaw: 1.62240994
-  Pitch: 0.223196998
+  Yaw: 4.64160776
+  Pitch: 0.213597342
   distance: 12.0480709
   FOV: 45
   Near: 0.100000001
