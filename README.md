@@ -5,7 +5,7 @@
 Syndra is an early-stage 3D game engine with a focus on real-time rendering. Syndra uses **OpenGL** graphics API and is being developed for windows platform.
 
 # Download
-[Syndra-Engine](https://github.com/ErfanMo77/Syndra/releases/download/v1.1.0-alpha/Syndra-v1.1.0-alpha.zip) version alpha-1.1.0 
+[Syndra-Engine](https://github.com/ErfanMo77/Syndra/releases/download/v1.1.0-alpha/Syndra-v1.1.0-alpha.zip) version 1.1.0-alpha
 
 # Showcase
 
@@ -15,12 +15,13 @@ Syndra is an early-stage 3D game engine with a focus on real-time rendering. Syn
 * Engine
   * Editor (with docking support)
   * Entity Component System (ECS)
-  * Event handling system
-  * Console logging system
-  * Model and texture loading
+  * Event system
+  * Console logging
+  * Model and texture loading (40+ model file formats support using Assimp)
   * Scene saving and loading using YAML serialization and deserialization
+  * Debug visualizer (GBuffer, HDRI map, ...)
   * Immediate mode GUI
-  * Component editor (material, mesh, tag and camera)
+  * Component editor (material, mesh, light, tag and camera)
   * Viewport gizmos
   * HDRI skymap loading
   
@@ -60,4 +61,4 @@ Then, you can execute GenerateProjects.bat to generate visual studio solution fi
 Logo design : [AmirMohammad Abedini](https://gitlab.com/musashi1997)
 
 # License
-- Licensed under the MIT license, see [LICENSE](https://github.com/ErfanMo77/Syndra/blob/master/LICENSE) for details.
+Licensed under the MIT license, see [LICENSE](https://github.com/ErfanMo77/Syndra/blob/master/LICENSE) for details.
