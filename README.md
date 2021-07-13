@@ -94,4 +94,4 @@ Then, you can execute GenerateProjects.bat to generate visual studio solution fi
 Logo design : [AmirMohammad Abedini](https://gitlab.com/musashi1997)
 
 # License
-Licensed under the MIT license, see [LICENSE](https://github.com/ErfanMo77/Syndra/blob/master/LICENSE) for details.
+Licensed under the Apache License 2.0, see [LICENSE](https://github.com/ErfanMo77/Syndra/blob/master/LICENSE) for details.
