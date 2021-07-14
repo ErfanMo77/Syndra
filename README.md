@@ -8,7 +8,7 @@ Syndra is an early-stage 3D game engine with a focus on real-time rendering. Syn
 Syndra is my bachelor's thesis project, where I wanted to study how to build 3D game engines. The purpose of this project is not to make 3D games; rather, my primary motivation for making Syndra is to test and learn new algorithms and techniques used mainly in graphics and real-time rendering. Also, I've made this project open source, hoping that it would be useful to someone.
 
 # Download
-[Syndra-Engine](https://github.com/ErfanMo77/Syndra/releases/download/v1.1.1-alpha/Syndra-v1.1.1-alpha.rar) v1.1.1-alpha
+[Syndra-Engine v1.1.1-alpha](https://github.com/ErfanMo77/Syndra/releases/download/v1.1.1-alpha/Syndra-v1.1.1-alpha.rar)
 
 # Showcase
 <img align="center" src="https://raw.githubusercontent.com/ErfanMo77/Syndra/develop/Showcase/Screenshot1.png"/>
@@ -79,6 +79,8 @@ Then, you can execute GenerateProjects.bat to generate visual studio solution fi
 - [GLM](https://github.com/g-truc/glm) : Matrix and vector operations.
 - [Assimp](https://github.com/assimp/assimp) : Loading 3D models with support for more than 40 file formats.
 - [yaml-cpp](https://github.com/jbeder/yaml-cpp) : Scene serialization and deserialization.
+- [Vulkan](https://www.lunarg.com/vulkan-sdk) : Shader compilation and reflection.
+- [Premake](https://premake.github.io) : Projects configuration and visual studio solution generator. 
 
 # Dependencies
 * Windows 10.
