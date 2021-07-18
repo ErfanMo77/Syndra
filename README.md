@@ -52,7 +52,7 @@ Syndra is my bachelor's thesis project, where I wanted to study how to build 3D 
 * Rendering
   * More debug visualizers (grid, wireframe, ...)
   * SSAO (Screen Space Ambient Occlusion)
-  * SSS (Screen Space Reflection)
+  * SSR (Screen Space Reflection)
   * Procedural atmospheric sky
   * Point light shadows
   * Bloom
