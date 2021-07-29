@@ -79,7 +79,7 @@ Then, you can execute GenerateProjects.bat to generate visual studio solution fi
 - [GLM](https://github.com/g-truc/glm) : Matrix and vector operations.
 - [Assimp](https://github.com/assimp/assimp) : Loading 3D models with support for more than 40 file formats.
 - [yaml-cpp](https://github.com/jbeder/yaml-cpp) : Scene serialization and deserialization.
-- [Vulkan](https://www.lunarg.com/vulkan-sdk) : Shader compilation and reflection.
+- [Vulkan SDK](https://www.lunarg.com/vulkan-sdk) : Shader compilation and reflection.
 - [Premake](https://premake.github.io) : Projects configuration and visual studio solution generator. 
 
 # Dependencies
