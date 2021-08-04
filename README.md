@@ -5,7 +5,7 @@
 Syndra is an early-stage 3D game engine with a focus on real-time rendering. Syndra uses **OpenGL** graphics API and is being developed for windows platform.
 
 # Motivation
-Syndra is my bachelor's thesis project, where I wanted to study how to build 3D game engines. The purpose of this project is not to make 3D games; rather, my primary motivation for making Syndra is to test and learn new algorithms and techniques used mainly in graphics and real-time rendering. Also, I've made this project open source, hoping that it would be useful to someone.
+Syndra is my bachelor's thesis project, where I wanted to study how to build 3D game engines. The purpose of this project is not to make 3D games; rather, my primary motivation for making Syndra is to test and learn new algorithms and techniques used mainly in graphics and real-time rendering.
 
 # Download
 [Syndra-Engine v1.1.1-alpha](https://github.com/ErfanMo77/Syndra/releases/download/v1.1.1-alpha/Syndra-v1.1.1-alpha.rar)
