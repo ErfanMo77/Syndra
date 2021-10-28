@@ -90,6 +90,8 @@ Then, you can execute GenerateProjects.bat to generate visual studio solution fi
 [ErfanMo77](https://github.com/ErfanMo77) - **Erfan Momeni** 
 
 # Acknowledgments
+[LearnOpenGL](https://learnopengl.com/) Great OpenGL tutorials!
+
 [The Cherno](https://www.youtube.com/channel/UCQ-W1KE9EYfdxhL6S4twUNw) game engine series
 
 Logo design : [AmirMohammad Abedini](https://gitlab.com/musashi1997)
