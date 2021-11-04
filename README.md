@@ -1,7 +1,3 @@
-<img align="left" width="128" src="https://github.com/ErfanMo77/Syndra/blob/master/Syndra-Editor/assets/Logo/GITLOGO.png"/>
-
-# Syndra Engine
-
 Syndra is an early-stage 3D game engine with a focus on real-time rendering. Syndra uses **OpenGL** graphics API and is being developed for the Windows platform.
 
 # Motivation
@@ -11,8 +7,9 @@ Syndra is my bachelor's thesis project, where I wanted to study how to build 3D 
 [Syndra-Engine v1.1.1-alpha](https://github.com/ErfanMo77/Syndra/releases/download/v1.1.1-alpha/Syndra-v1.1.1-alpha.rar)
 
 # Showcase
+
+[![](https://raw.githubusercontent.com/ErfanMo77/Syndra/master/Showcase/Screenshot2.png)](https://www.youtube.com/embed/PlPZ7A7ZCdA)
 <img align="center" src="https://raw.githubusercontent.com/ErfanMo77/Syndra/develop/Showcase/Screenshot1.png"/>
-<img align="center" src="https://raw.githubusercontent.com/ErfanMo77/Syndra/master/Showcase/Screenshot2.png"/>
 <img align="center" src="https://raw.githubusercontent.com/ErfanMo77/Syndra/master/Showcase/Screenshot3.png"/>
 
 
@@ -65,8 +62,8 @@ Visual Studio 2019 is recommended.
 Start by cloning the repository with `git clone --recursive https://github.com/ErfanMo77/Syndra-Engine`.
 If the repository was cloned non-recursively previously, use `git submodule update --init` to clone the necessary submodules.
 
-Syndra requires vulkan sdk to compile shaders, so first, you have to run **scripts/setup.py** to install vulkan sdk on your device.
-Then, you can execute GenerateProjects.bat to generate visual studio solution file and compile the engine.
+Syndra requires Vulkan SDK to compile shaders, so first, you have to run **scripts/setup.py** to install Vulkan SDK on your device.
+Then, you can execute GenerateProjects.bat to generate a visual studio solution file and compile the engine.
 
 # Third Party Libraries
 - [GLFW](https://www.glfw.org) : Handling windows and mouse and keyboard events.
@@ -98,3 +95,4 @@ Logo design : [AmirMohammad Abedini](https://gitlab.com/musashi1997)
 
 # License
 Licensed under the Apache License 2.0, see [LICENSE](https://github.com/ErfanMo77/Syndra/blob/master/LICENSE) for details.
+
