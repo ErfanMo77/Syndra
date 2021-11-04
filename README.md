@@ -38,7 +38,7 @@ Syndra is my bachelor's thesis project, where I wanted to study how to build 3D 
   * Different light types (directional, point lights and spot lights)
   * Soft shadows using **PCSS** algorithm
   * Image Based Lighting (IBL)
-  * Fast Aproximate Anti Aliasing (FXAA)
+  * Fast Approximate Anti-Aliasing (FXAA)
   * Normal mapping
 
 # Future
