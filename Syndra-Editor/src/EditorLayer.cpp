@@ -273,7 +273,7 @@ namespace Syndra {
 		{
 			if (ImGui::BeginMenu("File"))
 			{
-				if (ImGui::MenuItem(ICON_FA_PLUS"  New", "Ctrl+N")) {
+				if (ImGui::MenuItem(ICON_FA_PLUS" New", "Ctrl+N")) {
 					NewScene();
 				}
 				ImGui::Separator();
@@ -294,7 +294,6 @@ namespace Syndra {
 			}
 
 			if (ImGui::BeginMenu("View")) {
-				//TODO : showing different tabs
 				if (ImGui::MenuItem(ICON_FA_LIST_UL "  Scene hierarchy"))
 					m_SceneHierarchyOpen = true;
 				if (ImGui::MenuItem(ICON_FA_SLIDERS_H "  Properties"))
@@ -314,7 +313,6 @@ namespace Syndra {
 			}
 
 			if (ImGui::BeginMenu("Entity")) {
-				//TODO : showing different tabs
 				if (ImGui::MenuItem("Add Entity")) {
 					m_ActiveScene->CreateEntity();
 				}
