@@ -1,3 +1,6 @@
+<img align="left" width="150" src="https://github.com/ErfanMo77/Syndra/blob/master/Syndra-Editor/assets/Logo/GITLOGO.png"/>
+
+# Syndra Engine
 Syndra is an early-stage 3D game engine with a focus on real-time rendering. Syndra uses **OpenGL** graphics API and is being developed for the Windows platform.
 
 # Motivation
