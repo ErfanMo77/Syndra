@@ -11,9 +11,9 @@ Syndra is my bachelor's thesis project, where I wanted to study how to build 3D 
 
 # Showcase
 
-[![](https://raw.githubusercontent.com/ErfanMo77/Syndra/master/Showcase/video_img.png)](https://www.youtube.com/watch?v=PlPZ7A7ZCdA)
-<img align="center" src="https://raw.githubusercontent.com/ErfanMo77/Syndra/develop/Showcase/Screenshot1.png"/>
-<img align="center" src="https://raw.githubusercontent.com/ErfanMo77/Syndra/master/Showcase/Screenshot3.png"/>
+[![](https://raw.githubusercontent.com/ErfanMo77/Syndra/master/Showcase/video_img_show.png)](https://www.youtube.com/watch?v=PlPZ7A7ZCdA)
+<img align="center" src="https://raw.githubusercontent.com/ErfanMo77/Syndra/develop/Showcase/Screenshot1_show.png"/>
+<img align="center" src="https://raw.githubusercontent.com/ErfanMo77/Syndra/master/Showcase/Screenshot3_show.png"/>
 
 
 # Features
