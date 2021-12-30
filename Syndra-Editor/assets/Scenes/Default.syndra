@@ -1,0 +1,70 @@
+Scene: Default
+Environment path: ""
+Camera:
+  Yaw: 3.69839787
+  Pitch: 0.532799363
+  distance: 12.5732288
+  FOV: 45
+  Near: 0.100000001
+  Far: 1000
+Entities:
+  - Entity: 0
+    TagComponent:
+      Tag: Directional Light
+    TransformComponent:
+      Translation: [0, 0, 0]
+      Rotation: [0, 0, 0]
+      Scale: [1, 1, 1]
+    LightComponent:
+      Type: Directional
+      Color: [1, 1, 1]
+      Intensity: 10
+      Direction: [-4, -6.28000021, 0]
+  - Entity: 1
+    TagComponent:
+      Tag: Plane
+    TransformComponent:
+      Translation: [0, 0, 0]
+      Rotation: [0, 0, 0]
+      Scale: [5.03999996, 5.03999996, 5.03999996]
+    MeshComponent:
+      Path: assets\Models\plane\plane.obj
+    MaterialComponent:
+      shader: GeometryPass
+      Textures:
+        - {binding: 1, path: C:\dev\Syndra\Syndra-Editor\assets\Textures\Gold\schvfgwp_4K_Metalness.jpg}
+        - {binding: 0, path: ""}
+        - {binding: 2, path: ""}
+        - {binding: 3, path: ""}
+        - {binding: 4, path: ""}
+      Constants:
+        - {Tiling: 1}
+        - {Use Albedo: 1, Albedo: [0.300000012, 0.300000012, 0.300000012, 1]}
+        - {Use MetallicMap: 1, Metallic Factor: 0}
+        - {Use NormalMap: 1}
+        - {Use RoughnessMap: 1, Roughness Factor: 1}
+        - {Use AOMap: 1, AO: 1}
+  - Entity: 2
+    TagComponent:
+      Tag: Sphere
+    TransformComponent:
+      Translation: [0.00610388815, 1.7216078, -0.00982655585]
+      Rotation: [0, 0, 0]
+      Scale: [1, 1, 1]
+    MeshComponent:
+      Path: assets\Models\Sphere\Sphere.fbx
+    MaterialComponent:
+      shader: GeometryPass
+      Textures:
+        - {binding: 0, path: ""}
+        - {binding: 1, path: ""}
+        - {binding: 2, path: ""}
+        - {binding: 3, path: ""}
+        - {binding: 4, path: ""}
+      Constants:
+        - {Tiling: 1}
+        - {Use Albedo: 1, Albedo: [0.711743772, 0.139309287, 0.139309287, 1]}
+        - {Use MetallicMap: 1, Metallic Factor: 0}
+        - {Use NormalMap: 1}
+        - {Use RoughnessMap: 1, Roughness Factor: 1}
+        - {Use AOMap: 1, AO: 1}

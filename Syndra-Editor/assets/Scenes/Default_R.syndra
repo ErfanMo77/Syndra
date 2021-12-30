@@ -1,0 +1,70 @@
+Scene: Default_R
+Environment path: assets\HDRI\san_giuseppe_bridge_4k.hdr
+Camera:
+  Yaw: 8.09758663
+  Pitch: 0.628799617
+  distance: 12.5658169
+  FOV: 45
+  Near: 0.100000001
+  Far: 1000
+Entities:
+  - Entity: 0
+    TagComponent:
+      Tag: Directional Light
+    TransformComponent:
+      Translation: [0, 0, 0]
+      Rotation: [0, 0, 0]
+      Scale: [1, 1, 1]
+    LightComponent:
+      Type: Directional
+      Color: [1, 1, 1]
+      Intensity: 14.3999996
+      Direction: [-4, -6.28000021, 0]
+  - Entity: 1
+    TagComponent:
+      Tag: Sphere
+    TransformComponent:
+      Translation: [0.00610390306, 1.7216078, -0.00982654095]
+      Rotation: [0, 0, 0]
+      Scale: [1, 1, 1]
+    MeshComponent:
+      Path: assets\Models\Sphere\Sphere.fbx
+    MaterialComponent:
+      shader: GeometryPass
+      Textures:
+        - {binding: 0, path: ""}
+        - {binding: 1, path: ""}
+        - {binding: 2, path: ""}
+        - {binding: 3, path: ""}
+        - {binding: 4, path: ""}
+      Constants:
+        - {Tiling: 1}
+        - {Use Albedo: 1, Albedo: [1, 0.999989986, 0.999989986, 1]}
+        - {Use MetallicMap: 1, Metallic Factor: 1}
+        - {Use NormalMap: 1}
+        - {Use RoughnessMap: 1, Roughness Factor: 0}
+        - {Use AOMap: 1, AO: 1}
+  - Entity: 2
+    TagComponent:
+      Tag: Plane
+    TransformComponent:
+      Translation: [0, 0.324944019, 0.0343974419]
+      Rotation: [0, 0, 0]
+      Scale: [5.1359992, 5.13600254, 5.13600254]
+    MeshComponent:
+      Path: assets\Models\plane\plane.obj
+    MaterialComponent:
+      shader: GeometryPass
+      Textures:
+        - {binding: 0, path: assets\Textures\New folder\ufomabmo_4K_Albedo.jpg}
+        - {binding: 2, path: assets\Textures\New folder\ufomabmo_4K_Normal.jpg}
+        - {binding: 3, path: assets\Textures\New folder\ufomabmo_4K_Roughness.jpg}
+        - {binding: 1, path: ""}
+        - {binding: 4, path: ""}
+      Constants:
+        - {Tiling: 1.45000005}
+        - {Use Albedo: 1, Albedo: [1, 0.999989986, 0.999989986, 1]}
+        - {Use MetallicMap: 1, Metallic Factor: 0}
+        - {Use NormalMap: 1}
+        - {Use RoughnessMap: 1, Roughness Factor: 1}
+        - {Use AOMap: 1, AO: 1}
