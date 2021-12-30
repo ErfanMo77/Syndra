@@ -63,8 +63,8 @@ Syndra is my bachelor's thesis project, where I wanted to study how to build 3D 
 Syndra only supports windows for now.
 Visual Studio 2019 is recommended.
 
-Start by cloning the repository with `git clone --recursive https://github.com/ErfanMo77/Syndra-Engine`.
-If the repository was cloned non-recursively previously, use `git submodule update --init` to clone the necessary submodules.
+Start by cloning the repository with `git clone https://github.com/ErfanMo77/Syndra-Engine`.
+Then, use `git submodule update --init` to clone the necessary submodules.
 
 Syndra requires Vulkan SDK to compile shaders, so first, you have to run **scripts/setup.py** to install Vulkan SDK on your device.
 Then, you can execute GenerateProjects.bat to generate a visual studio solution file and compile the engine.
