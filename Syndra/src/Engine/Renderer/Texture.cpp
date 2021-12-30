@@ -23,7 +23,7 @@ namespace Syndra {
 		switch (Renderer::GetAPI())
 		{
 		case RendererAPI::API::NONE:    SN_CORE_ASSERT(false, "RendererAPI::None is currently not supported!"); return nullptr;
-		case RendererAPI::API::OpenGL:  return CreateRef<OpenGLTexture2D>(path,sRGB);
+		case RendererAPI::API::OpenGL:  return CreateRef<OpenGLTexture2D>(path,sRGB,false);
 		}
 
 		SN_CORE_ASSERT(false, "Unknown RendererAPI!");
@@ -42,6 +42,18 @@ namespace Syndra {
 		return nullptr;
 	}
 
+	Ref<Texture2D> Texture2D::CreateHDR(const std::string& path, bool sRGB, bool HDR)
+	{
+		switch (Renderer::GetAPI())
+		{
+		case RendererAPI::API::NONE:    SN_CORE_ASSERT(false, "RendererAPI::None is currently not supported!"); return nullptr;
+		case RendererAPI::API::OpenGL:  return CreateRef<OpenGLTexture2D>(path, sRGB, HDR);
+		}
+
+		SN_CORE_ASSERT(false, "Unknown RendererAPI!");
+		return nullptr;
+	}
+
 	void Texture::BindTexture(uint32_t rendererID, uint32_t slot)
 	{
 		switch (Renderer::GetAPI())
@@ -49,6 +61,8 @@ namespace Syndra {
 		case RendererAPI::API::NONE:    SN_CORE_ASSERT(false, "RendererAPI::None is currently not supported!");
 		case RendererAPI::API::OpenGL:	OpenGLTexture2D::BindTexture(rendererID,slot);
 		}
+
+
 	}
 
 	Ref<Texture1D> Texture1D::Create(uint32_t size)
@@ -58,6 +72,8 @@ namespace Syndra {
 		case RendererAPI::API::NONE:    SN_CORE_ASSERT(false, "RendererAPI::None is currently not supported!"); return nullptr;
 		case RendererAPI::API::OpenGL:  return CreateRef<OpenGLTexture1D>(size);
 		}
+		SN_CORE_ASSERT(false, "Unknown RendererAPI!");
+		return nullptr;
 	}
 
 	Ref<Syndra::Texture1D> Texture1D::Create(uint32_t size, void* data)
@@ -67,6 +83,8 @@ namespace Syndra {
 		case RendererAPI::API::NONE:    SN_CORE_ASSERT(false, "RendererAPI::None is currently not supported!"); return nullptr;
 		case RendererAPI::API::OpenGL:  return CreateRef<OpenGLTexture1D>(size,data);
 		}
+		SN_CORE_ASSERT(false, "Unknown RendererAPI!");
+		return nullptr;
 	}
 
 }

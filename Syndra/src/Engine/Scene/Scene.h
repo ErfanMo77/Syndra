@@ -9,6 +9,13 @@ namespace Syndra {
 
 	class Entity;
 
+	enum class PrimitiveType
+	{
+		Cube,
+		Plane,
+		Sphere
+	};
+
 	class Scene
 	{
 	public:
@@ -19,6 +26,10 @@ namespace Syndra {
 		Ref<Entity> CreateEntity(const std::string& name = std::string());
 		Ref<Entity> CreateEntity(const Entity& entity);
 
+		//Creating entities with default components
+		Ref<Entity> CreatePrimitive(PrimitiveType type);
+		Ref<Entity> CreateLight(LightType type);
+
 		void DestroyEntity(const Entity& entity);
 		Entity FindEntity(uint32_t id);
 
@@ -26,7 +37,6 @@ namespace Syndra {
 		void OnUpdateEditor(Timestep ts);
 		void OnViewportResize(uint32_t width, uint32_t height);
 		void OnCameraUpdate(Timestep ts) { m_Camera->OnUpdate(ts); }
-		void ReloadShader() { SceneRenderer::Reload(); }
 
 		uint32_t GetMainTextureID() { return SceneRenderer::GetTextureID(0); }
 		Ref<FrameBuffer> GetMainFrameBuffer() { return SceneRenderer::GetGeoFrameBuffer(); }
@@ -43,6 +53,7 @@ namespace Syndra {
 		entt::registry m_Registry;
 
 		std::vector<Ref<Entity>> m_Entities;
+		std::string m_EnvironmentPath;
 		
 		std::string m_Name;
 

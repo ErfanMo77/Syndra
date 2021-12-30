@@ -86,6 +86,12 @@ namespace Syndra {
 			light = CreateRef<PointLight>();
 		}
 
+		LightComponent(LightType otherType, Ref<Light>& otherLight)
+		{
+			type = otherType;
+			light = otherLight;
+		}
+
 		LightComponent(const LightComponent& other) {
 			this->type = other.type;
 			if (type == LightType::Directional) {
@@ -105,17 +111,15 @@ namespace Syndra {
 
 	struct MaterialComponent
 	{
-		Ref<Material> material;
-		Ref<Shader> m_Shader;
+		Material m_Material;
 
 		MaterialComponent() = default;
 		MaterialComponent(const MaterialComponent& material) = default;
-		MaterialComponent(const Ref<Material>& material, const Ref<Shader>& shader)
-			:material(material), m_Shader(shader)
+		MaterialComponent(const Ref<Material>& material)
+			:m_Material(*material)
 		{}
 		MaterialComponent(Ref<Shader> shader) {
-			m_Shader = shader;
-			material = Material::Create(shader);
+			m_Material = *Material::Create(shader);
 		}
 	};
 

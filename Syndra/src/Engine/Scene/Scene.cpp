@@ -13,10 +13,6 @@ namespace Syndra {
 		SceneRenderer::Initialize();
 		m_Shaders = SceneRenderer::GetShaderLibrary();
 		m_Camera = new PerspectiveCamera(45.0f, 1.66f, 0.1f, 1000.0f);
-		auto ent = CreateEntity("Directional Light");
-		auto& comp = ent->AddComponent<LightComponent>();
-		comp.type = LightType::Directional;
-		comp.light = CreateRef<DirectionalLight>();
 	}
 
 	Scene::~Scene()
@@ -28,7 +24,7 @@ namespace Syndra {
 	{
 		Entity entity = { m_Registry.create() };
 		auto& tag = entity.AddComponent<TagComponent>();
-		tag.Tag = name.empty() ? "Entity" : name;
+		tag.Tag = name.empty() ? "Entity" + std::to_string(uint32_t(entity)) : name;
 		entity.AddComponent<TransformComponent>();
 		Ref<Entity> ent = CreateRef<Entity>(entity);
 		m_Entities.push_back(ent);
@@ -54,6 +50,64 @@ namespace Syndra {
 			ent->AddComponent<LightComponent>(other.GetComponent<LightComponent>());
 		}
 		m_Entities.push_back(ent);
+		return ent;
+	}
+
+	Ref<Entity> Scene::CreatePrimitive(PrimitiveType type)
+	{
+		auto ent = this->CreateEntity();
+		std::string path;
+		switch (type)
+		{
+		case Syndra::PrimitiveType::Cube:
+			ent->GetComponent<TagComponent>().Tag = "Cube";
+			path = std::string("assets\\Models\\cube\\cube.obj");
+			ent->AddComponent<MeshComponent>(path);
+			break;
+		case Syndra::PrimitiveType::Plane:
+			ent->GetComponent<TagComponent>().Tag = "Plane";
+			path = std::string("assets\\Models\\plane\\plane.obj");
+			ent->AddComponent<MeshComponent>(path);
+			break;
+		case Syndra::PrimitiveType::Sphere:
+			ent->GetComponent<TagComponent>().Tag = "Sphere";
+			path = std::string("assets\\Models\\Sphere\\Sphere.fbx");
+			ent->AddComponent<MeshComponent>(path);
+			break;
+		default:
+			break;
+		}
+		return ent;
+	}
+
+	Syndra::Ref<Syndra::Entity> Scene::CreateLight(LightType type)
+	{
+		auto ent = this->CreateEntity();
+		std::string path;
+		Ref<Light> light;
+		switch (type)
+		{
+		case Syndra::LightType::Directional:
+			ent->GetComponent<TagComponent>().Tag = "Directional Light";
+			light = CreateRef<DirectionalLight>(glm::vec3(1.0f));
+			ent->AddComponent<LightComponent>(type, light);
+			break;
+		case Syndra::LightType::Point:
+			ent->GetComponent<TagComponent>().Tag = "Point Light";
+			light = CreateRef<PointLight>(glm::vec3(1.0f));
+			ent->AddComponent<LightComponent>(type, light);
+			break;
+		case Syndra::LightType::Spot:
+			ent->GetComponent<TagComponent>().Tag = "Spot Light";
+			light = CreateRef<SpotLight>(glm::vec3(1.0f));
+			ent->AddComponent<LightComponent>(type, light);
+			break;
+		case Syndra::LightType::Area:
+			//TODO
+			break;
+		default:
+			break;
+		}
 		return ent;
 	}
 
@@ -90,7 +144,7 @@ namespace Syndra {
 	void Scene::OnUpdateEditor(Timestep ts)
 	{
 		SceneRenderer::BeginScene(*m_Camera);
-		SceneRenderer::RenderScene(*this);
+		SceneRenderer::RenderScene();
 		SceneRenderer::EndScene();
 	}
 

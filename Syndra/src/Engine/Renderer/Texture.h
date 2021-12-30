@@ -38,6 +38,7 @@ namespace Syndra{
 	public:
 		static Ref<Texture2D> Create(uint32_t width, uint32_t height);
 		static Ref<Texture2D> Create(const std::string& path, bool sRGB = false);
+		static Ref<Texture2D> CreateHDR(const std::string& path, bool sRGB = false, bool HDR = false);
 		static Ref<Texture2D> Create(uint32_t width, uint32_t height, const unsigned char* data, bool sRGB = false);
 	};
 

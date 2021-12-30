@@ -97,7 +97,8 @@ project "Syndra"
 	}
 
 	libdirs {
-		"Syndra/vendor/assimp/build"
+		"Syndra/vendor/assimp/build/Debug",
+		"Syndra/vendor/assimp/build/Release"
 	}
 
 	links
@@ -106,7 +107,6 @@ project "Syndra"
 		"Glad",
 		"imgui",
 		"yaml-cpp",
-		"assimp-vc142-mtd.lib",
 		"opengl32.lib"
 	}
 	
@@ -129,7 +129,8 @@ project "Syndra"
 		{
 			"%{Library.ShaderC_Debug}",
 			"%{Library.SPIRV_Cross_Debug}",
-			"%{Library.SPIRV_Cross_GLSL_Debug}"
+			"%{Library.SPIRV_Cross_GLSL_Debug}",
+			"assimp-vc142-mtd.lib"
 		}
 		
 	filter "configurations:release"
@@ -139,7 +140,8 @@ project "Syndra"
 		{
 			"%{Library.ShaderC_Release}",
 			"%{Library.SPIRV_Cross_Release}",
-			"%{Library.SPIRV_Cross_GLSL_Release}"
+			"%{Library.SPIRV_Cross_GLSL_Release}",
+			"assimp-vc142-mt.lib"
 		}		
 		
 	filter "configurations:Dist"
@@ -149,7 +151,8 @@ project "Syndra"
 		{
 			"%{Library.ShaderC_Release}",
 			"%{Library.SPIRV_Cross_Release}",
-			"%{Library.SPIRV_Cross_GLSL_Release}"
+			"%{Library.SPIRV_Cross_GLSL_Release}",
+			"assimp-vc142-mt.lib"
 		}
 
 

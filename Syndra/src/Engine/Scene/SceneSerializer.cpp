@@ -80,6 +80,33 @@ namespace Syndra {
 		return out;
 	}
 
+	YAML::Emitter& operator<<(YAML::Emitter& out, const Material::CBuffer& cbuffer)
+	{
+		out << YAML::Flow << YAML::BeginMap;
+		out << YAML::Key << "Tiling"		   << YAML::Value << cbuffer.tiling << YAML::EndMap;
+
+		out << YAML::Flow << YAML::BeginMap;
+		out << YAML::Key << "Use Albedo"	   << YAML::Value << cbuffer.HasAlbedoMap;
+		out << YAML::Key << "Albedo"		   << YAML::Value << cbuffer.material.color << YAML::EndMap;
+
+		out << YAML::Flow << YAML::BeginMap;
+		out << YAML::Key << "Use MetallicMap"  << YAML::Value << cbuffer.HasMetallicMap;
+		out << YAML::Key << "Metallic Factor"  << YAML::Value << cbuffer.material.MetallicFactor << YAML::EndMap;
+
+		out << YAML::Flow << YAML::BeginMap;
+		out << YAML::Key << "Use NormalMap"	   << YAML::Value << cbuffer.HasNormalMap << YAML::EndMap;
+
+		out << YAML::Flow << YAML::BeginMap;
+		out << YAML::Key << "Use RoughnessMap" << YAML::Value << cbuffer.HasRoughnessMap;
+		out << YAML::Key << "Roughness Factor" << YAML::Value << cbuffer.material.RoughnessFactor << YAML::EndMap;
+
+		out << YAML::Flow << YAML::BeginMap;
+		out << YAML::Key << "Use AOMap"        << YAML::Value << cbuffer.HasAOMap;
+		out << YAML::Key << "AO"			   << YAML::Value << cbuffer.material.AO << YAML::EndMap;
+
+		return out;
+	}
+
 	YAML::Emitter& operator<<(YAML::Emitter& out, const std::unordered_map<uint32_t, Ref<Texture2D>>& textures)
 	{
 
@@ -200,11 +227,15 @@ namespace Syndra {
 			out << YAML::Key << "MaterialComponent";
 			out << YAML::BeginMap; // MaterialComponent
 			auto& material = entity.GetComponent<MaterialComponent>();
-			auto& shader = material.m_Shader;
+			auto shader = material.m_Material.GetShader();
 			out << YAML::Key << "shader" << YAML::Value << shader->GetName();
 
 			out << YAML::Key << "Textures" << YAML::Value << YAML::BeginSeq;
-			out << material.material->GetTextures();
+			out << material.m_Material.GetTextures();
+			out << YAML::EndSeq;
+
+			out << YAML::Key << "Constants" << YAML::Value << YAML::BeginSeq;
+			out << material.m_Material.GetCBuffer();
 			out << YAML::EndSeq;
 
 			out << YAML::EndMap; // MaterialComponent
@@ -222,6 +253,8 @@ namespace Syndra {
 
 		out << YAML::BeginMap;
 		out << YAML::Key << "Scene" << YAML::Value << name;
+
+		out << YAML::Key << "Environment path" << YAML::Value << m_Scene->m_EnvironmentPath;
 
 		//camera
 		out << YAML::Key << "Camera"   <<   YAML::Value << YAML::BeginMap;
@@ -254,6 +287,10 @@ namespace Syndra {
 		std::string sceneName = data["Scene"].as<std::string>();
 		m_Scene->m_Name = sceneName;
 		SN_CORE_TRACE("Deserializing scene '{0}'", sceneName);
+		if (data["Environment path"]) {
+			auto hdriPath = data["Environment path"].as<std::string>();
+			m_Scene->m_EnvironmentPath = hdriPath;
+		}
 
 		auto camera = data["Camera"];
 		auto yaw = camera["Yaw"].as<float>();
@@ -367,6 +404,7 @@ namespace Syndra {
 					auto shader = m_Shaders.Get(shaderName);
 
 					auto material = Material::Create(shader);
+
 					auto& materialTextures = material->GetTextures();
 
 					auto textures = materialComponent["Textures"];
@@ -381,7 +419,27 @@ namespace Syndra {
 						}
 					}
 
-					deserializedEntity->AddComponent<MaterialComponent>(material,shader);
+					if (auto cbuffer = materialComponent["Constants"])
+					{
+						material->Set("tiling", cbuffer[0]["Tiling"].as<float>());
+
+						material->Set("HasAlbedoMap", cbuffer[1]["Use Albedo"].as<int>());
+						material->Set("push.material.color", cbuffer[1]["Albedo"].as<glm::vec4>());
+
+						material->Set("HasNormalMap", cbuffer[2]["Use MetallicMap"].as<int>());
+						material->Set("push.material.MetallicFactor", cbuffer[2]["Metallic Factor"].as<float>());
+
+						material->Set("HasRoughnessMap", cbuffer[3]["Use NormalMap"].as<int>());
+
+						material->Set("HasMetallicMap", cbuffer[4]["Use RoughnessMap"].as<int>());
+						material->Set("push.material.RoughnessFactor", cbuffer[4]["Roughness Factor"].as<float>());
+
+						material->Set("HasAOMap", cbuffer[5]["Use AOMap"].as<int>());
+						material->Set("push.material.AO", cbuffer[5]["AO"].as<float>());
+					}
+					
+
+					deserializedEntity->AddComponent<MaterialComponent>(material);
 
 					//mc.path = materialComponent["Path"].as<std::string>();
 					//auto filepath = mc.path;

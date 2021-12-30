@@ -4,7 +4,11 @@
 #include "Engine/Renderer/Renderer.h"
 #include "Engine/Renderer/FrameBuffer.h"
 #include "Engine/Renderer/UniformBuffer.h"
+#include "Engine/Renderer/Environment.h"
+#include "Engine/Renderer/LightManager.h"
 #include "Engine/Renderer/RenderPass.h"
+#include "Engine/ImGui/IconsFontAwesome5.h"
+
 #include "entt.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
@@ -21,19 +25,21 @@ namespace Syndra {
 		static void Initialize();
 
 		static void BeginScene(const PerspectiveCamera& camera);
-		static void UpdateLights(Scene& scene);
-		static void RenderScene(Scene& scene);
+		static void UpdateLights();
+		static void RenderScene();
 
-		static void RenderEntityColor(const entt::entity& entity, TransformComponent& tc, MeshComponent& mc, const Ref<Shader>& shader);
-		static void RenderEntityColor(const entt::entity& entity, TransformComponent& tc, MeshComponent& mc, MaterialComponent& mat);
+		static void RenderEntity(const entt::entity& entity, MeshComponent& mc, const Ref<Shader>& shader);
+		static void RenderEntity(const entt::entity& entity, MeshComponent& mc, MaterialComponent& mat);
 
 		static void EndScene();
 
-		static void Reload();
+		static void Reload(const Ref<Shader>& shader);
 
 		static void OnViewPortResize(uint32_t width, uint32_t height);
 
-		static void OnImGuiUpdate();
+		static void OnImGuiRender(bool* rendererOpen, bool* environmentOpen);
+
+		static void SetScene(const Ref<Scene>& scene);
 
 		static uint32_t GetTextureID(int index);
 
@@ -51,32 +57,9 @@ namespace Syndra {
 			glm::vec4 position;
 		};
 
-		struct pointLight
-		{
-			glm::vec4 position;
-			glm::vec4 color;
-			float dist;
-			glm::vec3 dummy;
-		};
-
-		struct spotLight {
-			glm::vec4 position;
-			glm::vec4 color;
-			glm::vec4 direction;
-			float innerCutOff;
-			float outerCutOff;
-			glm::vec2 dummy;
-		};
-
-		struct directionalLight
-		{
-			glm::vec4 position;
-			glm::vec4 direction;
-			glm::vec4 color;
-		};
-
 		struct ShadowData {
 			glm::mat4 lightViewProj;
+			glm::mat4 pointLightViewProj[4][6];
 		};
 
 		struct DrawCall {
@@ -87,22 +70,27 @@ namespace Syndra {
 
 		struct SceneData
 		{
+			//Scene object
+			Ref<Scene> scene;
 			CameraData CameraBuffer;
+			//Environment
+			float intensity;
+			Ref<Environment> environment;
+			//Anti ALiasing
+			bool useFxaa = false;
 			//Light
+			Ref<LightManager> lightManager;
 			float exposure;
 			float gamma;
 			float lightSize;
 			float orthoSize;
 			float lightNear;
 			float lightFar;
-			directionalLight dirLight;
-			pointLight pointLights[4];
-			spotLight spotLights[4];
-			Ref<UniformBuffer> CameraUniformBuffer, LightsBuffer, ShadowBuffer;
+			Ref<UniformBuffer> CameraUniformBuffer, ShadowBuffer;
 			//Shadow
 			bool softShadow = false;
-			float numPCF = 8;
-			float numBlocker = 3;
+			float numPCF = 16;
+			float numBlocker = 2;
 			glm::mat4 lightProj;
 			glm::mat4 lightView;
 			ShadowData shadowData;
@@ -110,16 +98,12 @@ namespace Syndra {
 			Ref<Texture1D> distributionSampler0, distributionSampler1;
 			//shaders
 			ShaderLibrary shaders;
-			Ref<Shader> diffuse, geoShader, outline, mouseShader, aa, main, depth, deferredLighting;
-			//FrameBuffers
-			int textureRenderSlot=2;
-			Ref<RenderPass> geoPass, shadowPass, lightingPass;
-			//Scene quad VBO, VAO, EBO
+			Ref<Shader> diffuse, geoShader, outline, mouseShader, fxaa, main, depth, deferredLighting, hdrToCubeShader;
+			//Render passes
+			Ref<RenderPass> geoPass, shadowPass, lightingPass, aaPass;
+			//Scene quad VBO
 			Ref<VertexArray> screenVao;
-			Ref<VertexBuffer> screenVbo;
-			Ref<IndexBuffer> screenEbo;
 		};
 
 	};
-
 }

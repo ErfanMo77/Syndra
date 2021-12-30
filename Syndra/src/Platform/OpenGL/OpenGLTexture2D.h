@@ -8,7 +8,7 @@ namespace Syndra {
 
 	public:
 		OpenGLTexture2D(uint32_t width, uint32_t height);
-		OpenGLTexture2D(const std::string& path, bool sRGB);
+		OpenGLTexture2D(const std::string& path, bool sRGB, bool HDR);
 		OpenGLTexture2D(uint32_t mWidth, uint32_t mHeight,const unsigned char* data, bool sRGB);
 		virtual ~OpenGLTexture2D();
 
@@ -26,6 +26,9 @@ namespace Syndra {
 		static void BindTexture(uint32_t rendererID, uint32_t slot);
 
 	private:
+		void LoadHDR();
+	private:
+		
 		std::string m_Path;
 		uint32_t m_Width, m_Height;
 		uint32_t m_RendererID;

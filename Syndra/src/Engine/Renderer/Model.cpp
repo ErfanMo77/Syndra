@@ -149,14 +149,14 @@ namespace Syndra {
 				std::string filename = str.C_Str();
 				filename = directory + '\\' + filename;
 				Ref<Texture2D> syndraTexture;
-				if (m_Scene->GetEmbeddedTexture(str.C_Str())) {
-					auto width = m_Scene->GetEmbeddedTexture(str.C_Str())->mWidth;
-					auto height = m_Scene->GetEmbeddedTexture(str.C_Str())->mHeight;
-					syndraTexture = Texture2D::Create(width,height,reinterpret_cast<unsigned char*>(m_Scene->GetEmbeddedTexture(str.C_Str())->pcData), type==aiTextureType_DIFFUSE);
+				if (auto tex = m_Scene->GetEmbeddedTexture(str.C_Str())) {
+					auto width = tex->mWidth;
+					auto height = tex->mHeight;
+					syndraTexture = Texture2D::Create(width,height,reinterpret_cast<unsigned char*>(tex->pcData));
 				}
 				else
 				{
-					syndraTexture = Texture2D::Create(filename, type == aiTextureType_DIFFUSE);
+					syndraTexture = Texture2D::Create(filename);
 				}
 				if (syndraTexture) {
 					syndraTextures.push_back(syndraTexture);
