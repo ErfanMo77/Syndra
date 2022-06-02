@@ -43,6 +43,7 @@ Syndra is my bachelor's thesis project, where I wanted to study how to build 3D 
   * Normal mapping
 
 # Future
+Trello : https://trello.com/b/BW1shhAY/syndra 
 * Engine
   * Asset manager and content Browser
   * Physics engine
