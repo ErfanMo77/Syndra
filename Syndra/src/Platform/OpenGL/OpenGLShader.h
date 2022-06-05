@@ -22,6 +22,9 @@ namespace Syndra {
 		virtual void SetFloat4(const std::string& name, const glm::vec4& value) override;
 		virtual void SetMat4(const std::string& name, const glm::mat4& value) override;
 
+		virtual void DispatchCompute(uint32_t x, uint32_t y, uint32_t z) override;
+		virtual void SetMemoryBarrier(MemoryBarrierMode mode) override;
+
 		virtual const std::string& GetName() const override;
 
 		void UploadUniformInt(const std::string& name, int value);

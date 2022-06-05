@@ -25,6 +25,11 @@ namespace Syndra {
 		uint32_t binding;
 		bool isUsed;
 	};
+	
+	enum class MemoryBarrierMode
+	{
+		image, vertex
+	};
 
 	class Shader
 	{
@@ -41,6 +46,11 @@ namespace Syndra {
 		virtual void SetFloat3(const std::string& name, const glm::vec3& value) = 0;
 		virtual void SetFloat4(const std::string& name, const glm::vec4& value) = 0;
 		virtual void SetMat4(const std::string& name, const glm::mat4& value) = 0;
+
+		//-----------Compute Shaders----------//
+		virtual void DispatchCompute(uint32_t x, uint32_t y, uint32_t z) = 0;
+		virtual void SetMemoryBarrier(MemoryBarrierMode mode) = 0;
+		//------------------------------------//
 
 		virtual std::vector<PushConstant> GetPushConstants() = 0;
 		virtual std::vector<Sampler> GetSamplers() = 0;

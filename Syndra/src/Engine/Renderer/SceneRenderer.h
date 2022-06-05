@@ -98,7 +98,7 @@ namespace Syndra {
 			Ref<Texture1D> distributionSampler0, distributionSampler1;
 			//shaders
 			ShaderLibrary shaders;
-			Ref<Shader> diffuse, geoShader, outline, mouseShader, fxaa, main, depth, deferredLighting, hdrToCubeShader;
+			Ref<Shader> diffuse, geoShader, outline, mouseShader, fxaa, main, depth, deferredLighting, hdrToCubeShader, comp;
 			//Render passes
 			Ref<RenderPass> geoPass, shadowPass, lightingPass, aaPass;
 			//Scene quad VBO

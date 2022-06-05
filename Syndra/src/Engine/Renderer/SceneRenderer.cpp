@@ -41,7 +41,7 @@ namespace Syndra {
 
 	void SceneRenderer::Initialize()
 	{
-
+		
 		//------------------------------------------------Deferred Geometry Render Pass----------------------------------------//
 		FramebufferSpecification GeoFbSpec;
 		GeoFbSpec.Attachments =
@@ -105,6 +105,7 @@ namespace Syndra {
 		//s_Data.fxaa = Shader::Create("assets/shaders/FXAA.glsl");
 
 		if (!s_Data.main) {
+			s_Data.shaders.Load("assets/shaders/computeShader.cs");
 			s_Data.shaders.Load("assets/shaders/diffuse.glsl");
 			s_Data.shaders.Load("assets/shaders/FXAA.glsl");
 			s_Data.shaders.Load("assets/shaders/main.glsl");
@@ -115,6 +116,7 @@ namespace Syndra {
 		}
 		s_Data.depth = Shader::Create("assets/shaders/depth.glsl");
 		s_Data.geoShader = s_Data.shaders.Get("GeometryPass");
+		s_Data.comp = s_Data.shaders.Get("computeShader");
 		s_Data.fxaa = s_Data.shaders.Get("FXAA");
 		s_Data.diffuse = s_Data.shaders.Get("diffuse");
 		s_Data.main = s_Data.shaders.Get("main");
@@ -239,7 +241,7 @@ namespace Syndra {
 	{
 
 		UpdateLights();
-
+		
 		auto view = s_Data.scene->m_Registry.view<TransformComponent, MeshComponent>();
 		//---------------------------------------------------------SHADOW PASS------------------------------------------//
 		s_Data.shadowPass->BindTargetFrameBuffer();

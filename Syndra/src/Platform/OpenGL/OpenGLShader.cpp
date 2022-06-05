@@ -17,6 +17,8 @@ namespace Syndra {
 			return GL_VERTEX_SHADER;
 		if (type == "fragment" || type == "pixel")
 			return GL_FRAGMENT_SHADER;
+		if (type == "compute")
+			return GL_COMPUTE_SHADER;
 
 		SN_CORE_ASSERT(false, "Unknown shader type!");
 		return 0;
@@ -28,6 +30,7 @@ namespace Syndra {
 		{
 		case GL_VERTEX_SHADER:   return shaderc_glsl_vertex_shader;
 		case GL_FRAGMENT_SHADER: return shaderc_glsl_fragment_shader;
+		case GL_COMPUTE_SHADER: return shaderc_glsl_compute_shader;
 		}
 		SN_CORE_ASSERT(false, "Unknown shader type!");
 		return (shaderc_shader_kind)0;
@@ -39,6 +42,7 @@ namespace Syndra {
 		{
 		case GL_VERTEX_SHADER:   return "GL_VERTEX_SHADER";
 		case GL_FRAGMENT_SHADER: return "GL_FRAGMENT_SHADER";
+		case GL_COMPUTE_SHADER: return "GL_COMPUTE_SHADER";
 		}
 		SN_CORE_ASSERT(false, "Unknown shader stage!");
 		return nullptr;
@@ -62,6 +66,7 @@ namespace Syndra {
 		{
 		case GL_VERTEX_SHADER:    return ".cached_opengl.vert";
 		case GL_FRAGMENT_SHADER:  return ".cached_opengl.frag";
+		case GL_COMPUTE_SHADER:  return ".cached_opengl.comp";
 		}
 		SN_CORE_ASSERT(false, "Unknown shader stage!");
 		return "";
@@ -73,6 +78,7 @@ namespace Syndra {
 		{
 		case GL_VERTEX_SHADER:    return ".cached_vulkan.vert";
 		case GL_FRAGMENT_SHADER:  return ".cached_vulkan.frag";
+		case GL_COMPUTE_SHADER:  return ".cached_opengl.comp";
 		}
 		SN_CORE_ASSERT(false, "Unknown shader stage!");
 		return "";
@@ -103,6 +109,7 @@ namespace Syndra {
 		std::unordered_map<GLenum, std::string> sources;
 		sources[GL_VERTEX_SHADER] = vertexSrc;
 		sources[GL_FRAGMENT_SHADER] = fragmentSrc;
+		sources[GL_COMPUTE_SHADER] = "compute";
 
 		CompileOrGetVulkanBinaries(sources);
 		CompileOrGetOpenGLBinaries();
@@ -431,6 +438,21 @@ namespace Syndra {
 	void OpenGLShader::SetMat4(const std::string& name, const glm::mat4& value)
 	{
 		UploadUniformMat4(name, value);
+	}
+
+	void OpenGLShader::DispatchCompute(uint32_t x, uint32_t y, uint32_t z)
+	{
+		glDispatchCompute(x,y,z);
+	}
+
+	void OpenGLShader::SetMemoryBarrier(MemoryBarrierMode mode)
+	{
+		switch (mode) 
+		{
+		case MemoryBarrierMode::image:
+			glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+			break;
+		}
 	}
 
 	void OpenGLShader::UploadUniformInt(const std::string& name, int value)
