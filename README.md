@@ -43,6 +43,7 @@ Syndra is my bachelor's thesis project, where I wanted to study how to build 3D 
   * Normal mapping
 
 # Future
+* [Trello Page](https://trello.com/b/BW1shhAY/syndra) contains all the upcoming features.
 * Engine
   * Asset manager and content Browser
   * Physics engine
@@ -61,7 +62,7 @@ Syndra is my bachelor's thesis project, where I wanted to study how to build 3D 
   
 # Compiling
 Syndra only supports windows for now.
-Visual Studio 2019 is recommended.
+Visual Studio 2019+ is recommended.
 
 Start by cloning the repository with `git clone --recursive https://github.com/ErfanMo77/Syndra`.
 If the repository was cloned non-recursively previously, use `git submodule update --init` to clone the necessary submodules.
