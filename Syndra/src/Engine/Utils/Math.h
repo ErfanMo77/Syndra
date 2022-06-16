@@ -1,7 +1,7 @@
 #pragma once
 
 #include <glm/glm.hpp>
-
+#include "Engine/Renderer/Texture.h"
 namespace Syndra::Math {
 
 	//************************************
@@ -17,5 +17,7 @@ namespace Syndra::Math {
 	// Author: The cherno
 	//************************************
 	bool DecomposeTransform(const glm::mat4& transform, glm::vec3& translation, glm::vec3& rotation, glm::vec3& scale);
+
+	void GeneratePoissonDisk(Ref<Texture1D>& sampler, size_t numSamples);
 
 }

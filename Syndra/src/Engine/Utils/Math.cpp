@@ -3,6 +3,7 @@
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/matrix_decompose.hpp>
+#include "Engine/Utils/PoissonGenerator.h"
 
 namespace Syndra::Math {
 
@@ -76,6 +77,28 @@ namespace Syndra::Math {
 
 
 		return true;
+	}
+
+	void GeneratePoissonDisk(Ref<Texture1D>& sampler, size_t numSamples) {
+		PoissonGenerator::DefaultPRNG PRNG;
+		size_t attempts = 0;
+		auto points = PoissonGenerator::generatePoissonPoints(numSamples * 2, PRNG);
+		while (points.size() < numSamples && ++attempts < 100)
+			auto points = PoissonGenerator::generatePoissonPoints(numSamples * 2, PRNG);
+		if (attempts == 100)
+		{
+			SN_CORE_ERROR("couldn't generate Poisson-disc distribution with {0} samples", numSamples);
+			numSamples = points.size();
+		}
+		std::vector<float> data(numSamples * 2);
+		for (auto i = 0, j = 0; i < numSamples; i++, j += 2)
+		{
+			auto& point = points[i];
+			data[j] = point.x;
+			data[j + 1] = point.y;
+		}
+
+		sampler = Texture1D::Create(numSamples, &data[0]);
 	}
 
 }

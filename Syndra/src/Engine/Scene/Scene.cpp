@@ -10,7 +10,6 @@ namespace Syndra {
 		:m_Name(name)
 	{
 		Entity::s_Scene = this;
-		SceneRenderer::Initialize();
 		m_Shaders = SceneRenderer::GetShaderLibrary();
 		m_Camera = new PerspectiveCamera(45.0f, 1.66f, 0.1f, 1000.0f);
 	}

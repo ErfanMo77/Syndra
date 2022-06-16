@@ -26,10 +26,6 @@ namespace Syndra {
 
 	void EditorLayer::OnAttach()
 	{
-		m_ActiveScene = CreateRef<Scene>();
-		m_ScenePanel = CreateRef<ScenePanel>(m_ActiveScene);
-		SceneRenderer::SetScene(m_ActiveScene);
-
 		FramebufferSpecification fbSpec;
 		fbSpec.Attachments = { FramebufferTextureFormat::RGBA8 , FramebufferTextureFormat::DEPTH24STENCIL8 };
 		fbSpec.Width = 1280;
@@ -469,16 +465,19 @@ namespace Syndra {
 	void EditorLayer::OnLoadEditor()
 	{
 		m_ActiveScene = CreateRef<Scene>();
-		m_ActiveScene->OnViewportResize((uint32_t)m_ViewportSize.x, (uint32_t)m_ViewportSize.y);
-		m_ScenePanel->SetContext(m_ActiveScene);
-
+		SceneRenderer::SetScene(m_ActiveScene);
+		SceneRenderer::InitializeShaders();
+		m_ScenePanel = CreateRef<ScenePanel>(m_ActiveScene);
 		SceneSerializer serializer(m_ActiveScene);
 #ifdef SN_DEBUG
 		serializer.Deserialize("assets/Scenes/Default.syndra");
 #else
 		serializer.Deserialize("assets/Scenes/Default_R.syndra");
 #endif // SN_DEBUG
-		SceneRenderer::SetScene(m_ActiveScene);
+
+		SceneRenderer::InitializeEnvironment();
+		SceneRenderer::Initialize();
+		m_ActiveScene->OnViewportResize((uint32_t)m_ViewportSize.x, (uint32_t)m_ViewportSize.y);
 		Application::Get().GetWindow().SetTitle("Syndra Editor " + m_ActiveScene->m_Name + " scene");
 	}
 
@@ -497,8 +496,11 @@ namespace Syndra {
 	{
 		m_ActiveScene = CreateRef<Scene>();
 		m_ActiveScene->OnViewportResize((uint32_t)m_ViewportSize.x, (uint32_t)m_ViewportSize.y);
-		m_ScenePanel->SetContext(m_ActiveScene);
 		SceneRenderer::SetScene(m_ActiveScene);
+		SceneRenderer::InitializeShaders();
+		m_ScenePanel->SetContext(m_ActiveScene);
+		SceneRenderer::InitializeEnvironment();
+		SceneRenderer::Initialize();
 	}
 
 	void EditorLayer::OpenScene()
@@ -508,12 +510,13 @@ namespace Syndra {
 		{
 			m_ActiveScene = CreateRef<Scene>();
 			m_ActiveScene->OnViewportResize((uint32_t)m_ViewportSize.x, (uint32_t)m_ViewportSize.y);
+			SceneRenderer::SetScene(m_ActiveScene);
+			SceneRenderer::InitializeShaders();
 			m_ScenePanel->SetContext(m_ActiveScene);
-
 			SceneSerializer serializer(m_ActiveScene);
 			serializer.Deserialize(*filepath);
-
-			SceneRenderer::SetScene(m_ActiveScene);
+			SceneRenderer::InitializeEnvironment();
+			SceneRenderer::Initialize();
 			Application::Get().GetWindow().SetTitle("Syndra Editor "+m_ActiveScene->m_Name+ " scene");
 		}
 	}

@@ -39,7 +39,7 @@ namespace Syndra {
 		void OnCameraUpdate(Timestep ts) { m_Camera->OnUpdate(ts); }
 
 		uint32_t GetMainTextureID() { return SceneRenderer::GetTextureID(0); }
-		Ref<FrameBuffer> GetMainFrameBuffer() { return SceneRenderer::GetGeoFrameBuffer(); }
+		Ref<FrameBuffer> GetMainFrameBuffer() { return SceneRenderer::GetMainFrameBuffer(); }
 		FramebufferSpecification GetSpec() { return SceneRenderer::GetMainFrameSpec(); }
 
 		ShaderLibrary& GetShaderLibrary() { return m_Shaders; }
@@ -68,6 +68,7 @@ namespace Syndra {
 		friend class ScenePanel;
 		friend class SceneSerializer;
 		friend class SceneRenderer;
+		friend class DeferredRenderer;
 	};
 
 }
