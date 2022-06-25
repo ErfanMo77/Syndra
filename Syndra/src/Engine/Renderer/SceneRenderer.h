@@ -1,5 +1,6 @@
 #pragma once
 #include "DeferredRenderer.h"
+#include "ForwardPlusRenderer.h"
 
 namespace Syndra {
 

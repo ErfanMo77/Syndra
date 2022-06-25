@@ -69,6 +69,7 @@ namespace Syndra {
 		friend class SceneSerializer;
 		friend class SceneRenderer;
 		friend class DeferredRenderer;
+		friend class ForwardPlusRenderer;
 	};
 
 }

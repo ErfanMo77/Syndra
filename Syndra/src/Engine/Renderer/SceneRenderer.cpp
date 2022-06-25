@@ -14,7 +14,7 @@ namespace Syndra {
 
 	void SceneRenderer::Initialize()
 	{
-		s_Data.renderPipeline = CreateRef<DeferredRenderer>();
+		s_Data.renderPipeline = CreateRef<ForwardPlusRenderer>();
 
 		//Initializing the pipeline
 		s_Data.renderPipeline->Init(s_Data.scene, s_Data.shaders, s_Data.environment);
@@ -30,13 +30,16 @@ namespace Syndra {
 		//------------------------------------------------Shaders-----------------------------------------------//
 		//Loading all shaders
 		if (!s_Data.main) {
-			//s_Data.shaders.Load("assets/shaders/computeShader.cs");
+			s_Data.shaders.Load("assets/shaders/computeShader.cs");
 			s_Data.shaders.Load("assets/shaders/diffuse.glsl");
 			s_Data.shaders.Load("assets/shaders/FXAA.glsl");
 			s_Data.shaders.Load("assets/shaders/main.glsl");
 			s_Data.shaders.Load("assets/shaders/DeferredLighting.glsl");
 			s_Data.shaders.Load("assets/shaders/GeometryPass.glsl");
 			s_Data.shaders.Load("assets/shaders/depth.glsl");
+			s_Data.shaders.Load("assets/shaders/depthPass.glsl");
+			s_Data.shaders.Load("assets/shaders/ForwardShading.glsl");
+			s_Data.shaders.Load("assets/shaders/ForwardPostProc.glsl");
 			//s_Data.shaders.Load("assets/shaders/mouse.glsl");
 			//s_Data.shaders.Load("assets/shaders/outline.glsl");
 		}
