@@ -35,12 +35,20 @@ namespace Syndra {
 			glm::mat4 lightViewProj;
 		};
 
+		struct VisibleIndex {
+			int index;
+		};
+
 		struct pointLight
 		{
 			glm::vec4 position;
 			glm::vec4 color;
-			float radius;
-			glm::vec3 padding;
+			glm::vec4 paddingAndRadius;
+		};
+
+		struct pointLightData
+		{
+			pointLight lights[512];
 		};
 
 		struct spotLight {
@@ -71,9 +79,10 @@ namespace Syndra {
 			Ref<Shader>  depthShader, postProcShader, compShader, forwardLightingShader, shadowDepthShader;
 			//lighting and shadow parameters
 			float exposure, gamma, lightSize, orthoSize, lightNear, lightFar;
-			//Point light buffers
+			//Point lights
 			uint32_t lightBuffer, visibleLightIndicesBuffer, numLights;
 			uint32_t workGroupsX, workGroupsY;
+			pointLightData pLights;
 			//Directional light data
 			Ref<UniformBuffer> ShadowBuffer;
 			glm::mat4 lightProj;

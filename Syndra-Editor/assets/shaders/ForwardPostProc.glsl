@@ -41,7 +41,7 @@ void main()
 layout(location = 0) out vec4 FragColor;
 layout(location = 1) out vec4 FragDepth;
 
-layout(location = 0) in vec2 v_uv;
+layout(location = 0) in vec4 v_uv;
 
 //Main color texture
 layout(binding = 0) uniform sampler2D u_Texture;
@@ -122,10 +122,10 @@ layout(binding = 2) uniform sampler2D depthMap;
 void main()
 {
     if(pc.useFXAA==1){
-        FragColor = FXAA(v_uv.wz);
+        FragColor = FXAA(v_uv.xy);
     }else { 
-        FragColor =  vec4(texture(u_Texture, v_uv).xyz,1.0);
+        FragColor =  vec4(texture(u_Texture, v_uv.xy).xyz,1.0);
     }
-    float depth = LinearizeDepth(texture(depthMap, v_uv).r) / 1000.0;
+    float depth = LinearizeDepth(texture(depthMap, v_uv.xy).r) / 1000.0;
 	FragDepth = vec4(vec3(depth), 1.0f);
 } 

@@ -247,6 +247,7 @@ namespace Syndra {
 			glsl.set_common_options(options);
 	
 			m_OpenGLSourceCode[stage] = glsl.compile();
+			//Uncomment to print the shader on console
 			//SN_CORE_TRACE(m_OpenGLSourceCode[stage]);
 		}
 		

@@ -46,8 +46,12 @@ namespace Syndra {
 
 		//-------------------------------------Lighting and Post Processing Pass----------------------------------//
 		FramebufferSpecification lightingFB;
-		lightingFB.Attachments = { 
-			FramebufferTextureFormat::RGBA8, 
+		lightingFB.Attachments = {
+			//main color
+			FramebufferTextureFormat::RGBA8,
+			//light debug
+			FramebufferTextureFormat::RGBA8,
+			//entities' ids for mouse click
 			FramebufferTextureFormat::RED_INTEGER,
 			FramebufferTextureFormat::DEPTH24STENCIL8
 		};
@@ -120,10 +124,10 @@ namespace Syndra {
 		r_Data.intensity = 1.0f;
 
 		//Point Lights initialization
-		r_Data.numLights = 1024;
+		r_Data.numLights = 512;
 		r_Data.workGroupsX = (postProcFB.Width + (postProcFB.Width % 16)) / 16;
 		r_Data.workGroupsY = (postProcFB.Height + (postProcFB.Height % 16)) / 16;
-		//SetupLights();
+		SetupLights();
 
 		//Directional Light initialization
 		r_Data.dirLightBuffer = UniformBuffer::Create(sizeof(r_Data.dirLight), 2);
@@ -173,35 +177,66 @@ namespace Syndra {
 		
 		//--------------------------------------------Light Culling-----------------------------------------------//
 		//Compute pass to calculate light indices
-		//r_Data.compShader->Bind();
+		r_Data.compShader->Bind();
 		//Attaching depth map from previous pass
-		//Texture2D::BindTexture(r_Data.depthPass->GetSpecification().TargetFrameBuffer->GetDepthAttachmentRendererID(), 0);
-		// Define work group sizes in x and y direction based off screen size and tile size (in pixels)
-
-		//TODO
-		//Bind light buffers
-		/*r_Data.compShader->DispatchCompute(r_Data.workGroupsX, r_Data.workGroupsY, 1);
-		r_Data.compShader->Unbind();*/
+		Texture2D::BindTexture(r_Data.depthPass->GetSpecification().TargetFrameBuffer->GetDepthAttachmentRendererID(), 2);
+		r_Data.compShader->SetMat4("pc.view", r_Data.scene->m_Camera->GetViewMatrix());
+		r_Data.compShader->SetMat4("pc.projection", r_Data.scene->m_Camera->GetProjection());
+		r_Data.compShader->SetFloat("pc.width", r_Data.depthPass->GetSpecification().TargetFrameBuffer->GetSpecification().Width);
+		r_Data.compShader->SetFloat("pc.height", r_Data.depthPass->GetSpecification().TargetFrameBuffer->GetSpecification().Height);
+		r_Data.compShader->SetInt("pc.lightCount", r_Data.numLights);
+		//Define work group sizes in x and y direction based off screen size and tile size (in pixels)
+		r_Data.compShader->DispatchCompute(r_Data.workGroupsX, r_Data.workGroupsY, 1);
+		r_Data.compShader->Unbind();
 
 		//---------------------------------------Lighting Accumulation--------------------------------------------//
-		//r_Data.lightingPass->BindTargetFrameBuffer();
-
-		//RenderCommand::SetState(RenderState::DEPTH_TEST, false);
-
-		//r_Data.forwardLightingShader->Bind();
-		////shadow map samplers
-		//Texture2D::BindTexture(r_Data.shadowPass->GetSpecification().TargetFrameBuffer->GetDepthAttachmentRendererID(), 3);
-		//Texture1D::BindTexture(r_Data.distributionSampler0->GetRendererID(), 4);
-		//Texture1D::BindTexture(r_Data.distributionSampler1->GetRendererID(), 5);
-		////Push constant variables
-		////r_Data.deferredLighting->SetFloat("pc.size", r_Data.lightSize * 0.0001f);
-		////r_Data.deferredLighting->SetInt("pc.numPCFSamples", r_Data.numPCF);
-		////r_Data.deferredLighting->SetInt("pc.numBlockerSearchSamples", r_Data.numBlocker);
-		////r_Data.deferredLighting->SetInt("pc.softShadow", (int)r_Data.softShadow);
-		////r_Data.deferredLighting->SetFloat("pc.exposure", r_Data.exposure);
-		////r_Data.deferredLighting->SetFloat("pc.gamma", r_Data.gamma);
-		////r_Data.deferredLighting->SetFloat("pc.near", r_Data.lightNear);
-		////r_Data.deferredLighting->SetFloat("pc.intensity", r_Data.intensity);
+		r_Data.lightingPass->BindTargetFrameBuffer();
+		RenderCommand::Clear();
+		//RenderCommand::SetState(RenderState::DEPTH_TEST, true);
+		r_Data.forwardLightingShader->Bind();
+		r_Data.forwardLightingShader->SetInt("pc.numberOfTilesX", r_Data.workGroupsX);
+		for (auto ent : view)
+		{
+			auto& tc = view.get<TransformComponent>(ent);
+			auto& mc = view.get<MeshComponent>(ent);
+			if (!mc.path.empty())
+			{
+				if (r_Data.scene->m_Registry.has<MaterialComponent>(ent)) {
+					auto& mat = r_Data.scene->m_Registry.get<MaterialComponent>(ent);
+					r_Data.forwardLightingShader->SetInt("transform.id", (uint32_t)ent);
+					r_Data.forwardLightingShader->SetMat4("transform.u_trans", tc.GetTransform());
+					Renderer::Submit(mat.m_Material, mc.model);
+				}
+				else
+				{
+					/*r_Data.forwardLightingShader->SetInt("push.HasAlbedoMap", 1);
+					r_Data.forwardLightingShader->SetFloat("push.tiling", 1.0f);
+					r_Data.forwardLightingShader->SetInt("push.HasNormalMap", 0);
+					r_Data.forwardLightingShader->SetInt("push.HasMetallicMap", 0);
+					r_Data.forwardLightingShader->SetInt("push.HasRoughnessMap", 0);
+					r_Data.forwardLightingShader->SetInt("push.HasAOMap", 0);
+					r_Data.forwardLightingShader->SetFloat("push.material.MetallicFactor", 0);
+					r_Data.forwardLightingShader->SetFloat("push.material.RoughnessFactor", 1);
+					r_Data.forwardLightingShader->SetFloat("push.material.AO", 1);*/
+					r_Data.forwardLightingShader->SetMat4("transform.u_trans", tc.GetTransform());
+					r_Data.forwardLightingShader->SetInt("transform.id", (uint32_t)ent);
+					Renderer::Submit(r_Data.forwardLightingShader, mc.model);
+				}
+			}
+		}
+		//shadow map samplers
+		Texture2D::BindTexture(r_Data.shadowPass->GetSpecification().TargetFrameBuffer->GetDepthAttachmentRendererID(), 3);
+		Texture1D::BindTexture(r_Data.distributionSampler0->GetRendererID(), 4);
+		Texture1D::BindTexture(r_Data.distributionSampler1->GetRendererID(), 5);
+		//Push constant variables
+		/*r_Data.deferredLighting->SetFloat("pc.size", r_Data.lightSize * 0.0001f);
+		r_Data.deferredLighting->SetInt("pc.numPCFSamples", r_Data.numPCF);
+		r_Data.deferredLighting->SetInt("pc.numBlockerSearchSamples", r_Data.numBlocker);
+		r_Data.deferredLighting->SetInt("pc.softShadow", (int)r_Data.softShadow);
+		r_Data.deferredLighting->SetFloat("pc.exposure", r_Data.exposure);
+		r_Data.deferredLighting->SetFloat("pc.gamma", r_Data.gamma);
+		r_Data.deferredLighting->SetFloat("pc.near", r_Data.lightNear);
+		r_Data.deferredLighting->SetFloat("pc.intensity", r_Data.intensity);*/
 
 		//if (r_Data.environment) {
 		//	r_Data.environment->SetIntensity(r_Data.intensity);
@@ -211,8 +246,8 @@ namespace Syndra {
 		//}
 		//Renderer::Submit(r_Data.forwardLightingShader, r_Data.screenVao);
 
-		//r_Data.forwardLightingShader->Unbind();
-		//r_Data.lightingPass->UnbindTargetFrameBuffer();
+		r_Data.forwardLightingShader->Unbind();
+		r_Data.lightingPass->UnbindTargetFrameBuffer();
 	}
 
 	void ForwardPlusRenderer::End()
@@ -234,6 +269,7 @@ namespace Syndra {
 		r_Data.postProcPass->BindTargetFrameBuffer();
 		r_Data.postProcShader->Bind();
 		r_Data.screenVao->Bind();
+		//TODO FIX FXAA SHADER
 		r_Data.postProcShader->SetInt("pc.useFXAA", r_Data.useFxaa==true ? 1:0);	
 		r_Data.postProcShader->SetFloat("pc.width", (float)r_Data.postProcPass->GetSpecification().TargetFrameBuffer->GetSpecification().Width);
 		r_Data.postProcShader->SetFloat("pc.height", (float)r_Data.postProcPass->GetSpecification().TargetFrameBuffer->GetSpecification().Height);
@@ -242,38 +278,32 @@ namespace Syndra {
 		Renderer::Submit(r_Data.postProcShader, r_Data.screenVao);
 		r_Data.postProcShader->Unbind();
 		r_Data.postProcPass->UnbindTargetFrameBuffer();
-		
-
+	
 	}
 
 	void ForwardPlusRenderer::SetupLights()
 	{
-		glGenBuffers(1, &r_Data.lightBuffer);
-		glGenBuffers(1, &r_Data.visibleLightIndicesBuffer);
+		glCreateBuffers(1, &r_Data.lightBuffer);
+		glCreateBuffers(1, &r_Data.visibleLightIndicesBuffer);
 
-		// Bind light buffer
-		glBindBuffer(GL_SHADER_STORAGE_BUFFER, r_Data.lightBuffer);
-		glBufferData(GL_SHADER_STORAGE_BUFFER, r_Data.numLights * sizeof(PointLight), 0, GL_DYNAMIC_DRAW);
+		//creating and binding point light buffer
+		glNamedBufferData(r_Data.lightBuffer, r_Data.numLights * sizeof(pointLight), nullptr, GL_DYNAMIC_DRAW);
+		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, r_Data.lightBuffer);
 
 		size_t numberOfTiles = r_Data.workGroupsX * r_Data.workGroupsY;
 
 		// Bind visible light indices buffer
-		glBindBuffer(GL_SHADER_STORAGE_BUFFER, r_Data.visibleLightIndicesBuffer);
-		glBufferData(GL_SHADER_STORAGE_BUFFER, numberOfTiles * sizeof(int) * 1024, 0, GL_STATIC_DRAW);
+		glNamedBufferData(r_Data.visibleLightIndicesBuffer, numberOfTiles * sizeof(VisibleIndex) * r_Data.numLights, nullptr, GL_STATIC_DRAW);
+		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, r_Data.visibleLightIndicesBuffer);
 
 		//Setting point lights' values
-		glBindBuffer(GL_SHADER_STORAGE_BUFFER, r_Data.lightBuffer);
-		auto pointLights = (pointLight*)glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_WRITE);
-
 		for (int i = 0; i < r_Data.numLights; i++) {
-			pointLight& light = pointLights[i];
+			auto& light = r_Data.pLights.lights[i];
 			light.color = glm::vec4(0);
 			light.position = glm::vec4(0);
-			light.radius = 10.0f;
+			light.paddingAndRadius = glm::vec4(glm::vec3(0),00.0f);
 		}
-
-		glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
-		glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+		glNamedBufferSubData(r_Data.lightBuffer, 0, sizeof(r_Data.pLights), &r_Data.pLights);
 	}
 
 	void ForwardPlusRenderer::UpdateLights()
@@ -302,22 +332,16 @@ namespace Syndra {
 				p = nullptr;
 			}
 			if (lc.type == LightType::Point) {
-				if (pIndex < 1024) {
-					//auto p = dynamic_cast<PointLight*>(lc.light.get());
+				if (pIndex < 512) {
+					auto p = dynamic_cast<PointLight*>(lc.light.get());
 
-					//glBindBuffer(GL_SHADER_STORAGE_BUFFER, r_Data.lightBuffer);
-					//auto pointLights = (pointLight*)glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_WRITE);
+					pointLight& light = r_Data.pLights.lights[pIndex];
+					light.color = glm::vec4(p->GetColor(), 1) * p->GetIntensity();
+					light.position = glm::vec4(tc.Translation, 1);
+					light.paddingAndRadius = glm::vec4(glm::vec3(0), p->GetRange());
 
-					//pointLight& light = pointLights[pIndex];
-					//light.color = glm::vec4(p->GetColor(), 1) * p->GetIntensity();
-					//light.position = glm::vec4(tc.Translation, 1);
-					//light.radius = p->GetRange();
-
-					//glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
-					//glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-
-					//pIndex++;
-					//p = nullptr;
+					pIndex++;
+					p = nullptr;
 				}
 			}
 			//if (lc.type == LightType::Spot) {
@@ -329,11 +353,14 @@ namespace Syndra {
 			//	}
 			//}
 		}
+		//sending updated point lights to gpu
+		glNamedBufferSubData(r_Data.lightBuffer, 0, sizeof(r_Data.pLights), &r_Data.pLights);
 	}
 
 	uint32_t ForwardPlusRenderer::GetFinalTextureID(int index)
 	{
-		return r_Data.postProcPass->GetSpecification().TargetFrameBuffer->GetColorAttachmentRendererID(1);
+		//return r_Data.postProcPass->GetSpecification().TargetFrameBuffer->GetColorAttachmentRendererID(1);
+		return r_Data.lightingPass->GetSpecification().TargetFrameBuffer->GetColorAttachmentRendererID(0);
 	}
 
 	Ref<FrameBuffer> ForwardPlusRenderer::GetMainFrameBuffer()
@@ -352,14 +379,19 @@ namespace Syndra {
 
 			ImGui::Text("ForwardPlus debugger");
 			static bool showDepth = false;
+			static bool showlights = false;
 			if (ImGui::Button("Show Depth")) {
 				showDepth = true;
+			}
+			if (ImGui::Button("Show Lights")) {
+				showlights = true;
 			}
 			auto width = r_Data.postProcPass->GetSpecification().TargetFrameBuffer->GetSpecification().Width * 0.5f;
 			auto height = r_Data.postProcPass->GetSpecification().TargetFrameBuffer->GetSpecification().Height * 0.5f;
 			auto ratio = height / width;
 			width = ImGui::GetContentRegionAvail().x;
 			height = ratio * width;
+
 			if (showDepth) {
 				ImGui::Begin("Show Depth", &showDepth);
 				width = ImGui::GetContentRegionAvail().x;
@@ -367,7 +399,13 @@ namespace Syndra {
 				ImGui::Image((ImTextureID)r_Data.postProcPass->GetFrameBufferTextureID(1), { width, height }, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
 				ImGui::End();
 			}
-
+			if (showlights) {
+				ImGui::Begin("Show lights", &showlights);
+				width = ImGui::GetContentRegionAvail().x;
+				height = ratio * width;
+				ImGui::Image((ImTextureID)r_Data.lightingPass->GetFrameBufferTextureID(1), { width, height }, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
+				ImGui::End();
+			}
 			
 			ImGui::Separator();
 			//V-Sync
@@ -428,9 +466,8 @@ namespace Syndra {
 		r_Data.workGroupsX = (w + (w % 16)) / 16;
 		r_Data.workGroupsY = (h + (h % 16)) / 16;
 		size_t numberOfTiles = r_Data.workGroupsX * r_Data.workGroupsY;
-		/*glBindBuffer(GL_SHADER_STORAGE_BUFFER, r_Data.visibleLightIndicesBuffer);
-		glBufferData(GL_SHADER_STORAGE_BUFFER, numberOfTiles * sizeof(int) * 1024, 0, GL_STATIC_DRAW);
-		glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);*/
+		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, r_Data.visibleLightIndicesBuffer);
+		glNamedBufferSubData(r_Data.visibleLightIndicesBuffer, 0, numberOfTiles * sizeof(VisibleIndex) * r_Data.numLights, nullptr);
 	}
 
 }

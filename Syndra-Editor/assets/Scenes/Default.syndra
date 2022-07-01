@@ -30,7 +30,7 @@ Entities:
     MeshComponent:
       Path: assets\Models\plane\plane.obj
     MaterialComponent:
-      shader: GeometryPass
+      shader: ForwardShading
       Textures:
         - {binding: 1, path: C:\dev\Syndra\Syndra-Editor\assets\Textures\Gold\schvfgwp_4K_Metalness.jpg}
         - {binding: 0, path: ""}
@@ -48,13 +48,13 @@ Entities:
     TagComponent:
       Tag: Sphere
     TransformComponent:
-      Translation: [0.00610388815, 1.7216078, -0.00982655585]
+      Translation: [0, 0, 0]
       Rotation: [0, 0, 0]
       Scale: [1, 1, 1]
     MeshComponent:
       Path: assets\Models\Sphere\Sphere.fbx
     MaterialComponent:
-      shader: GeometryPass
+      shader: ForwardShading
       Textures:
         - {binding: 0, path: ""}
         - {binding: 1, path: ""}

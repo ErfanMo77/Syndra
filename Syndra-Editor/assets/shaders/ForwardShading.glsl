@@ -1,7 +1,7 @@
 // Forward shading light accumulation shader
 #type vertex
-
 #version 460
+
 layout(location = 0) in vec3 a_pos;
 layout(location = 1) in vec2 a_uv;
 layout(location = 2) in vec3 a_normal;
@@ -14,12 +14,11 @@ layout(binding = 0) uniform camera
 	vec4 cameraPos;
 } cam;
 
-layout(binding = 1) uniform Transform
+layout(push_constant) uniform Transform
 {
-	 mat4 u_trans;
-	 vec4 lightPos;
-} transform;
-
+	mat4 u_trans;
+	int id;
+}transform;
 
 
 struct VS_OUT {
@@ -31,6 +30,7 @@ struct VS_OUT {
 };
 
 layout(location = 0) out VS_OUT vs_out;
+layout(location = 8) out flat int id;
 
 void main(){
 
@@ -45,7 +45,9 @@ void main(){
 
 	mat3 TBN = transpose(mat3(T, B, N));
 
-	vs_out.TangentLightPos = TBN * vec3(transform.lightPos);
+	id = transform.id;
+
+	//vs_out.TangentLightPos = TBN * vec3(transform.lightPos);
     vs_out.TangentViewPos  = TBN * vec3(cam.cameraPos);
     vs_out.TangentFragPos  = TBN * vs_out.v_pos;
 	gl_Position = cam.u_ViewProjection * transform.u_trans *vec4(a_pos, 1.0);
@@ -53,8 +55,10 @@ void main(){
 
 #type fragment
 #version 460
-layout(location = 0) out vec4 fragColor;	
-layout(location = 1) out vec4 fragDepth;	
+
+layout(location = 0) out vec4 fragColor;
+layout(location = 1) out vec4 lightDebug;
+layout(location = 2) out int entityID;
 
 layout(binding = 0) uniform sampler2D texture_diffuse;
 layout(binding = 3) uniform sampler2D shadowMap;
@@ -81,7 +85,7 @@ const int NEAR = 2;
 struct PointLight {
     vec4 position;
     vec4 color;
-	float dist;
+	vec4 paddingAndRadius;
 };
 
 struct DirLight {
@@ -98,19 +102,38 @@ struct SpotLight {
     float outerCutOff;      
 };
 
+struct VisibleIndex
+{
+	int index;
+};
+
+
 layout(binding = 2) uniform Lights
 {
 	DirLight dLight;
 } lights;
 
 
-layout(push_constant) uniform pc
-{
+layout(push_constant) uniform pushConstants{
+	float exposure;
+	float gamma;
 	float size;
+	float near;
+	float intensity;
 	int numPCFSamples;
 	int numBlockerSearchSamples;
 	int softShadow;
-} push;
+	int numberOfTilesX;
+} pc;
+
+// Shader storage buffer objects
+layout(std430, binding = 0) readonly buffer LightBuffer {
+	PointLight data[];
+} lightBuffer;
+
+layout(std430, binding = 1) readonly buffer VisibleLightIndicesBuffer {
+	VisibleIndex data[];
+} visibleLightIndicesBuffer;
 
 struct VS_OUT {
     vec3 v_pos;
@@ -121,10 +144,7 @@ struct VS_OUT {
 };
 
 layout(location = 0) in VS_OUT fs_in;
-
-vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir, vec3 col);
-vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir,vec3 col);
-vec3 CalcSpotLight(SpotLight light, vec3 normal, vec3 fragPos, vec3 viewDir, vec3 col);
+layout(location = 8) in	flat int id;
 
 //////////////////////////////////////////////////////////////////////////
 //vec2 RandomDirection(sampler1D distribution, float u)
@@ -270,6 +290,49 @@ void main(){
 	//	shadow = HardShadow(fs_in.FragPosLightSpace);
 	//}
 	//result = (1-shadow) * result + color.rgb * 0.1;
-	fragColor = vec4(1.0);
+
+	// Determine which tile this pixel belongs to
+	ivec2 location = ivec2(gl_FragCoord.xy);
+	ivec2 tileID = location / ivec2(16, 16);
+	uint index = tileID.y * pc.numberOfTilesX + tileID.x;
+
+	//uint offset = index * 1024;
+	//for (uint i = 0; i < 1024 && visibleLightIndicesBuffer.data[offset + i].index != -1; i++) {
+	//uint lightIndex = visibleLightIndicesBuffer.data[offset + i].index;
+	//PointLight light = lightBuffer.data[lightIndex];
+	//
+	//vec4 lightColor = light.color;
+	//vec3 tangentLightPosition = fragment_in.TBN * light.position.xyz;
+	//float lightRadius = light.paddingAndRadius.w;
+	//
+	//// Calculate the light attenuation on the pre-normalized lightDirection
+	//vec3 lightDirection = tangentLightPosition - fragment_in.tangentFragmentPosition;
+	//float attenuation = attenuate(lightDirection, lightRadius);
+	//
+	//// Normalize the light direction and calculate the halfway vector
+	//lightDirection = normalize(lightDirection);
+	//vec3 halfway = normalize(lightDirection + viewDirection);
+	//
+	//// Calculate the diffuse and specular components of the irradiance, then irradiance, and accumulate onto color
+	//float diffuse = max(dot(lightDirection, normal), 0.0);
+	//// How do I change the material propery for the spec exponent? is it the alpha of the spec texture?
+	//float specular = pow(max(dot(normal, halfway), 0.0), 32.0);
+	//
+	//// Hacky fix to handle issue where specular light still effects scene once point light has passed into an object
+	//if (diffuse == 0.0) {
+	//	specular = 0.0;
+	//}
+
+
+	uint offset = index * 512;
+	uint i;
+	for (i = 0; i < 512 && visibleLightIndicesBuffer.data[offset + i].index != -1; i++);
+
+	float ratio = float(i) / float(2.0);
+
+	fragColor = vec4(vec3(1), 1.0);
+	lightDebug = vec4(vec3(ratio),1.0);
+	entityID = id;
+	//fragColor = vec4(1.0);
 
 }
