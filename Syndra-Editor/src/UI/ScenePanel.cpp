@@ -262,7 +262,7 @@ namespace Syndra {
 			if (ImGui::MenuItem("Material"))
 			{
 				if (!m_SelectionContext.HasComponent<MaterialComponent>())
-					m_SelectionContext.AddComponent<MaterialComponent>(m_Shaders.Get("GeometryPass"));
+					m_SelectionContext.AddComponent<MaterialComponent>(m_Shaders.Get("ForwardShading"));//("GeometryPass"));
 				else
 					SN_CORE_WARN("This entity already has the Camera Component!");
 				ImGui::CloseCurrentPopup();

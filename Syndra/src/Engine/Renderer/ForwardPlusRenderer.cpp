@@ -118,15 +118,15 @@ namespace Syndra {
 		r_Data.exposure = 0.5f;
 		r_Data.gamma = 1.9f;
 		r_Data.lightSize = 1.0f;
-		r_Data.orthoSize = 20.0f;
+		r_Data.orthoSize = 30.0f;
 		r_Data.lightNear = 20.0f;
 		r_Data.lightFar = 200.0f;
 		r_Data.intensity = 1.0f;
 
 		//Point Lights initialization
 		r_Data.numLights = 512;
-		r_Data.workGroupsX = (postProcFB.Width + (postProcFB.Width % 16)) / 16;
-		r_Data.workGroupsY = (postProcFB.Height + (postProcFB.Height % 16)) / 16;
+		r_Data.workGroupsX = (1920 + (1920 % 16)) / 16;
+		r_Data.workGroupsY = (1080 + (1080 % 16)) / 16;
 		SetupLights();
 
 		//Directional Light initialization
@@ -194,7 +194,28 @@ namespace Syndra {
 		RenderCommand::Clear();
 		//RenderCommand::SetState(RenderState::DEPTH_TEST, true);
 		r_Data.forwardLightingShader->Bind();
-		r_Data.forwardLightingShader->SetInt("pc.numberOfTilesX", r_Data.workGroupsX);
+		r_Data.forwardLightingShader->SetInt("push.numberOfTilesX", r_Data.workGroupsX);
+		//shadow map samplers
+		Texture2D::BindTexture(r_Data.shadowPass->GetSpecification().TargetFrameBuffer->GetDepthAttachmentRendererID(), 5);
+		Texture1D::BindTexture(r_Data.distributionSampler0->GetRendererID(), 6);
+		Texture1D::BindTexture(r_Data.distributionSampler1->GetRendererID(), 10);
+		//Push constant variables (lighting and shadow parameters)
+		r_Data.forwardLightingShader->SetFloat("push.size", r_Data.lightSize * 0.0001f);
+		r_Data.forwardLightingShader->SetInt("push.numPCFSamples", r_Data.numPCF);
+		r_Data.forwardLightingShader->SetInt("push.numBlockerSearchSamples", r_Data.numBlocker);
+		r_Data.forwardLightingShader->SetInt("push.softShadow", (int)r_Data.softShadow);
+		r_Data.forwardLightingShader->SetFloat("push.exposure", r_Data.exposure);
+		r_Data.forwardLightingShader->SetFloat("push.gamma", r_Data.gamma);
+		r_Data.forwardLightingShader->SetFloat("push.near", r_Data.lightNear);
+		r_Data.forwardLightingShader->SetFloat("push.intensity", r_Data.intensity);
+		//Environment samplers
+		if (r_Data.environment) {
+			r_Data.environment->SetIntensity(r_Data.intensity);
+			r_Data.environment->BindIrradianceMap(7);
+			r_Data.environment->BindPreFilterMap(8);
+			r_Data.environment->BindBRDFMap(9);
+		}
+		r_Data.forwardLightingShader->Bind();
 		for (auto ent : view)
 		{
 			auto& tc = view.get<TransformComponent>(ent);
@@ -209,7 +230,7 @@ namespace Syndra {
 				}
 				else
 				{
-					/*r_Data.forwardLightingShader->SetInt("push.HasAlbedoMap", 1);
+					r_Data.forwardLightingShader->SetInt("push.HasAlbedoMap", 1);
 					r_Data.forwardLightingShader->SetFloat("push.tiling", 1.0f);
 					r_Data.forwardLightingShader->SetInt("push.HasNormalMap", 0);
 					r_Data.forwardLightingShader->SetInt("push.HasMetallicMap", 0);
@@ -217,54 +238,26 @@ namespace Syndra {
 					r_Data.forwardLightingShader->SetInt("push.HasAOMap", 0);
 					r_Data.forwardLightingShader->SetFloat("push.material.MetallicFactor", 0);
 					r_Data.forwardLightingShader->SetFloat("push.material.RoughnessFactor", 1);
-					r_Data.forwardLightingShader->SetFloat("push.material.AO", 1);*/
+					r_Data.forwardLightingShader->SetFloat("push.material.AO", 1);
 					r_Data.forwardLightingShader->SetMat4("transform.u_trans", tc.GetTransform());
 					r_Data.forwardLightingShader->SetInt("transform.id", (uint32_t)ent);
 					Renderer::Submit(r_Data.forwardLightingShader, mc.model);
 				}
 			}
 		}
-		//shadow map samplers
-		Texture2D::BindTexture(r_Data.shadowPass->GetSpecification().TargetFrameBuffer->GetDepthAttachmentRendererID(), 3);
-		Texture1D::BindTexture(r_Data.distributionSampler0->GetRendererID(), 4);
-		Texture1D::BindTexture(r_Data.distributionSampler1->GetRendererID(), 5);
-		//Push constant variables
-		/*r_Data.deferredLighting->SetFloat("pc.size", r_Data.lightSize * 0.0001f);
-		r_Data.deferredLighting->SetInt("pc.numPCFSamples", r_Data.numPCF);
-		r_Data.deferredLighting->SetInt("pc.numBlockerSearchSamples", r_Data.numBlocker);
-		r_Data.deferredLighting->SetInt("pc.softShadow", (int)r_Data.softShadow);
-		r_Data.deferredLighting->SetFloat("pc.exposure", r_Data.exposure);
-		r_Data.deferredLighting->SetFloat("pc.gamma", r_Data.gamma);
-		r_Data.deferredLighting->SetFloat("pc.near", r_Data.lightNear);
-		r_Data.deferredLighting->SetFloat("pc.intensity", r_Data.intensity);*/
-
-		//if (r_Data.environment) {
-		//	r_Data.environment->SetIntensity(r_Data.intensity);
-		//	r_Data.environment->BindIrradianceMap(7);
-		//	r_Data.environment->BindPreFilterMap(8);
-		//	r_Data.environment->BindBRDFMap(9);
-		//}
-		//Renderer::Submit(r_Data.forwardLightingShader, r_Data.screenVao);
-
 		r_Data.forwardLightingShader->Unbind();
+
+		if (r_Data.environment) {
+			glEnable(GL_DEPTH_TEST);
+			glDepthFunc(GL_LEQUAL);
+			r_Data.environment->RenderBackground();
+			glDepthFunc(GL_LESS);
+		}
 		r_Data.lightingPass->UnbindTargetFrameBuffer();
 	}
 
 	void ForwardPlusRenderer::End()
 	{
-		//r_Data.lightingPass->BindTargetFrameBuffer();
-		//glBindFramebuffer(GL_READ_FRAMEBUFFER, r_Data.geoPass->GetSpecification().TargetFrameBuffer->GetRendererID());
-		//glBindFramebuffer(GL_DRAW_FRAMEBUFFER, r_Data.lightingPass->GetSpecification().TargetFrameBuffer->GetRendererID()); // write to default framebuffer
-		//auto w = r_Data.lightingPass->GetSpecification().TargetFrameBuffer->GetSpecification().Width;
-		//auto h = r_Data.lightingPass->GetSpecification().TargetFrameBuffer->GetSpecification().Height;
-		//glBlitFramebuffer(0, 0, w, h, 0, 0, w, h, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
-		//if (r_Data.environment) {
-		//	glEnable(GL_DEPTH_TEST);
-		//	glDepthFunc(GL_LEQUAL);
-		//	r_Data.environment->RenderBackground();
-		//	glDepthFunc(GL_LESS);
-		//}
-
 		//-------------------------------------Post Processing and Depth Debug------------------------------------//
 		r_Data.postProcPass->BindTargetFrameBuffer();
 		r_Data.postProcShader->Bind();
@@ -278,7 +271,6 @@ namespace Syndra {
 		Renderer::Submit(r_Data.postProcShader, r_Data.screenVao);
 		r_Data.postProcShader->Unbind();
 		r_Data.postProcPass->UnbindTargetFrameBuffer();
-	
 	}
 
 	void ForwardPlusRenderer::SetupLights()
@@ -314,6 +306,15 @@ namespace Syndra {
 		//spot light index
 		int sIndex = 0;
 		//Set light values for each entity that has a light component
+
+		//Setting point lights' values
+		for (int i = 0; i < r_Data.numLights; i++) {
+			auto& light = r_Data.pLights.lights[i];
+			light.color = glm::vec4(0);
+			light.position = glm::vec4(0);
+			light.paddingAndRadius = glm::vec4(glm::vec3(0), 00.0f);
+		}
+
 		for (auto ent : viewLights)
 		{
 			auto& tc = viewLights.get<TransformComponent>(ent);
@@ -372,8 +373,6 @@ namespace Syndra {
 
 	void ForwardPlusRenderer::OnImGuiRender(bool* rendererOpen, bool* environmentOpen)
 	{
-		//TODO
-		//Debugger for depth map and lights
 		if (*rendererOpen) {
 			ImGui::Begin(ICON_FA_COGS" Renderer Settings", rendererOpen);
 
@@ -424,17 +423,17 @@ namespace Syndra {
 			//Gamma
 			ImGui::DragFloat("gamma", &r_Data.gamma, 0.01f, 0, 4);
 
-			//ImGui::Checkbox("Soft Shadow", &r_Data.softShadow);
-			//ImGui::DragFloat("PCF samples", &r_Data.numPCF, 1, 1, 64);
-			//ImGui::DragFloat("blocker samples", &r_Data.numBlocker, 1, 1, 64);
+			ImGui::Checkbox("Soft Shadow", &r_Data.softShadow);
+			ImGui::DragFloat("PCF samples", &r_Data.numPCF, 1, 1, 64);
+			ImGui::DragFloat("blocker samples", &r_Data.numBlocker, 1, 1, 64);
 
 
 			//shadow
-			//ImGui::DragFloat("Light Size", &r_Data.lightSize, 0.01f, 0, 100);
+			ImGui::DragFloat("Light Size", &r_Data.lightSize, 0.01f, 0, 100);
 
-			//if (ImGui::DragFloat("Ortho Size", &r_Data.orthoSize, 0.1f, 1, 100)) {
-			//	r_Data.lightProj = glm::ortho(-r_Data.orthoSize, r_Data.orthoSize, -r_Data.orthoSize, r_Data.orthoSize, r_Data.lightNear, r_Data.lightFar);
-			//}
+			if (ImGui::DragFloat("Ortho Size", &r_Data.orthoSize, 0.1f, 1, 100)) {
+				r_Data.lightProj = glm::ortho(-r_Data.orthoSize, r_Data.orthoSize, -r_Data.orthoSize, r_Data.orthoSize, r_Data.lightNear, r_Data.lightFar);
+			}
 
 			ImGui::PushMultiItemsWidths(2, ImGui::CalcItemWidth());
 			if (ImGui::DragFloat("near", &r_Data.lightNear, 0.01f, 0.1f, 100.0f)) {
@@ -453,6 +452,29 @@ namespace Syndra {
 
 			ImGui::End();
 		}
+
+		//Environment settings
+		if (*environmentOpen) {
+			ImGui::Begin(ICON_FA_TREE" Environment", environmentOpen);
+			if (ImGui::Button("HDR", { 40,30 })) {
+				auto path = FileDialogs::OpenFile("HDR (*.hdr)\0*.hdr\0");
+				if (path) {
+					//Add texture as sRGB color space if it is binded to 0 (diffuse texture binding)
+					r_Data.environment = CreateRef<Environment>(Texture2D::CreateHDR(*path, false, true));
+					r_Data.scene->m_EnvironmentPath = *path;
+					SceneRenderer::SetEnvironment(r_Data.environment);
+				}
+			}
+			if (r_Data.environment) {
+				ImGui::Image((ImTextureID)r_Data.environment->GetBackgroundTextureID(), { 300, 150 }, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
+			}
+			if (ImGui::DragFloat("Intensity", &r_Data.intensity, 0.01f, 1, 20)) {
+				if (r_Data.environment) {
+					r_Data.environment->SetIntensity(r_Data.intensity);
+				}
+			}
+			ImGui::End();
+		}
 	}
 
 	void ForwardPlusRenderer::OnResize(uint32_t width, uint32_t height)
@@ -461,13 +483,13 @@ namespace Syndra {
 		r_Data.lightingPass->GetSpecification().TargetFrameBuffer->Resize(width, height);
 		r_Data.postProcPass->GetSpecification().TargetFrameBuffer->Resize(width, height);
 		//change the number of work groups in the compute shader
-		auto w = r_Data.depthPass->GetSpecification().TargetFrameBuffer->GetSpecification().Width;
-		auto h = r_Data.depthPass->GetSpecification().TargetFrameBuffer->GetSpecification().Height;
+		auto w = width;
+		auto h = height;
 		r_Data.workGroupsX = (w + (w % 16)) / 16;
 		r_Data.workGroupsY = (h + (h % 16)) / 16;
-		size_t numberOfTiles = r_Data.workGroupsX * r_Data.workGroupsY;
-		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, r_Data.visibleLightIndicesBuffer);
-		glNamedBufferSubData(r_Data.visibleLightIndicesBuffer, 0, numberOfTiles * sizeof(VisibleIndex) * r_Data.numLights, nullptr);
+		//size_t numberOfTiles = r_Data.workGroupsX * r_Data.workGroupsY;
+		//glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, r_Data.visibleLightIndicesBuffer);
+		//glNamedBufferSubData(r_Data.visibleLightIndicesBuffer, 0, numberOfTiles * sizeof(VisibleIndex) * r_Data.numLights, nullptr);
 	}
 
 }

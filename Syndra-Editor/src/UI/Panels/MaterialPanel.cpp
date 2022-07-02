@@ -44,68 +44,70 @@ namespace Syndra {
 
 			for (auto& sampler : samplers)
 			{
-				ImGui::PushID(sampler.name.c_str());
-				ImGui::Separator();
-				int frame_padding = -1 + 0;                              // -1 == uses default padding (style.FramePadding)
-				ImVec2 size = ImVec2(64.0f, 64.0f);                      // Size of the image we want to make visible
-				ImGui::Checkbox("Use", &sampler.isUsed);
-				
-				ImGui::SameLine();
-				ImGui::Text(sampler.name.c_str());
+				if (sampler.binding < 5) {
+					ImGui::PushID(sampler.name.c_str());
+					ImGui::Separator();
+					int frame_padding = -1 + 0;                              // -1 == uses default padding (style.FramePadding)
+					ImVec2 size = ImVec2(64.0f, 64.0f);                      // Size of the image we want to make visible
+					ImGui::Checkbox("Use", &sampler.isUsed);
 
-				m_TextureId = reinterpret_cast<void*>(m_EmptyTexture->GetRendererID());
-				auto& texture = component.m_Material.GetTexture(sampler);
-				if (texture)
-				{
-					m_TextureId = reinterpret_cast<void*>(texture->GetRendererID());
-				}
+					ImGui::SameLine();
+					ImGui::Text(sampler.name.c_str());
 
-				if (ImGui::ImageButton(m_TextureId, size, ImVec2{ 0, 1 }, ImVec2{ 1, 0 })) {
+					m_TextureId = reinterpret_cast<void*>(m_EmptyTexture->GetRendererID());
+					auto& texture = component.m_Material.GetTexture(sampler);
+					if (texture)
+					{
+						m_TextureId = reinterpret_cast<void*>(texture->GetRendererID());
+					}
 
-					auto path = FileDialogs::OpenFile("Syndra Texture (*.*)\0*.*\0");
-					if (path) {
-						//Add texture as sRGB color space if it is binded to 0 (diffuse texture binding)
-						materialTextures[sampler.binding] = Texture2D::Create(*path);
-					}
-				}
+					if (ImGui::ImageButton(m_TextureId, size, ImVec2{ 0, 1 }, ImVec2{ 1, 0 })) {
 
-				//Albedo color
-				if (sampler.binding == 0) {
-					glm::vec4 color = buffer.material.color;
-					if (ImGui::ColorEdit4("Albedo", glm::value_ptr(color), ImGuiColorEditFlags_NoInputs)) {
-						component.m_Material.Set("push.material.color", color);
+						auto path = FileDialogs::OpenFile("Syndra Texture (*.*)\0*.*\0");
+						if (path) {
+							//Add texture as sRGB color space if it is binded to 0 (diffuse texture binding)
+							materialTextures[sampler.binding] = Texture2D::Create(*path);
+						}
 					}
-					component.m_Material.Set("HasAlbedoMap", sampler.isUsed);
-				}
-				//metal factor
-				if (sampler.binding == 1) {
-					float metal = buffer.material.MetallicFactor;
-					if (UI::SliderFloat("Metallic", &metal, 0.0f, 1.0f)) {
-						component.m_Material.Set("push.material.MetallicFactor", metal);
+
+					//Albedo color
+					if (sampler.binding == 0) {
+						glm::vec4 color = buffer.material.color;
+						if (ImGui::ColorEdit4("Albedo", glm::value_ptr(color), ImGuiColorEditFlags_NoInputs)) {
+							component.m_Material.Set("push.material.color", color);
+						}
+						component.m_Material.Set("HasAlbedoMap", sampler.isUsed);
 					}
-					component.m_Material.Set("HasMetallicMap", sampler.isUsed);
-				}
-				//Use Normal map
-				if (sampler.binding == 2) {
-					component.m_Material.Set("HasNormalMap", sampler.isUsed);
-				}
-				//Roughness factor
-				if (sampler.binding == 3) {
-					float roughness = buffer.material.RoughnessFactor;
-					if (UI::SliderFloat("Roughness", &roughness, 0.0f, 1.0f)) {
-						component.m_Material.Set("push.material.RoughnessFactor", roughness);
+					//metal factor
+					if (sampler.binding == 1) {
+						float metal = buffer.material.MetallicFactor;
+						if (UI::SliderFloat("Metallic", &metal, 0.0f, 1.0f)) {
+							component.m_Material.Set("push.material.MetallicFactor", metal);
+						}
+						component.m_Material.Set("HasMetallicMap", sampler.isUsed);
 					}
-					component.m_Material.Set("HasRoughnessMap", sampler.isUsed);
-				}
-				//Ambient Occlusion factor
-				if (sampler.binding == 4) {
-					float AO = buffer.material.AO;
-					if (UI::SliderFloat("Ambient Occlusion", &AO, 0.0f, 1.0f)) {
-						component.m_Material.Set("push.material.AO", AO);
+					//Use Normal map
+					if (sampler.binding == 2) {
+						component.m_Material.Set("HasNormalMap", sampler.isUsed);
 					}
-					component.m_Material.Set("HasAOMap", sampler.isUsed);
+					//Roughness factor
+					if (sampler.binding == 3) {
+						float roughness = buffer.material.RoughnessFactor;
+						if (UI::SliderFloat("Roughness", &roughness, 0.0f, 1.0f)) {
+							component.m_Material.Set("push.material.RoughnessFactor", roughness);
+						}
+						component.m_Material.Set("HasRoughnessMap", sampler.isUsed);
+					}
+					//Ambient Occlusion factor
+					if (sampler.binding == 4) {
+						float AO = buffer.material.AO;
+						if (UI::SliderFloat("Ambient Occlusion", &AO, 0.0f, 1.0f)) {
+							component.m_Material.Set("push.material.AO", AO);
+						}
+						component.m_Material.Set("HasAOMap", sampler.isUsed);
+					}
+					ImGui::PopID();
 				}
-				ImGui::PopID();
 			}
 			ImGui::TreePop();
 		}

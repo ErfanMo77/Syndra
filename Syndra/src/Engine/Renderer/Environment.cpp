@@ -218,8 +218,8 @@ namespace Syndra {
 		//Texture2D::BindTexture(m_IrradianceFBO->GetColorAttachmentRendererID(), 1);
 		m_BackgroundShader->SetMat4("cam.view", m_View);
 		m_BackgroundShader->SetMat4("cam.projection", m_Projection);
-
 		RenderCube();
+		m_BackgroundShader->Unbind();
 	}
 
 	void Environment::SetIntensity(float intensity)
