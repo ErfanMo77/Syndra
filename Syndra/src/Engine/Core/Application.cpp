@@ -2,7 +2,7 @@
 #include "Engine/Core/Application.h"
 #include "Engine/Core/Input.h"
 #include "GLFW/glfw3.h"
-
+#include "Instrument.h"
 
 namespace Syndra {
 
@@ -49,13 +49,15 @@ namespace Syndra {
 				for (Layer* layer : m_LayerStack) {
 					layer->OnUpdate(ts);
 				}
-
-				m_ImGuiLayer->Begin();
-				for (Layer* Layer : m_LayerStack)
 				{
-					Layer->OnImGuiRender();
+					SN_PROFILE_SCOPE("ImGui");
+					m_ImGuiLayer->Begin();
+					for (Layer* Layer : m_LayerStack)
+					{
+						Layer->OnImGuiRender();
+					}
+					m_ImGuiLayer->End();
 				}
-				m_ImGuiLayer->End();
 			}
 
 			m_window->OnUpdate();

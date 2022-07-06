@@ -4,9 +4,9 @@
 #include "imgui_internal.h"
 #include "Engine/Utils/PlatformUtils.h"
 #include "Engine/Core/Application.h"
-
 #include "Engine/Scene/Entity.h"
 #include "Engine/Scene/Scene.h"
+#include "Engine/Core/Instrument.h"
 #include <glad/glad.h>
 
 namespace Syndra {
@@ -18,7 +18,7 @@ namespace Syndra {
 		r_Data.scene = scene;
 		r_Data.shaders = shaders;
 		r_Data.environment = env;
-
+		
 		//-------------------------------Depth Pre Pass Framebuffer Initialization--------------------------------//
 		FramebufferSpecification depthPassFB;
 		depthPassFB.Attachments = { FramebufferTextureFormat::DEPTH32 };
@@ -140,137 +140,150 @@ namespace Syndra {
 	{
 		auto view = r_Data.scene->m_Registry.view<TransformComponent, MeshComponent>();
 		//-----------------------------------------------Depth Pre Pass--------------------------------------------//
-		r_Data.depthPass->BindTargetFrameBuffer();
-		RenderCommand::SetState(RenderState::DEPTH_TEST, true);
-		RenderCommand::SetClearColor(r_Data.depthPass->GetSpecification().TargetFrameBuffer->GetSpecification().ClearColor);
-		r_Data.depthShader->Bind();
-		RenderCommand::Clear();
-		for (auto ent : view)
 		{
-			auto& tc = view.get<TransformComponent>(ent);
-			auto& mc = view.get<MeshComponent>(ent);
-			if (!mc.path.empty())
+			SN_PROFILE_SCOPE("Depth pass");
+			r_Data.depthPass->BindTargetFrameBuffer();
+			RenderCommand::SetState(RenderState::DEPTH_TEST, true);
+			RenderCommand::SetClearColor(r_Data.depthPass->GetSpecification().TargetFrameBuffer->GetSpecification().ClearColor);
+			r_Data.depthShader->Bind();
+			RenderCommand::Clear();
+			for (auto ent : view)
 			{
-				r_Data.depthShader->SetMat4("transform.u_trans", tc.GetTransform());
-				Renderer::Submit(r_Data.depthShader, mc.model);
+				auto& tc = view.get<TransformComponent>(ent);
+				auto& mc = view.get<MeshComponent>(ent);
+				if (!mc.path.empty())
+				{
+					r_Data.depthShader->SetMat4("transform.u_trans", tc.GetTransform());
+					Renderer::Submit(r_Data.depthShader, mc.model);
+				}
 			}
+			r_Data.depthPass->UnbindTargetFrameBuffer();
 		}
-		r_Data.depthPass->UnbindTargetFrameBuffer();
-
 		//----------------------------------------Directional Light Shadow Pass-----------------------------------//
-		r_Data.shadowPass->BindTargetFrameBuffer();
-		RenderCommand::SetState(RenderState::DEPTH_TEST, true);
-		RenderCommand::SetClearColor(r_Data.shadowPass->GetSpecification().TargetFrameBuffer->GetSpecification().ClearColor);
-		r_Data.shadowDepthShader->Bind();
-		RenderCommand::Clear();
-		for (auto ent : view)
 		{
-			auto& tc = view.get<TransformComponent>(ent);
-			auto& mc = view.get<MeshComponent>(ent);
-			if (!mc.path.empty())
+			SN_PROFILE_SCOPE("Shadow Pass");
+			r_Data.shadowPass->BindTargetFrameBuffer();
+			RenderCommand::SetState(RenderState::DEPTH_TEST, true);
+			RenderCommand::SetClearColor(r_Data.shadowPass->GetSpecification().TargetFrameBuffer->GetSpecification().ClearColor);
+			r_Data.shadowDepthShader->Bind();
+			RenderCommand::Clear();
+			for (auto ent : view)
 			{
-				r_Data.shadowDepthShader->SetMat4("transform.u_trans", tc.GetTransform());
-				Renderer::Submit(r_Data.shadowDepthShader, mc.model);
+				auto& tc = view.get<TransformComponent>(ent);
+				auto& mc = view.get<MeshComponent>(ent);
+				if (!mc.path.empty())
+				{
+					r_Data.shadowDepthShader->SetMat4("transform.u_trans", tc.GetTransform());
+					Renderer::Submit(r_Data.shadowDepthShader, mc.model);
+				}
 			}
+			r_Data.shadowPass->UnbindTargetFrameBuffer();
 		}
-		r_Data.shadowPass->UnbindTargetFrameBuffer();
-		
 		//--------------------------------------------Light Culling-----------------------------------------------//
 		//Compute pass to calculate light indices
-		r_Data.compShader->Bind();
-		//Attaching depth map from previous pass
-		Texture2D::BindTexture(r_Data.depthPass->GetSpecification().TargetFrameBuffer->GetDepthAttachmentRendererID(), 2);
-		r_Data.compShader->SetMat4("pc.view", r_Data.scene->m_Camera->GetViewMatrix());
-		r_Data.compShader->SetMat4("pc.projection", r_Data.scene->m_Camera->GetProjection());
-		r_Data.compShader->SetFloat("pc.width", r_Data.depthPass->GetSpecification().TargetFrameBuffer->GetSpecification().Width);
-		r_Data.compShader->SetFloat("pc.height", r_Data.depthPass->GetSpecification().TargetFrameBuffer->GetSpecification().Height);
-		r_Data.compShader->SetInt("pc.lightCount", r_Data.numLights);
-		//Define work group sizes in x and y direction based off screen size and tile size (in pixels)
-		r_Data.compShader->DispatchCompute(r_Data.workGroupsX, r_Data.workGroupsY, 1);
-		r_Data.compShader->Unbind();
-
-		//---------------------------------------Lighting Accumulation--------------------------------------------//
-		r_Data.lightingPass->BindTargetFrameBuffer();
-		RenderCommand::Clear();
-		//RenderCommand::SetState(RenderState::DEPTH_TEST, true);
-		r_Data.forwardLightingShader->Bind();
-		r_Data.forwardLightingShader->SetInt("push.numberOfTilesX", r_Data.workGroupsX);
-		//shadow map samplers
-		Texture2D::BindTexture(r_Data.shadowPass->GetSpecification().TargetFrameBuffer->GetDepthAttachmentRendererID(), 5);
-		Texture1D::BindTexture(r_Data.distributionSampler0->GetRendererID(), 6);
-		Texture1D::BindTexture(r_Data.distributionSampler1->GetRendererID(), 10);
-		//Push constant variables (lighting and shadow parameters)
-		r_Data.forwardLightingShader->SetFloat("push.size", r_Data.lightSize * 0.0001f);
-		r_Data.forwardLightingShader->SetInt("push.numPCFSamples", r_Data.numPCF);
-		r_Data.forwardLightingShader->SetInt("push.numBlockerSearchSamples", r_Data.numBlocker);
-		r_Data.forwardLightingShader->SetInt("push.softShadow", (int)r_Data.softShadow);
-		r_Data.forwardLightingShader->SetFloat("push.exposure", r_Data.exposure);
-		r_Data.forwardLightingShader->SetFloat("push.gamma", r_Data.gamma);
-		r_Data.forwardLightingShader->SetFloat("push.near", r_Data.lightNear);
-		r_Data.forwardLightingShader->SetFloat("push.intensity", r_Data.intensity);
-		//Environment samplers
-		if (r_Data.environment) {
-			r_Data.environment->SetIntensity(r_Data.intensity);
-			r_Data.environment->BindIrradianceMap(7);
-			r_Data.environment->BindPreFilterMap(8);
-			r_Data.environment->BindBRDFMap(9);
-		}
-		r_Data.forwardLightingShader->Bind();
-		for (auto ent : view)
 		{
-			auto& tc = view.get<TransformComponent>(ent);
-			auto& mc = view.get<MeshComponent>(ent);
-			if (!mc.path.empty())
+			SN_PROFILE_SCOPE("Light Culling");
+			r_Data.compShader->Bind();
+			//Attaching depth map from previous pass
+			Texture2D::BindTexture(r_Data.depthPass->GetSpecification().TargetFrameBuffer->GetDepthAttachmentRendererID(), 2);
+			r_Data.compShader->SetMat4("pc.view", r_Data.scene->m_Camera->GetViewMatrix());
+			r_Data.compShader->SetMat4("pc.projection", r_Data.scene->m_Camera->GetProjection());
+			r_Data.compShader->SetFloat("pc.width", r_Data.depthPass->GetSpecification().TargetFrameBuffer->GetSpecification().Width);
+			r_Data.compShader->SetFloat("pc.height", r_Data.depthPass->GetSpecification().TargetFrameBuffer->GetSpecification().Height);
+			r_Data.compShader->SetInt("pc.lightCount", r_Data.numLights);
+			//Define work group sizes in x and y direction based off screen size and tile size (in pixels)
+			r_Data.compShader->DispatchCompute(r_Data.workGroupsX, r_Data.workGroupsY, 1);
+			r_Data.compShader->Unbind();
+		}
+		//---------------------------------------Lighting Accumulation--------------------------------------------//
+		{
+			SN_PROFILE_SCOPE("Light Accumulation");
+			r_Data.lightingPass->BindTargetFrameBuffer();
+			RenderCommand::Clear();
+			//RenderCommand::SetState(RenderState::DEPTH_TEST, true);
+			r_Data.forwardLightingShader->Bind();
+			r_Data.forwardLightingShader->SetInt("push.numberOfTilesX", r_Data.workGroupsX);
+			//shadow map samplers
+			Texture2D::BindTexture(r_Data.shadowPass->GetSpecification().TargetFrameBuffer->GetDepthAttachmentRendererID(), 5);
+			Texture1D::BindTexture(r_Data.distributionSampler0->GetRendererID(), 6);
+			Texture1D::BindTexture(r_Data.distributionSampler1->GetRendererID(), 10);
+			//Push constant variables (lighting and shadow parameters)
+			r_Data.forwardLightingShader->SetFloat("push.size", r_Data.lightSize * 0.0001f);
+			r_Data.forwardLightingShader->SetInt("push.numPCFSamples", r_Data.numPCF);
+			r_Data.forwardLightingShader->SetInt("push.numBlockerSearchSamples", r_Data.numBlocker);
+			r_Data.forwardLightingShader->SetInt("push.softShadow", (int)r_Data.softShadow);
+			r_Data.forwardLightingShader->SetFloat("push.exposure", r_Data.exposure);
+			r_Data.forwardLightingShader->SetFloat("push.gamma", r_Data.gamma);
+			r_Data.forwardLightingShader->SetFloat("push.near", r_Data.lightNear);
+			r_Data.forwardLightingShader->SetFloat("push.intensity", r_Data.intensity);
+			r_Data.forwardLightingShader->SetInt("push.disableShadow", r_Data.disableShadow);
+			//Environment samplers
+			if (r_Data.environment) {
+				r_Data.environment->SetIntensity(r_Data.intensity);
+				r_Data.environment->BindIrradianceMap(7);
+				r_Data.environment->BindPreFilterMap(8);
+				r_Data.environment->BindBRDFMap(9);
+			}
+			r_Data.forwardLightingShader->Bind();
+			for (auto ent : view)
 			{
-				if (r_Data.scene->m_Registry.has<MaterialComponent>(ent)) {
-					auto& mat = r_Data.scene->m_Registry.get<MaterialComponent>(ent);
-					r_Data.forwardLightingShader->SetInt("transform.id", (uint32_t)ent);
-					r_Data.forwardLightingShader->SetMat4("transform.u_trans", tc.GetTransform());
-					Renderer::Submit(mat.m_Material, mc.model);
-				}
-				else
+				auto& tc = view.get<TransformComponent>(ent);
+				auto& mc = view.get<MeshComponent>(ent);
+				if (!mc.path.empty())
 				{
-					r_Data.forwardLightingShader->SetInt("push.HasAlbedoMap", 1);
-					r_Data.forwardLightingShader->SetFloat("push.tiling", 1.0f);
-					r_Data.forwardLightingShader->SetInt("push.HasNormalMap", 0);
-					r_Data.forwardLightingShader->SetInt("push.HasMetallicMap", 0);
-					r_Data.forwardLightingShader->SetInt("push.HasRoughnessMap", 0);
-					r_Data.forwardLightingShader->SetInt("push.HasAOMap", 0);
-					r_Data.forwardLightingShader->SetFloat("push.material.MetallicFactor", 0);
-					r_Data.forwardLightingShader->SetFloat("push.material.RoughnessFactor", 1);
-					r_Data.forwardLightingShader->SetFloat("push.material.AO", 1);
-					r_Data.forwardLightingShader->SetMat4("transform.u_trans", tc.GetTransform());
-					r_Data.forwardLightingShader->SetInt("transform.id", (uint32_t)ent);
-					Renderer::Submit(r_Data.forwardLightingShader, mc.model);
+					if (r_Data.scene->m_Registry.has<MaterialComponent>(ent)) {
+						auto& mat = r_Data.scene->m_Registry.get<MaterialComponent>(ent);
+						r_Data.forwardLightingShader->SetInt("transform.id", (uint32_t)ent);
+						r_Data.forwardLightingShader->SetMat4("transform.u_trans", tc.GetTransform());
+						Renderer::Submit(mat.m_Material, mc.model);
+					}
+					else
+					{
+						r_Data.forwardLightingShader->SetInt("push.HasAlbedoMap", 1);
+						r_Data.forwardLightingShader->SetFloat("push.tiling", 1.0f);
+						r_Data.forwardLightingShader->SetInt("push.HasNormalMap", 0);
+						r_Data.forwardLightingShader->SetInt("push.HasMetallicMap", 0);
+						r_Data.forwardLightingShader->SetInt("push.HasRoughnessMap", 0);
+						r_Data.forwardLightingShader->SetInt("push.HasAOMap", 0);
+						r_Data.forwardLightingShader->SetFloat("push.material.MetallicFactor", 0);
+						r_Data.forwardLightingShader->SetFloat("push.material.RoughnessFactor", 1);
+						r_Data.forwardLightingShader->SetFloat("push.material.AO", 1);
+						r_Data.forwardLightingShader->SetMat4("transform.u_trans", tc.GetTransform());
+						r_Data.forwardLightingShader->SetInt("transform.id", (uint32_t)ent);
+						Renderer::Submit(r_Data.forwardLightingShader, mc.model);
+					}
 				}
 			}
-		}
-		r_Data.forwardLightingShader->Unbind();
+			r_Data.forwardLightingShader->Unbind();
 
-		if (r_Data.environment) {
-			glEnable(GL_DEPTH_TEST);
-			glDepthFunc(GL_LEQUAL);
-			r_Data.environment->RenderBackground();
-			glDepthFunc(GL_LESS);
+			if (r_Data.environment) {
+				glEnable(GL_DEPTH_TEST);
+				glDepthFunc(GL_LEQUAL);
+				r_Data.environment->RenderBackground();
+				glDepthFunc(GL_LESS);
+			}
+			r_Data.lightingPass->UnbindTargetFrameBuffer();
 		}
-		r_Data.lightingPass->UnbindTargetFrameBuffer();
 	}
 
 	void ForwardPlusRenderer::End()
 	{
 		//-------------------------------------Post Processing and Depth Debug------------------------------------//
-		r_Data.postProcPass->BindTargetFrameBuffer();
-		r_Data.postProcShader->Bind();
-		r_Data.screenVao->Bind();
-		//TODO FIX FXAA SHADER
-		r_Data.postProcShader->SetInt("pc.useFXAA", r_Data.useFxaa==true ? 1:0);	
-		r_Data.postProcShader->SetFloat("pc.width", (float)r_Data.postProcPass->GetSpecification().TargetFrameBuffer->GetSpecification().Width);
-		r_Data.postProcShader->SetFloat("pc.height", (float)r_Data.postProcPass->GetSpecification().TargetFrameBuffer->GetSpecification().Height);
-		//Texture2D::BindTexture(r_Data.lightingPass->GetFrameBufferTextureID(0), 0);
-		Texture2D::BindTexture(r_Data.depthPass->GetSpecification().TargetFrameBuffer->GetDepthAttachmentRendererID(), 2);
-		Renderer::Submit(r_Data.postProcShader, r_Data.screenVao);
-		r_Data.postProcShader->Unbind();
-		r_Data.postProcPass->UnbindTargetFrameBuffer();
+		{
+			SN_PROFILE_SCOPE("Post Processing");
+			r_Data.postProcPass->BindTargetFrameBuffer();
+			r_Data.postProcShader->Bind();
+			r_Data.screenVao->Bind();
+			//TODO FIX FXAA SHADER
+			r_Data.postProcShader->SetInt("pc.useFXAA", r_Data.useFxaa == true ? 1 : 0);
+			r_Data.postProcShader->SetFloat("pc.width", (float)r_Data.postProcPass->GetSpecification().TargetFrameBuffer->GetSpecification().Width);
+			r_Data.postProcShader->SetFloat("pc.height", (float)r_Data.postProcPass->GetSpecification().TargetFrameBuffer->GetSpecification().Height);
+			//Texture2D::BindTexture(r_Data.lightingPass->GetFrameBufferTextureID(0), 0);
+			Texture2D::BindTexture(r_Data.depthPass->GetSpecification().TargetFrameBuffer->GetDepthAttachmentRendererID(), 2);
+			Renderer::Submit(r_Data.postProcShader, r_Data.screenVao);
+			r_Data.postProcShader->Unbind();
+			r_Data.postProcPass->UnbindTargetFrameBuffer();
+		}
 	}
 
 	void ForwardPlusRenderer::SetupLights()
@@ -300,6 +313,7 @@ namespace Syndra {
 
 	void ForwardPlusRenderer::UpdateLights()
 	{
+		SN_PROFILE_FUNCTION();
 		auto viewLights = r_Data.scene->m_Registry.view<TransformComponent, LightComponent>();
 		//point light index
 		int pIndex = 0;
@@ -375,13 +389,13 @@ namespace Syndra {
 	{
 		if (*rendererOpen) {
 			ImGui::Begin(ICON_FA_COGS" Renderer Settings", rendererOpen);
-
 			ImGui::Text("ForwardPlus debugger");
 			static bool showDepth = false;
 			static bool showlights = false;
 			if (ImGui::Button("Show Depth")) {
 				showDepth = true;
 			}
+			ImGui::SameLine();
 			if (ImGui::Button("Show Lights")) {
 				showlights = true;
 			}
@@ -423,6 +437,7 @@ namespace Syndra {
 			//Gamma
 			ImGui::DragFloat("gamma", &r_Data.gamma, 0.01f, 0, 4);
 
+			ImGui::Checkbox("Disable Shadow", &r_Data.disableShadow);
 			ImGui::Checkbox("Soft Shadow", &r_Data.softShadow);
 			ImGui::DragFloat("PCF samples", &r_Data.numPCF, 1, 1, 64);
 			ImGui::DragFloat("blocker samples", &r_Data.numBlocker, 1, 1, 64);
@@ -487,9 +502,9 @@ namespace Syndra {
 		auto h = height;
 		r_Data.workGroupsX = (w + (w % 16)) / 16;
 		r_Data.workGroupsY = (h + (h % 16)) / 16;
-		//size_t numberOfTiles = r_Data.workGroupsX * r_Data.workGroupsY;
-		//glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, r_Data.visibleLightIndicesBuffer);
-		//glNamedBufferSubData(r_Data.visibleLightIndicesBuffer, 0, numberOfTiles * sizeof(VisibleIndex) * r_Data.numLights, nullptr);
+		size_t numberOfTiles = r_Data.workGroupsX * r_Data.workGroupsY;
+		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, r_Data.visibleLightIndicesBuffer);
+		glNamedBufferSubData(r_Data.visibleLightIndicesBuffer, 0, numberOfTiles * sizeof(VisibleIndex) * r_Data.numLights, nullptr);
 	}
 
 }

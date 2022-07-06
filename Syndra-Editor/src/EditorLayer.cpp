@@ -6,6 +6,7 @@
 #include "imgui.h"
 #include "ImGuizmo.h"
 
+#include "Engine/Core/Instrument.h"
 #include "Engine/Utils/Math.h"
 #include "Engine/Scene/SceneSerializer.h"
 #include "Engine/Utils/PlatformUtils.h"
@@ -97,38 +98,40 @@ namespace Syndra {
 		}
 
 		//----------------------------------------------Viewport----------------------------------------------//
-		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{ 0, 0 });
-		ImGui::Begin(ICON_FA_IMAGE" Viewport");
-		ImGuiWindow* window = ImGui::GetCurrentWindow();
-		const ImGuiID id = window->GetID("Viewport");
+		{
+			ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{ 0, 0 });
+			ImGui::Begin(ICON_FA_IMAGE" Viewport");
+			ImGuiWindow* window = ImGui::GetCurrentWindow();
+			const ImGuiID id = window->GetID("Viewport");
 
-		m_ViewportFocused = ImGui::IsWindowFocused();
-		m_ViewportHovered = ImGui::IsWindowHovered();
+			m_ViewportFocused = ImGui::IsWindowFocused();
+			m_ViewportHovered = ImGui::IsWindowHovered();
 
-		//Gizmos Icons
-		ShowIcons();
+			//Gizmos Icons
+			ShowIcons();
 
-		auto viewportMinRegion = ImGui::GetWindowContentRegionMin();
-		auto viewportMaxRegion = ImGui::GetWindowContentRegionMax();
-		auto viewportOffset = ImGui::GetWindowPos();
-		m_ViewportBounds[0] = { viewportMinRegion.x + viewportOffset.x, viewportMinRegion.y + viewportOffset.y };
-		m_ViewportBounds[1] = { viewportMaxRegion.x + viewportOffset.x, viewportMaxRegion.y + viewportOffset.y };
+			auto viewportMinRegion = ImGui::GetWindowContentRegionMin();
+			auto viewportMaxRegion = ImGui::GetWindowContentRegionMax();
+			auto viewportOffset = ImGui::GetWindowPos();
+			m_ViewportBounds[0] = { viewportMinRegion.x + viewportOffset.x, viewportMinRegion.y + viewportOffset.y };
+			m_ViewportBounds[1] = { viewportMaxRegion.x + viewportOffset.x, viewportMaxRegion.y + viewportOffset.y };
 
-		Application::Get().GetImGuiLayer()->SetBlockEvents(!m_ViewportFocused && !m_ViewportHovered);
+			Application::Get().GetImGuiLayer()->SetBlockEvents(!m_ViewportFocused && !m_ViewportHovered);
 
-		ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
+			ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
 
-		m_ViewportSize = { viewportPanelSize.x, viewportPanelSize.y };
-		uint64_t textureID = m_ActiveScene->GetMainTextureID();
-		ImGui::Image((ImTextureID)textureID, ImVec2{ m_ViewportSize.x, m_ViewportSize.y }, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
-		
-		//Gizmos
-		ShowGizmos();
+			m_ViewportSize = { viewportPanelSize.x, viewportPanelSize.y };
+			uint64_t textureID = m_ActiveScene->GetMainTextureID();
+			ImGui::Image((ImTextureID)textureID, ImVec2{ m_ViewportSize.x, m_ViewportSize.y }, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
 
-		ImGui::End();
-		ImGui::PopStyleVar();
+			//Gizmos
+			ShowGizmos();
 
-		ImGui::End();
+			ImGui::End();
+			ImGui::PopStyleVar();
+
+			ImGui::End();
+		}
 	}
 
 	void EditorLayer::OnEvent(Event& event)

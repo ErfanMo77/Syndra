@@ -79,6 +79,7 @@ namespace Syndra {
 			Ref<Shader>  depthShader, postProcShader, compShader, forwardLightingShader, shadowDepthShader;
 			//lighting and shadow parameters
 			bool softShadow = false;
+			bool disableShadow = false;
 			float numPCF = 16;
 			float numBlocker = 2;
 			float exposure, gamma, lightSize, orthoSize, lightNear, lightFar;

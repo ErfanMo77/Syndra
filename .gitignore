@@ -10,6 +10,7 @@ bin-int/
 **.vcxproj.user
 *.log
 imgui.ini
+Runtime.json
 
 Syndra/vendor/VulkanSDK
 Syndra-Editor/assets/cache

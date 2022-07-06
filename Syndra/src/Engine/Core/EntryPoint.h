@@ -1,6 +1,6 @@
 #pragma once
 #include "Application.h"
-
+#include "Instrument.h"
 
 #ifdef SN_PLATFORM_WINDOWS
 
@@ -15,7 +15,9 @@ int main(int argc, char** argv)
 	SN_WARN("HELLO! Welcome to Syndra!");
 
 	auto app = Syndra::CreateApplication();
+	SN_PROFILE_BEGIN_SESSION("Runtime", "Runtime.json");
 	app->Run();
+	SN_PROFILE_END_SESSION();
 	delete app;
 }
 

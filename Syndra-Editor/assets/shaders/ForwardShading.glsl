@@ -148,6 +148,7 @@ layout(push_constant) uniform pushConstants{
 	float size;
 	float near;
 	float intensity;
+	int disableShadow;
 	int numPCFSamples;
 	int numBlockerSearchSamples;
 	int softShadow;
@@ -435,13 +436,14 @@ void main(){
 	Lo += CalculateLo(lightDir, N, V, lights.dLight.color.rgb, F0, Roughness, Metallic, albedo);
 	float shadow =0;
 	//directional light shadow
-	if(push.softShadow == 1){
-		shadow = SoftShadow(FragPosLightSpace, bias);
-	} else
-	{
-		shadow = HardShadow(FragPosLightSpace, bias);
+	if(push.disableShadow == 0){
+		if(push.softShadow == 1){
+			shadow = SoftShadow(FragPosLightSpace, bias);
+		} else
+		{
+			shadow = HardShadow(FragPosLightSpace, bias);
+		}
 	}
-
 	vec3 tangentFragmentPos = fs_in.TBN * fragPos;
 	// Determine which tile this pixel belongs to
 	ivec2 location = ivec2(gl_FragCoord.xy);
@@ -451,21 +453,21 @@ void main(){
 
 	//Calculating point lights contribution
 	uint offset = index * 512;
+	uint j;
 	for (uint i = 0; i < 512 && visibleLightIndicesBuffer.data[offset + i].index != -1; i++) {
 		uint lightIndex = visibleLightIndicesBuffer.data[offset + i].index;
 		PointLight light = lightBuffer.data[lightIndex];
 		
 		vec3 lightColor = light.color.rgb;
-		vec3 tangentLightPosition = fs_in.TBN * light.position.xyz;
 		float lightRadius = light.paddingAndRadius.w;
-		
-		// Calculate the light attenuation on the pre-normalized lightDirection
-		vec3 lightDirection = tangentLightPosition - tangentFragmentPos;
-		float attenuation = attenuate(lightDirection, lightRadius);
+
 		lightDirection = normalize((light.position.xyz - fragPos));
+		float attenuation = attenuate(lightDirection, lightRadius);
 		vec3 pointLO = CalculateLo(lightDirection, N, V, lightColor, F0, Roughness, Metallic, albedo) * attenuation; 
 		Lo += pointLO;
+		j=i;
 	}
+	float ratio = float(j) / float(64.0);
 
 	vec3 F = FresnelSchlickRoughness(max(dot(N, V), 0.0), F0, Roughness);
 
@@ -492,10 +494,6 @@ void main(){
     // gamma correction 
 	mapped = pow(mapped, vec3(1.0 / push.gamma));
 
-	uint i;
-	for (i = 0; i < 512 && visibleLightIndicesBuffer.data[offset + i].index != -1; i++);
-
-	float ratio = float(i) / float(512.0);
 
 	fragColor = vec4(mapped, 1.0);
 	lightDebug = vec4(vec3(ratio),1.0);
