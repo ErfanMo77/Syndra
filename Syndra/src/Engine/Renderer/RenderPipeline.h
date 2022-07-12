@@ -35,16 +35,22 @@ namespace Syndra {
 		// Lighting(in deferred rendering), Post processing and etc.
 		virtual void End() = 0;
 
-		//Updating all the lights and their respective shadow maps
+		// Deleting all the allocated resources
+		virtual void ShutDown() = 0;
+
+		// Updating all the lights and their respective shadow maps
 		virtual void UpdateLights() = 0;
 
-		//Final colored texture ID required by ImGui
+		// Final colored texture ID required by ImGui
 		virtual uint32_t GetFinalTextureID(int index) = 0;
 
-		//Main frame buffer required for resizing UI
+		// MousePick texture ID
+		virtual uint32_t GetMouseTextureID() = 0;
+
+		// Main frame buffer required for resizing UI
 		virtual Ref<FrameBuffer> GetMainFrameBuffer() = 0;
 
-		//Resizing the render window
+		// Resizing the render window
 		virtual void OnResize(uint32_t width, uint32_t height) = 0;
 	
 		// UI related to the render pipeline debuging (e.g. GBuffer)

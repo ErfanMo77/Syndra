@@ -122,7 +122,7 @@ layout(binding = 2) uniform sampler2D depthMap;
 void main()
 {
     if(pc.useFXAA==1){
-        FragColor = FXAA(v_uv.xy);
+        FragColor = FXAA(v_uv.wz);
     }else { 
         FragColor =  vec4(texture(u_Texture, v_uv.xy).xyz,1.0);
     }

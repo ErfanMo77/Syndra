@@ -260,6 +260,10 @@ namespace Syndra {
 		Renderer::EndScene();
 	}
 
+	void DeferredRenderer::ShutDown()
+	{
+	}
+
 	void DeferredRenderer::OnImGuiRender(bool* rendererOpen, bool* environmentOpen)
 	{
 		//Renderer settings
@@ -453,6 +457,11 @@ namespace Syndra {
 		{
 			return r_Data.lightingPass->GetSpecification().TargetFrameBuffer->GetColorAttachmentRendererID(index);
 		}
+	}
+
+	uint32_t DeferredRenderer::GetMouseTextureID()
+	{
+		return 4;
 	}
 
 	Ref<FrameBuffer> DeferredRenderer::GetMainFrameBuffer()

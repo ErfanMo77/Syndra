@@ -14,6 +14,7 @@ namespace Syndra {
 
 	void SceneRenderer::Initialize()
 	{
+		//s_Data.renderPipeline = CreateRef<DeferredRenderer>();
 		s_Data.renderPipeline = CreateRef<ForwardPlusRenderer>();
 
 		//Initializing the pipeline
@@ -87,6 +88,11 @@ namespace Syndra {
 		s_Data.renderPipeline->End();
 	}
 
+	void SceneRenderer::ShutDown()
+	{
+		s_Data.renderPipeline->ShutDown();
+	}
+
 	void SceneRenderer::Reload(const Ref<Shader>& shader)
 	{
 		shader->Reload();
@@ -138,6 +144,11 @@ namespace Syndra {
 	void SceneRenderer::SetEnvironment(const Ref<Environment>& env)
 	{
 		s_Data.environment = env;
+	}
+
+	uint32_t SceneRenderer::GetMouseTextureID()
+	{
+		return s_Data.renderPipeline->GetMouseTextureID();
 	}
 
 	uint32_t SceneRenderer::GetTextureID(int index)

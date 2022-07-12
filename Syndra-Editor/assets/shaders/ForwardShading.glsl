@@ -436,14 +436,14 @@ void main(){
 	Lo += CalculateLo(lightDir, N, V, lights.dLight.color.rgb, F0, Roughness, Metallic, albedo);
 	float shadow =0;
 	//directional light shadow
-	if(push.disableShadow == 0){
-		if(push.softShadow == 1){
-			shadow = SoftShadow(FragPosLightSpace, bias);
-		} else
-		{
-			shadow = HardShadow(FragPosLightSpace, bias);
-		}
+	
+	if(push.softShadow == 1){
+		shadow = SoftShadow(FragPosLightSpace, bias);
+	} else
+	{
+		shadow = HardShadow(FragPosLightSpace, bias);
 	}
+	
 	vec3 tangentFragmentPos = fs_in.TBN * fragPos;
 	// Determine which tile this pixel belongs to
 	ivec2 location = ivec2(gl_FragCoord.xy);
@@ -452,17 +452,23 @@ void main(){
 
 
 	//Calculating point lights contribution
-	uint offset = index * 512;
+	uint offset = index * 256;
 	uint j;
-	for (uint i = 0; i < 512 && visibleLightIndicesBuffer.data[offset + i].index != -1; i++) {
+	for (uint i = 0; i < 256 && visibleLightIndicesBuffer.data[offset + i].index != -1; i++) {
 		uint lightIndex = visibleLightIndicesBuffer.data[offset + i].index;
 		PointLight light = lightBuffer.data[lightIndex];
 		
 		vec3 lightColor = light.color.rgb;
 		float lightRadius = light.paddingAndRadius.w;
 
-		lightDirection = normalize((light.position.xyz - fragPos));
+
+		vec3 tangentLightPosition = fs_in.TBN * light.position.xyz;
+
+		// Calculate the light attenuation on the pre-normalized lightDirection
+		vec3 lightDirection = tangentLightPosition - tangentFragmentPos;
 		float attenuation = attenuate(lightDirection, lightRadius);
+		lightDirection = normalize((light.position.xyz - fragPos));
+		//float attenuation = attenuate(lightDirection, lightRadius);
 		vec3 pointLO = CalculateLo(lightDirection, N, V, lightColor, F0, Roughness, Metallic, albedo) * attenuation; 
 		Lo += pointLO;
 		j=i;

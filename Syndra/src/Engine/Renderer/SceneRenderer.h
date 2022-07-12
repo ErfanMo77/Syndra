@@ -18,6 +18,7 @@ namespace Syndra {
 		static void RenderScene();
 
 		static void EndScene();
+		static void ShutDown();
 
 		static void Reload(const Ref<Shader>& shader);
 
@@ -27,6 +28,8 @@ namespace Syndra {
 
 		static void SetScene(const Ref<Scene>& scene);
 		static void SetEnvironment(const Ref<Environment>& env);
+
+		static uint32_t GetMouseTextureID();
 
 		static uint32_t GetTextureID(int index);
 

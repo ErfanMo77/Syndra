@@ -124,9 +124,9 @@ namespace Syndra {
 		r_Data.intensity = 1.0f;
 
 		//Point Lights initialization
-		r_Data.numLights = 512;
-		r_Data.workGroupsX = (1920 + (1920 % 16)) / 16;
-		r_Data.workGroupsY = (1080 + (1080 % 16)) / 16;
+		r_Data.numLights = 256;
+		r_Data.workGroupsX = (postProcFB.Width + (postProcFB.Width % 16)) / 16;
+		r_Data.workGroupsY = (postProcFB.Height + (postProcFB.Height % 16)) / 16;
 		SetupLights();
 
 		//Directional Light initialization
@@ -188,11 +188,12 @@ namespace Syndra {
 			Texture2D::BindTexture(r_Data.depthPass->GetSpecification().TargetFrameBuffer->GetDepthAttachmentRendererID(), 2);
 			r_Data.compShader->SetMat4("pc.view", r_Data.scene->m_Camera->GetViewMatrix());
 			r_Data.compShader->SetMat4("pc.projection", r_Data.scene->m_Camera->GetProjection());
-			r_Data.compShader->SetFloat("pc.width", r_Data.depthPass->GetSpecification().TargetFrameBuffer->GetSpecification().Width);
-			r_Data.compShader->SetFloat("pc.height", r_Data.depthPass->GetSpecification().TargetFrameBuffer->GetSpecification().Height);
+			r_Data.compShader->SetFloat("pc.width", (float)r_Data.depthPass->GetSpecification().TargetFrameBuffer->GetSpecification().Width);
+			r_Data.compShader->SetFloat("pc.height", (float)r_Data.depthPass->GetSpecification().TargetFrameBuffer->GetSpecification().Height);
 			r_Data.compShader->SetInt("pc.lightCount", r_Data.numLights);
 			//Define work group sizes in x and y direction based off screen size and tile size (in pixels)
 			r_Data.compShader->DispatchCompute(r_Data.workGroupsX, r_Data.workGroupsY, 1);
+			//glMemoryBarrier(GL_ALL_BARRIER_BITS);
 			r_Data.compShader->Unbind();
 		}
 		//---------------------------------------Lighting Accumulation--------------------------------------------//
@@ -272,18 +273,24 @@ namespace Syndra {
 		{
 			SN_PROFILE_SCOPE("Post Processing");
 			r_Data.postProcPass->BindTargetFrameBuffer();
+			RenderCommand::Clear();
 			r_Data.postProcShader->Bind();
 			r_Data.screenVao->Bind();
-			//TODO FIX FXAA SHADER
 			r_Data.postProcShader->SetInt("pc.useFXAA", r_Data.useFxaa == true ? 1 : 0);
 			r_Data.postProcShader->SetFloat("pc.width", (float)r_Data.postProcPass->GetSpecification().TargetFrameBuffer->GetSpecification().Width);
 			r_Data.postProcShader->SetFloat("pc.height", (float)r_Data.postProcPass->GetSpecification().TargetFrameBuffer->GetSpecification().Height);
-			//Texture2D::BindTexture(r_Data.lightingPass->GetFrameBufferTextureID(0), 0);
+			Texture2D::BindTexture(r_Data.lightingPass->GetFrameBufferTextureID(0), 0);
 			Texture2D::BindTexture(r_Data.depthPass->GetSpecification().TargetFrameBuffer->GetDepthAttachmentRendererID(), 2);
 			Renderer::Submit(r_Data.postProcShader, r_Data.screenVao);
 			r_Data.postProcShader->Unbind();
 			r_Data.postProcPass->UnbindTargetFrameBuffer();
 		}
+	}
+
+	void ForwardPlusRenderer::ShutDown()
+	{
+		glDeleteBuffers(1, &r_Data.lightBuffer);
+		glDeleteBuffers(1, &r_Data.visibleLightIndicesBuffer);
 	}
 
 	void ForwardPlusRenderer::SetupLights()
@@ -295,7 +302,7 @@ namespace Syndra {
 		glNamedBufferData(r_Data.lightBuffer, r_Data.numLights * sizeof(pointLight), nullptr, GL_DYNAMIC_DRAW);
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, r_Data.lightBuffer);
 
-		size_t numberOfTiles = r_Data.workGroupsX * r_Data.workGroupsY;
+		size_t numberOfTiles = 121 * 56; //r_Data.workGroupsX * r_Data.workGroupsY;
 
 		// Bind visible light indices buffer
 		glNamedBufferData(r_Data.visibleLightIndicesBuffer, numberOfTiles * sizeof(VisibleIndex) * r_Data.numLights, nullptr, GL_STATIC_DRAW);
@@ -347,7 +354,7 @@ namespace Syndra {
 				p = nullptr;
 			}
 			if (lc.type == LightType::Point) {
-				if (pIndex < 512) {
+				if (pIndex < 256) {
 					auto p = dynamic_cast<PointLight*>(lc.light.get());
 
 					pointLight& light = r_Data.pLights.lights[pIndex];
@@ -374,8 +381,13 @@ namespace Syndra {
 
 	uint32_t ForwardPlusRenderer::GetFinalTextureID(int index)
 	{
-		//return r_Data.postProcPass->GetSpecification().TargetFrameBuffer->GetColorAttachmentRendererID(1);
-		return r_Data.lightingPass->GetSpecification().TargetFrameBuffer->GetColorAttachmentRendererID(0);
+		return r_Data.postProcPass->GetSpecification().TargetFrameBuffer->GetColorAttachmentRendererID(0);
+		//return r_Data.lightingPass->GetSpecification().TargetFrameBuffer->GetColorAttachmentRendererID(0);
+	}
+
+	uint32_t ForwardPlusRenderer::GetMouseTextureID()
+	{
+		return 2;
 	}
 
 	Ref<FrameBuffer> ForwardPlusRenderer::GetMainFrameBuffer()
@@ -498,12 +510,12 @@ namespace Syndra {
 		r_Data.lightingPass->GetSpecification().TargetFrameBuffer->Resize(width, height);
 		r_Data.postProcPass->GetSpecification().TargetFrameBuffer->Resize(width, height);
 		//change the number of work groups in the compute shader
-		auto w = width;
-		auto h = height;
-		r_Data.workGroupsX = (w + (w % 16)) / 16;
-		r_Data.workGroupsY = (h + (h % 16)) / 16;
+		r_Data.workGroupsX = (width + (width % 16)) / 16;
+		r_Data.workGroupsY = (height + (height % 16)) / 16;
 		size_t numberOfTiles = r_Data.workGroupsX * r_Data.workGroupsY;
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, r_Data.visibleLightIndicesBuffer);
+		SN_CORE_INFO("Size:{0}", numberOfTiles * sizeof(VisibleIndex) * r_Data.numLights);
+		SN_CORE_INFO("Width:{0} Height: {1}", width, height);
 		glNamedBufferSubData(r_Data.visibleLightIndicesBuffer, 0, numberOfTiles * sizeof(VisibleIndex) * r_Data.numLights, nullptr);
 	}
 

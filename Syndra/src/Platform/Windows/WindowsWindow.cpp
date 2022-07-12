@@ -5,7 +5,7 @@
 #include "Engine/Events/MouseEvent.h"
 #include "Engine/Events/KeyEvent.h"
 
-//#include "Engine/Renderer/Renderer.h"
+#include "Engine/Core/Instrument.h"
 
 #include "Platform/OpenGL/OpenGLContext.h"
 #include "stb_image.h"
@@ -185,10 +185,11 @@ namespace Syndra {
 
 	void WindowsWindow::OnUpdate()
 	{
-		//SN_PROFILE_FUNCTION();
-
 		glfwPollEvents();
-		m_Context->SwapBuffers();
+		{
+			SN_PROFILE_SCOPE("swap buffers");
+			m_Context->SwapBuffers();
+		}
 	}
 
 	void WindowsWindow::SetVSync(bool enabled)

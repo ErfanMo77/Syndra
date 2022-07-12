@@ -48,7 +48,7 @@ namespace Syndra {
 
 	void EditorLayer::OnDetach()
 	{
-		
+		SceneRenderer::ShutDown();
 	}
 
 	void EditorLayer::OnUpdate(Timestep ts)
@@ -119,7 +119,9 @@ namespace Syndra {
 			Application::Get().GetImGuiLayer()->SetBlockEvents(!m_ViewportFocused && !m_ViewportHovered);
 
 			ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
-
+			if (viewportPanelSize.x > 1920) {
+				viewportPanelSize.x = 1920;
+			}
 			m_ViewportSize = { viewportPanelSize.x, viewportPanelSize.y };
 			uint64_t textureID = m_ActiveScene->GetMainTextureID();
 			ImGui::Image((ImTextureID)textureID, ImVec2{ m_ViewportSize.x, m_ViewportSize.y }, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
@@ -248,7 +250,7 @@ namespace Syndra {
 		{
 			auto& mousePickFB = m_ActiveScene->GetMainFrameBuffer();
 			mousePickFB->Bind();
-			int pixelData = mousePickFB->ReadPixel(2, mouseX, mouseY);
+			int pixelData = mousePickFB->ReadPixel(SceneRenderer::GetMouseTextureID(), mouseX, mouseY);
 			if (pixelData != -1) {
 				m_ScenePanel->SetSelectedEntity(m_ActiveScene->FindEntity(pixelData));
 			}

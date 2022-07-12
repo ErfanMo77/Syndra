@@ -100,7 +100,7 @@ namespace Syndra {
 			}
 			if (type == LightType::Point) {
 				auto p = reinterpret_cast<PointLight*>(other.light.get());
-				this->light = CreateRef<PointLight>(p->GetColor(), p->GetIntensity());
+				this->light = CreateRef<PointLight>(p->GetColor(), p->GetIntensity(),p->GetPosition(), p->GetRange());
 			}
 			if (type == LightType::Spot) {
 				auto p = reinterpret_cast<SpotLight*>(other.light.get());

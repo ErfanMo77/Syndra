@@ -51,7 +51,7 @@ shared uint maxDepthInt;
 shared uint visibleLightCount;
 shared vec4 frustumPlanes[6] ;
 // Shared local storage for visible indices, will be written out to the global buffer at the end
-shared int visibleLightIndices[512];
+shared int visibleLightIndices[256];
 shared mat4 viewProjection;
 
 // Took some light culling guidance from Dice's deferred renderer
@@ -75,32 +75,32 @@ void main()
 	}
 
 	barrier();
-
+	
 	// Step 1: Calculate the minimum and maximum depth values (from the depth buffer) for this group's tile
 	float maxDepth, minDepth;
 	vec2 text = vec2(location) / vec2(pc.width, pc.height);
 	float depth = texture(depthMap, text).r;
 	// Linearize the depth value from depth buffer (must do this because we created it using projection)
 	depth = (0.5 * pc.projection[3][2]) / (depth + 0.5 * pc.projection[2][2] - 0.5);
-
+	
 	// Convert depth to uint so we can do atomic min and max comparisons between the threads
 	uint depthInt = floatBitsToUint(depth);
 	atomicMin(minDepthInt, depthInt);
 	atomicMax(maxDepthInt, depthInt);
-
+	
 	barrier();
-
+	
 	// Step 2: One thread should calculate the frustum planes to be used for this tile
 	if (gl_LocalInvocationIndex == 0)
 	{
 		// Convert the min and max across the entire tile back to float
 		minDepth = uintBitsToFloat(minDepthInt);
 		maxDepth = uintBitsToFloat(maxDepthInt);
-
+	
 		// Steps based on tile sale
 		vec2 negativeStep = (2.0 * vec2(tileID)) / vec2(tileNumber);
 		vec2 positiveStep = (2.0 * vec2(tileID + ivec2(1, 1))) / vec2(tileNumber);
-
+	
 		// Set up starting values for planes using steps and min and max z values
 		frustumPlanes[0] = vec4(1.0, 0.0, 0.0, 1.0 - negativeStep.x); // Left
 		frustumPlanes[1] = vec4(-1.0, 0.0, 0.0, -1.0 + positiveStep.x); // Right
@@ -108,23 +108,23 @@ void main()
 		frustumPlanes[3] = vec4(0.0, -1.0, 0.0, -1.0 + positiveStep.y); // Top
 		frustumPlanes[4] = vec4(0.0, 0.0, -1.0, -minDepth); // Near
 		frustumPlanes[5] = vec4(0.0, 0.0, 1.0, maxDepth); // Far
-
+	
 		// Transform the first four planes
 		for (uint i = 0; i < 4; i++)
 		{
 			frustumPlanes[i] *= viewProjection;
 			frustumPlanes[i] /= length(frustumPlanes[i].xyz);
 		}
-
+	
 		// Transform the depth planes
 		frustumPlanes[4] *= pc.view;
 		frustumPlanes[4] /= length(frustumPlanes[4].xyz);
 		frustumPlanes[5] *= pc.view;
 		frustumPlanes[5] /= length(frustumPlanes[5].xyz);
 	}
-
+	
 	barrier();
-
+	
 	// Step 3: Cull lights.
 	// Parallelize the threads against the lights now.
 	// Can handle 256 simultaniously. Anymore lights than that and additional passes are performed
@@ -138,23 +138,23 @@ void main()
 		{
 			break;
 		}
-
+	
 		vec4 position = lightBuffer.data[lightIndex].position;
 		float radius = lightBuffer.data[lightIndex].paddingAndRadius.w;
-
+	
 		// We check if the light exists in our frustum
 		float distance = 0.0;
 		for (uint j = 0; j < 6; j++)
 		{
 			distance = dot(position, frustumPlanes[j]) + radius;
-
+	
 			// If one of the tests fails, then there is no intersection
 			if (distance <= 0.0)
 			{
 				break;
 			}
 		}
-
+	
 		// If greater than zero, then it is a visible light
 		if (distance > 0.0)
 		{
@@ -163,19 +163,19 @@ void main()
 			visibleLightIndices[offset] = int(lightIndex);
 		}
 	}
-
+	
 	barrier();
 
 	// One thread should fill the global light buffer
 	if (gl_LocalInvocationIndex == 0)
 	{
-		uint offset = index * 512; // Determine bosition in global buffer
+		uint offset = index * 256; // Determine bosition in global buffer
 		for (uint i = 0; i < visibleLightCount; i++)
 		{
 			visibleLightIndicesBuffer.data[offset + i].index = visibleLightIndices[i];
 		}
 
-		if (visibleLightCount != 512)
+		if (visibleLightCount != 256)
 		{
 			// Unless we have totally filled the entire array, mark it's end with -1
 			// Final shader step will use this to determine where to stop (without having to pass the light count)

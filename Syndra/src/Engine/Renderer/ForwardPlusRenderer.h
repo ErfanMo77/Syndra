@@ -16,9 +16,13 @@ namespace Syndra {
 
 		virtual void End() override;
 
+		virtual void ShutDown() override;
+
 		virtual void UpdateLights() override;
 
 		virtual uint32_t GetFinalTextureID(int index) override;
+
+		virtual uint32_t GetMouseTextureID() override;
 
 		virtual Ref<FrameBuffer> GetMainFrameBuffer() override;
 
@@ -48,7 +52,7 @@ namespace Syndra {
 
 		struct pointLightData
 		{
-			pointLight lights[512];
+			pointLight lights[256];
 		};
 
 		struct spotLight {

@@ -30,7 +30,7 @@ Entities:
     MeshComponent:
       Path: assets\Models\Sphere\Sphere.fbx
     MaterialComponent:
-      shader: GeometryPass
+      shader: ForwardShading
       Textures:
         - {binding: 0, path: ""}
         - {binding: 1, path: ""}
@@ -54,7 +54,7 @@ Entities:
     MeshComponent:
       Path: assets\Models\plane\plane.obj
     MaterialComponent:
-      shader: GeometryPass
+      shader: ForwardShading
       Textures:
         - {binding: 0, path: assets\Textures\New folder\ufomabmo_4K_Albedo.jpg}
         - {binding: 2, path: assets\Textures\New folder\ufomabmo_4K_Normal.jpg}
