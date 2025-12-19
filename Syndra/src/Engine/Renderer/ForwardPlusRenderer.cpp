@@ -7,15 +7,22 @@
 #include "Engine/Scene/Entity.h"
 #include "Engine/Scene/Scene.h"
 #include "Engine/Core/Instrument.h"
+#include "Engine/Renderer/Renderer.h"
 #include <glad/glad.h>
 
 namespace Syndra {
 	
+	static bool IsVulkan()
+	{
+		return Renderer::GetAPI() == RendererAPI::API::Vulkan;
+	}
 	static ForwardPlusRenderer::RenderData r_Data;
 
-	void ForwardPlusRenderer::Init(const Ref<Scene>& scene, const ShaderLibrary& shaders, const Ref<Environment>& env)
-	{
-		r_Data.scene = scene;
+void ForwardPlusRenderer::Init(const Ref<Scene>& scene, const ShaderLibrary& shaders, const Ref<Environment>& env)
+{
+	if (IsVulkan())
+		return;
+	r_Data.scene = scene;
 		r_Data.shaders = shaders;
 		r_Data.environment = env;
 		
@@ -136,9 +143,11 @@ namespace Syndra {
 		r_Data.ShadowBuffer = UniformBuffer::Create(sizeof(glm::mat4), 3);
 	}
 
-	void ForwardPlusRenderer::Render()
-	{
-		auto view = r_Data.scene->m_Registry.view<TransformComponent, MeshComponent>();
+void ForwardPlusRenderer::Render()
+{
+	if (IsVulkan())
+		return;
+	auto view = r_Data.scene->m_Registry.view<TransformComponent, MeshComponent>();
 		//-----------------------------------------------Depth Pre Pass--------------------------------------------//
 		{
 			SN_PROFILE_SCOPE("Depth pass");
@@ -267,9 +276,11 @@ namespace Syndra {
 		}
 	}
 
-	void ForwardPlusRenderer::End()
-	{
-		//-------------------------------------Post Processing and Depth Debug------------------------------------//
+void ForwardPlusRenderer::End()
+{
+	if (IsVulkan())
+		return;
+	//-------------------------------------Post Processing and Depth Debug------------------------------------//
 		{
 			SN_PROFILE_SCOPE("Post Processing");
 			r_Data.postProcPass->BindTargetFrameBuffer();
@@ -287,15 +298,19 @@ namespace Syndra {
 		}
 	}
 
-	void ForwardPlusRenderer::ShutDown()
-	{
-		glDeleteBuffers(1, &r_Data.lightBuffer);
-		glDeleteBuffers(1, &r_Data.visibleLightIndicesBuffer);
-	}
+void ForwardPlusRenderer::ShutDown()
+{
+	if (IsVulkan())
+		return;
+	glDeleteBuffers(1, &r_Data.lightBuffer);
+	glDeleteBuffers(1, &r_Data.visibleLightIndicesBuffer);
+}
 
-	void ForwardPlusRenderer::SetupLights()
-	{
-		glCreateBuffers(1, &r_Data.lightBuffer);
+void ForwardPlusRenderer::SetupLights()
+{
+	if (IsVulkan())
+		return;
+	glCreateBuffers(1, &r_Data.lightBuffer);
 		glCreateBuffers(1, &r_Data.visibleLightIndicesBuffer);
 
 		//creating and binding point light buffer
@@ -318,9 +333,11 @@ namespace Syndra {
 		glNamedBufferSubData(r_Data.lightBuffer, 0, sizeof(r_Data.pLights), &r_Data.pLights);
 	}
 
-	void ForwardPlusRenderer::UpdateLights()
-	{
-		SN_PROFILE_FUNCTION();
+void ForwardPlusRenderer::UpdateLights()
+{
+	if (IsVulkan())
+		return;
+	SN_PROFILE_FUNCTION();
 		auto viewLights = r_Data.scene->m_Registry.view<TransformComponent, LightComponent>();
 		//point light index
 		int pIndex = 0;
@@ -379,27 +396,35 @@ namespace Syndra {
 		glNamedBufferSubData(r_Data.lightBuffer, 0, sizeof(r_Data.pLights), &r_Data.pLights);
 	}
 
-	uint32_t ForwardPlusRenderer::GetFinalTextureID(int index)
-	{
-		return r_Data.postProcPass->GetSpecification().TargetFrameBuffer->GetColorAttachmentRendererID(0);
+uint32_t ForwardPlusRenderer::GetFinalTextureID(int index)
+{
+	if (IsVulkan())
+		return 0;
+	return r_Data.postProcPass->GetSpecification().TargetFrameBuffer->GetColorAttachmentRendererID(0);
 		//return r_Data.lightingPass->GetSpecification().TargetFrameBuffer->GetColorAttachmentRendererID(0);
 	}
 
-	uint32_t ForwardPlusRenderer::GetMouseTextureID()
-	{
-		return 2;
-	}
+uint32_t ForwardPlusRenderer::GetMouseTextureID()
+{
+	if (IsVulkan())
+		return 0;
+	return 2;
+}
 
-	Ref<FrameBuffer> ForwardPlusRenderer::GetMainFrameBuffer()
-	{
-		//TODO 
-		//Fix attachment ID
-		return r_Data.lightingPass->GetSpecification().TargetFrameBuffer;
-	}
+Ref<FrameBuffer> ForwardPlusRenderer::GetMainFrameBuffer()
+{
+	if (IsVulkan())
+		return nullptr;
+	//TODO 
+	//Fix attachment ID
+	return r_Data.lightingPass->GetSpecification().TargetFrameBuffer;
+}
 
-	void ForwardPlusRenderer::OnImGuiRender(bool* rendererOpen, bool* environmentOpen)
-	{
-		if (*rendererOpen) {
+void ForwardPlusRenderer::OnImGuiRender(bool* rendererOpen, bool* environmentOpen)
+{
+	if (IsVulkan())
+		return;
+	if (*rendererOpen) {
 			ImGui::Begin(ICON_FA_COGS" Renderer Settings", rendererOpen);
 			ImGui::Text("ForwardPlus debugger");
 			static bool showDepth = false;
@@ -504,9 +529,11 @@ namespace Syndra {
 		}
 	}
 
-	void ForwardPlusRenderer::OnResize(uint32_t width, uint32_t height)
-	{
-		r_Data.depthPass->GetSpecification().TargetFrameBuffer->Resize(width, height);
+void ForwardPlusRenderer::OnResize(uint32_t width, uint32_t height)
+{
+	if (IsVulkan())
+		return;
+	r_Data.depthPass->GetSpecification().TargetFrameBuffer->Resize(width, height);
 		r_Data.lightingPass->GetSpecification().TargetFrameBuffer->Resize(width, height);
 		r_Data.postProcPass->GetSpecification().TargetFrameBuffer->Resize(width, height);
 		//change the number of work groups in the compute shader

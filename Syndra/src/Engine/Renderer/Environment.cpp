@@ -1,5 +1,6 @@
 #include "lpch.h"
 #include "Engine/Renderer/Environment.h"
+#include "Engine/Renderer/Renderer.h"
 #include "glad/glad.h"
 
 namespace Syndra {
@@ -7,6 +8,8 @@ namespace Syndra {
 	Environment::Environment(const Ref<Texture2D>& hdri)
 		:m_HDRSkyMap(hdri)
 	{
+		if (Renderer::GetAPI() == RendererAPI::API::Vulkan)
+			return;
 		m_EquirectangularToCube = Shader::Create("assets/shaders/EquirectangularToCube.glsl");
 		m_BackgroundShader = Shader::Create("assets/shaders/BackgroundSky.glsl");
 		m_PrefilterShader = Shader::Create("assets/shaders/Prefilter.glsl");
@@ -199,21 +202,27 @@ namespace Syndra {
 
 	}
 
-	void Environment::RenderCube()
-	{
-		m_CubeVAO->Bind();
-		glDrawArrays(GL_TRIANGLES, 0, 36);
-	}
+void Environment::RenderCube()
+{
+	if (Renderer::GetAPI() == RendererAPI::API::Vulkan)
+		return;
+	m_CubeVAO->Bind();
+	glDrawArrays(GL_TRIANGLES, 0, 36);
+}
 
-	void Environment::RenderQuad()
-	{
-		m_QuadVAO->Bind();
-		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-	}
+void Environment::RenderQuad()
+{
+	if (Renderer::GetAPI() == RendererAPI::API::Vulkan)
+		return;
+	m_QuadVAO->Bind();
+	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+}
 
-	void Environment::RenderBackground()
-	{
-		m_BackgroundShader->Bind();
+void Environment::RenderBackground()
+{
+	if (Renderer::GetAPI() == RendererAPI::API::Vulkan)
+		return;
+	m_BackgroundShader->Bind();
 		Texture2D::BindTexture(envCubemap, 0);
 		//Texture2D::BindTexture(m_IrradianceFBO->GetColorAttachmentRendererID(), 1);
 		m_BackgroundShader->SetMat4("cam.view", m_View);
@@ -222,9 +231,11 @@ namespace Syndra {
 		m_BackgroundShader->Unbind();
 	}
 
-	void Environment::SetIntensity(float intensity)
-	{
-		m_BackgroundShader->Bind();
+void Environment::SetIntensity(float intensity)
+{
+	if (Renderer::GetAPI() == RendererAPI::API::Vulkan)
+		return;
+	m_BackgroundShader->Bind();
 		m_BackgroundShader->SetFloat("push.intensity", intensity);
 		m_BackgroundShader->Unbind();
 	}

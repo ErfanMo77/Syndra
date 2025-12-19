@@ -8,6 +8,8 @@
 #include "Engine/Core/Instrument.h"
 
 #include "Platform/OpenGL/OpenGLContext.h"
+#include "Platform/Vulkan/VulkanContext.h"
+#include "Engine/Renderer/Renderer.h"
 #include "stb_image.h"
 
 namespace Syndra {
@@ -40,9 +42,16 @@ namespace Syndra {
 		m_Data.Title = props.Title;
 		m_Data.Width = props.Width;
 		m_Data.Height = props.Height;
-		glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-		glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
-		glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+		if (Renderer::GetAPI() == RendererAPI::API::OpenGL)
+		{
+			glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+			glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
+			glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+		}
+		else
+		{
+			glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+		}
 		//glfwWindowHint(GLFW_SAMPLES,8);
 		SN_CORE_INFO("Creating window {0} ({1}, {2})", props.Title, props.Width, props.Height);
 
@@ -71,7 +80,10 @@ namespace Syndra {
 		glfwSetWindowIcon(m_Window, 1, images);
 		stbi_image_free(images[0].pixels);
 
-		m_Context = new OpenGLContext(m_Window);
+		if (Renderer::GetAPI() == RendererAPI::API::Vulkan)
+			m_Context = new VulkanContext(m_Window);
+		else
+			m_Context = new OpenGLContext(m_Window);
 		m_Context->Init();
 		//SN_CORE_INFO(m_Window);
 
@@ -196,10 +208,13 @@ namespace Syndra {
 	{
 		//SN_PROFILE_FUNCTION();
 
-		if (enabled)
-			glfwSwapInterval(1);
-		else
-			glfwSwapInterval(0);
+		if (Renderer::GetAPI() == RendererAPI::API::OpenGL)
+		{
+			if (enabled)
+				glfwSwapInterval(1);
+			else
+				glfwSwapInterval(0);
+		}
 
 		m_Data.VSync = enabled;
 	}

@@ -1,7 +1,6 @@
 #include "lpch.h"
 #include "Engine/Renderer/Renderer.h"
 #include "Engine/Renderer/RenderCommand.h"
-#include <glad/glad.h>
 namespace Syndra {
 
 	Renderer::SceneData* Renderer::m_SceneData = new Renderer::SceneData;

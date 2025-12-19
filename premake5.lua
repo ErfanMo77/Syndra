@@ -105,7 +105,8 @@ project "Syndra"
 		"Glad",
 		"imgui",
 		"yaml-cpp",
-		"opengl32.lib"
+		"opengl32.lib",
+		"%{Library.Vulkan}"
 	}
 	
 	filter "files:Syndra/vendor/ImGuizmo/**.cpp"

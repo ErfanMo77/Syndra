@@ -6,16 +6,21 @@
 #include "Engine/Scene/Scene.h"
 #include "imgui.h"
 #include "imgui_internal.h"
+#include "Engine/Renderer/Renderer.h"
 #include <glad/glad.h>
 
 namespace Syndra {
 
 	static SceneRenderer::SceneData s_Data;
-
-	void SceneRenderer::Initialize()
+	static bool IsVulkan()
 	{
-		//s_Data.renderPipeline = CreateRef<DeferredRenderer>();
-		s_Data.renderPipeline = CreateRef<ForwardPlusRenderer>();
+		return Renderer::GetAPI() == RendererAPI::API::Vulkan;
+	}
+
+void SceneRenderer::Initialize()
+{
+	//s_Data.renderPipeline = CreateRef<DeferredRenderer>();
+	s_Data.renderPipeline = CreateRef<ForwardPlusRenderer>();
 
 		//Initializing the pipeline
 		s_Data.renderPipeline->Init(s_Data.scene, s_Data.shaders, s_Data.environment);
@@ -48,10 +53,12 @@ namespace Syndra {
 		s_Data.scene->m_Shaders = s_Data.shaders;
 	}
 
-	void SceneRenderer::InitializeEnvironment()
-	{
-		//Initializing the environment map
-		auto path = s_Data.scene->m_EnvironmentPath;
+void SceneRenderer::InitializeEnvironment()
+{
+	if (IsVulkan())
+		return;
+	//Initializing the environment map
+	auto path = s_Data.scene->m_EnvironmentPath;
 		if (s_Data.environment) {
 			s_Data.scene->m_EnvironmentPath = s_Data.environment->GetPath();
 		}

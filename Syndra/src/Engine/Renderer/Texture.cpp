@@ -3,6 +3,7 @@
 #include "Engine/Renderer/Renderer.h"
 #include "Platform/OpenGL/OpenGLTexture2D.h"
 #include "Platform/OpenGL/OpenGLTexture1D.h"
+#include "Platform/Vulkan/VulkanTexture2D.h"
 
 namespace Syndra {
 
@@ -12,6 +13,7 @@ namespace Syndra {
 		{
 		case RendererAPI::API::NONE:    SN_CORE_ASSERT(false, "RendererAPI::None is currently not supported!"); return nullptr;
 		case RendererAPI::API::OpenGL:  return CreateRef<OpenGLTexture2D>(width, height);
+		case RendererAPI::API::Vulkan:  return CreateRef<VulkanTexture2D>(width, height);
 		}
 
 		SN_CORE_ASSERT(false, "Unknown RendererAPI!");
@@ -24,6 +26,7 @@ namespace Syndra {
 		{
 		case RendererAPI::API::NONE:    SN_CORE_ASSERT(false, "RendererAPI::None is currently not supported!"); return nullptr;
 		case RendererAPI::API::OpenGL:  return CreateRef<OpenGLTexture2D>(path,sRGB,false);
+		case RendererAPI::API::Vulkan:  return CreateRef<VulkanTexture2D>(path, sRGB,false);
 		}
 
 		SN_CORE_ASSERT(false, "Unknown RendererAPI!");
@@ -36,6 +39,7 @@ namespace Syndra {
 		{
 		case RendererAPI::API::NONE:    SN_CORE_ASSERT(false, "RendererAPI::None is currently not supported!"); return nullptr;
 		case RendererAPI::API::OpenGL:  return CreateRef<OpenGLTexture2D>(width,height,data,sRGB);
+		case RendererAPI::API::Vulkan:  return CreateRef<VulkanTexture2D>(width, height, data, sRGB);
 		}
 
 		SN_CORE_ASSERT(false, "Unknown RendererAPI!");
@@ -48,6 +52,7 @@ namespace Syndra {
 		{
 		case RendererAPI::API::NONE:    SN_CORE_ASSERT(false, "RendererAPI::None is currently not supported!"); return nullptr;
 		case RendererAPI::API::OpenGL:  return CreateRef<OpenGLTexture2D>(path, sRGB, HDR);
+		case RendererAPI::API::Vulkan:  return CreateRef<VulkanTexture2D>(path, sRGB, HDR);
 		}
 
 		SN_CORE_ASSERT(false, "Unknown RendererAPI!");
@@ -60,6 +65,7 @@ namespace Syndra {
 		{
 		case RendererAPI::API::NONE:    SN_CORE_ASSERT(false, "RendererAPI::None is currently not supported!");
 		case RendererAPI::API::OpenGL:	OpenGLTexture2D::BindTexture(rendererID,slot);
+		case RendererAPI::API::Vulkan:  break;
 		}
 
 
@@ -71,6 +77,7 @@ namespace Syndra {
 		{
 		case RendererAPI::API::NONE:    SN_CORE_ASSERT(false, "RendererAPI::None is currently not supported!"); return nullptr;
 		case RendererAPI::API::OpenGL:  return CreateRef<OpenGLTexture1D>(size);
+		case RendererAPI::API::Vulkan:  return CreateRef<VulkanTexture1D>(size);
 		}
 		SN_CORE_ASSERT(false, "Unknown RendererAPI!");
 		return nullptr;
@@ -82,6 +89,7 @@ namespace Syndra {
 		{
 		case RendererAPI::API::NONE:    SN_CORE_ASSERT(false, "RendererAPI::None is currently not supported!"); return nullptr;
 		case RendererAPI::API::OpenGL:  return CreateRef<OpenGLTexture1D>(size,data);
+		case RendererAPI::API::Vulkan:  return CreateRef<VulkanTexture1D>(size, data);
 		}
 		SN_CORE_ASSERT(false, "Unknown RendererAPI!");
 		return nullptr;

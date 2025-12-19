@@ -4,17 +4,24 @@
 #include "imgui_internal.h"
 #include "Engine/Utils/PlatformUtils.h"
 #include "Engine/Core/Application.h"
+#include "Engine/Renderer/Renderer.h"
 
 #include "Engine/Scene/Entity.h"
 #include "Engine/Scene/Scene.h"
 #include <glad/glad.h>
 
 namespace Syndra {
-	
+	static bool IsVulkan()
+	{
+		return Renderer::GetAPI() == RendererAPI::API::Vulkan;
+	}
+
 	static DeferredRenderer::RenderData r_Data;
 	
 	void DeferredRenderer::Init(const Ref<Scene>& scene, const ShaderLibrary& shaders, const Ref<Environment>& env)
 	{
+		if (IsVulkan())
+			return;
 		r_Data.scene = scene;
 		r_Data.shaders = shaders;
 		r_Data.environment = env;
@@ -132,6 +139,8 @@ namespace Syndra {
 
 	void DeferredRenderer::Render()
 	{
+		if (IsVulkan())
+			return;
 		auto view = r_Data.scene->m_Registry.view<TransformComponent, MeshComponent>();
 		//---------------------------------------------------------SHADOW PASS------------------------------------------//
 		r_Data.shadowPass->BindTargetFrameBuffer();
@@ -193,6 +202,8 @@ namespace Syndra {
 
 	void DeferredRenderer::End()
 	{
+		if (IsVulkan())
+			return;
 		//-------------------------------------------------Lighting and post-processing pass---------------------------------------------------//
 
 		r_Data.lightingPass->BindTargetFrameBuffer();
@@ -260,12 +271,16 @@ namespace Syndra {
 		Renderer::EndScene();
 	}
 
-	void DeferredRenderer::ShutDown()
-	{
-	}
+void DeferredRenderer::ShutDown()
+{
+	if (IsVulkan())
+		return;
+}
 
 	void DeferredRenderer::OnImGuiRender(bool* rendererOpen, bool* environmentOpen)
 	{
+		if (IsVulkan())
+			return;
 		//Renderer settings
 		if (*rendererOpen) {
 			ImGui::Begin(ICON_FA_COGS" Renderer Settings", rendererOpen);
@@ -397,16 +412,20 @@ namespace Syndra {
 		}
 	}
 
-	void DeferredRenderer::OnResize(uint32_t width, uint32_t height)
-	{
-		r_Data.geoPass->GetSpecification().TargetFrameBuffer->Resize(width, height);
+void DeferredRenderer::OnResize(uint32_t width, uint32_t height)
+{
+	if (IsVulkan())
+		return;
+	r_Data.geoPass->GetSpecification().TargetFrameBuffer->Resize(width, height);
 		r_Data.lightingPass->GetSpecification().TargetFrameBuffer->Resize(width, height);
 		r_Data.aaPass->GetSpecification().TargetFrameBuffer->Resize(width, height);
 	}
 
-	void DeferredRenderer::UpdateLights()
-	{
-		r_Data.lightManager->IntitializeLights();
+void DeferredRenderer::UpdateLights()
+{
+	if (IsVulkan())
+		return;
+	r_Data.lightManager->IntitializeLights();
 		auto viewLights = r_Data.scene->m_Registry.view<TransformComponent, LightComponent>();
 		//point light index
 		int pIndex = 0;
@@ -448,10 +467,12 @@ namespace Syndra {
 		r_Data.lightManager->UpdateBuffer();
 	}
 
-	uint32_t DeferredRenderer::GetFinalTextureID(int index)
-	{
-		if (r_Data.useFxaa) {
-			return r_Data.aaPass->GetSpecification().TargetFrameBuffer->GetColorAttachmentRendererID(index);
+uint32_t DeferredRenderer::GetFinalTextureID(int index)
+{
+	if (IsVulkan())
+		return 0;
+	if (r_Data.useFxaa) {
+		return r_Data.aaPass->GetSpecification().TargetFrameBuffer->GetColorAttachmentRendererID(index);
 		}
 		else
 		{
@@ -459,14 +480,18 @@ namespace Syndra {
 		}
 	}
 
-	uint32_t DeferredRenderer::GetMouseTextureID()
-	{
-		return 4;
-	}
+uint32_t DeferredRenderer::GetMouseTextureID()
+{
+	if (IsVulkan())
+		return 0;
+	return 4;
+}
 
-	Ref<FrameBuffer> DeferredRenderer::GetMainFrameBuffer()
-	{
-		return r_Data.geoPass->GetSpecification().TargetFrameBuffer;
-	}
+Ref<FrameBuffer> DeferredRenderer::GetMainFrameBuffer()
+{
+	if (IsVulkan())
+		return nullptr;
+	return r_Data.geoPass->GetSpecification().TargetFrameBuffer;
+}
 
 }
