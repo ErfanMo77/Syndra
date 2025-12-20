@@ -67,9 +67,15 @@ Visual Studio 2019+ is recommended.
 Start by cloning the repository with `git clone --recursive https://github.com/ErfanMo77/Syndra`.
 If the repository was cloned non-recursively previously, use `git submodule update --init` to clone the necessary submodules.
 
-Then, run **scripts/setup.py** to download and install all the necessary requirements (like VulkanSDK).
-It will also generate a Visual Studio solution. After installing all the prerequisites,
-you can compile and run the engine in Visual Studio.
+Install the Vulkan SDK and make sure the `VULKAN_SDK` environment variable is set (CMake uses it to locate shaderc/spirv libraries).
+
+Then, run **scripts/setup.py** to update submodules and generate a Visual Studio 2022 solution via CMake.
+After installing all the prerequisites, you can compile and run the engine in Visual Studio.
+
+You can also generate the solution manually:
+```
+cmake -S . -B build -G "Visual Studio 17 2022" -A x64
+```
 
 
 # Third Party Libraries
@@ -84,7 +90,6 @@ you can compile and run the engine in Visual Studio.
 - [Assimp](https://github.com/assimp/assimp) : Loading 3D models with support for more than 40 file formats.
 - [yaml-cpp](https://github.com/jbeder/yaml-cpp) : Scene serialization and deserialization.
 - [Vulkan SDK](https://www.lunarg.com/vulkan-sdk) : Shader compilation and reflection.
-- [Premake](https://premake.github.io) : Projects configuration and visual studio solution generator. 
 
 # Dependencies
 * Windows 10.
