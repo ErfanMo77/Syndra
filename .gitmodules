@@ -3,10 +3,10 @@
 	url = https://github.com/gabime/spdlog.git
 [submodule "Syndra/vendor/GLFW"]
 	path = Syndra/vendor/GLFW
-	url = https://github.com/ErfanMo77/glfw.git
+	url = https://github.com/glfw/glfw.git
 [submodule "Syndra/vendor/imgui"]
 	path = Syndra/vendor/imgui
-	url = https://github.com/ErfanMo77/imgui.git
+	url = https://github.com/ocornut/imgui.git
 [submodule "Syndra/vendor/glm"]
 	path = Syndra/vendor/glm
 	url = https://github.com/g-truc/glm.git
@@ -15,4 +15,4 @@
 	url = https://github.com/ErfanMo77/yaml-cpp.git
 [submodule "Syndra/vendor/ImGuizmo"]
 	path = Syndra/vendor/ImGuizmo
-	url = https://github.com/ErfanMo77/ImGuizmo.git
+	url = https://github.com/CedricGuillemet/ImGuizmo.git

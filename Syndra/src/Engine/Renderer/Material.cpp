@@ -83,7 +83,7 @@ namespace Syndra {
 	void Material::Bind()
 	{
 		m_Shader->Bind();
-		
+
 		//Binding textures
 		for (auto& sampler : m_Samplers)
 		{
@@ -104,6 +104,7 @@ namespace Syndra {
 			}
 			else
 			{
+				Texture2D::BindTexture(0, sampler.binding);
 				if (sampler.binding == 0)
 					m_Shader->SetInt("push.HasAlbedoMap", 0);
 				if (sampler.binding == 1)
@@ -117,16 +118,33 @@ namespace Syndra {
 			}
 		}
 
-		//Binding push constants
-		for (auto& item : m_PushConstants[1].members) 
+		bool hasMaterialConstants = false;
+		for (const auto& pushConstant : m_PushConstants)
 		{
-			if (item.name == "material") {
-				m_Shader->SetFloat("push.material.MetallicFactor", m_Cbuffer.material.MetallicFactor);
-				m_Shader->SetFloat("push.material.RoughnessFactor", m_Cbuffer.material.RoughnessFactor);
-				m_Shader->SetFloat("push.material.AO", m_Cbuffer.material.AO);
-				m_Shader->SetFloat4("push.material.color", m_Cbuffer.material.color);
-				m_Shader->SetFloat("push.tiling", m_Cbuffer.tiling);
+			for (const auto& item : pushConstant.members)
+			{
+				if (item.name == "material" ||
+					item.name == "color" ||
+					item.name == "RoughnessFactor" ||
+					item.name == "MetallicFactor" ||
+					item.name == "AO")
+				{
+					hasMaterialConstants = true;
+					break;
+				}
 			}
+
+			if (hasMaterialConstants)
+				break;
+		}
+
+		if (hasMaterialConstants || m_PushConstants.empty())
+		{
+			m_Shader->SetFloat("push.material.MetallicFactor", m_Cbuffer.material.MetallicFactor);
+			m_Shader->SetFloat("push.material.RoughnessFactor", m_Cbuffer.material.RoughnessFactor);
+			m_Shader->SetFloat("push.material.AO", m_Cbuffer.material.AO);
+			m_Shader->SetFloat4("push.material.color", m_Cbuffer.material.color);
+			m_Shader->SetFloat("push.tiling", m_Cbuffer.tiling);
 		}
 	}
 

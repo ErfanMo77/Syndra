@@ -6,12 +6,13 @@
 class DummyLayer : public Syndra::Layer {
 
 public:
-	DummyLayer() :Layer("Dummy") 
+	DummyLayer() :Layer("Dummy")
 	{
 	}
-	
+
 	~DummyLayer() {
 		delete m_Camera;
+		m_Camera = nullptr;
 	}
 
 	virtual void OnImGuiRender() override
@@ -28,7 +29,7 @@ public:
 	virtual void OnAttach() override
 	{
 
-		
+
 	}
 
 	virtual void OnUpdate(Syndra::Timestep ts) override
@@ -44,7 +45,7 @@ private:
 	Syndra::Ref<Syndra::VertexBuffer> m_VertexBuffer;
 	Syndra::Ref<Syndra::IndexBuffer> m_IndexBuffer;
 	Syndra::Ref<Syndra::Texture2D> m_Texture;
-	Syndra::PerspectiveCamera* m_Camera;
+	Syndra::PerspectiveCamera* m_Camera = nullptr;
 };
 
 

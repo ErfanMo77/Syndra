@@ -401,7 +401,17 @@ namespace Syndra {
 				{
 					auto dir = std::filesystem::current_path();
 					auto shaderName = materialComponent["shader"].as<std::string>();
-					auto shader = m_Shaders.Get(shaderName);
+					Ref<Shader> shader = SceneRenderer::ResolveShader(shaderName);
+					if (!shader)
+					{
+						SN_CORE_WARN("Missing shader '{}' during scene load. Falling back to default material shader.", shaderName);
+						shader = SceneRenderer::GetDefaultMaterialShader();
+					}
+					if (!shader)
+					{
+						SN_CORE_WARN("No compatible shader found for material component on entity '{}'. Material was skipped.", name);
+						continue;
+					}
 
 					auto material = Material::Create(shader);
 
@@ -426,18 +436,18 @@ namespace Syndra {
 						material->Set("HasAlbedoMap", cbuffer[1]["Use Albedo"].as<int>());
 						material->Set("push.material.color", cbuffer[1]["Albedo"].as<glm::vec4>());
 
-						material->Set("HasNormalMap", cbuffer[2]["Use MetallicMap"].as<int>());
+						material->Set("HasMetallicMap", cbuffer[2]["Use MetallicMap"].as<int>());
 						material->Set("push.material.MetallicFactor", cbuffer[2]["Metallic Factor"].as<float>());
 
-						material->Set("HasRoughnessMap", cbuffer[3]["Use NormalMap"].as<int>());
+						material->Set("HasNormalMap", cbuffer[3]["Use NormalMap"].as<int>());
 
-						material->Set("HasMetallicMap", cbuffer[4]["Use RoughnessMap"].as<int>());
+						material->Set("HasRoughnessMap", cbuffer[4]["Use RoughnessMap"].as<int>());
 						material->Set("push.material.RoughnessFactor", cbuffer[4]["Roughness Factor"].as<float>());
 
 						material->Set("HasAOMap", cbuffer[5]["Use AOMap"].as<int>());
 						material->Set("push.material.AO", cbuffer[5]["AO"].as<float>());
 					}
-					
+
 
 					deserializedEntity->AddComponent<MaterialComponent>(material);
 

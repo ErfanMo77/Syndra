@@ -25,6 +25,7 @@ set(SYNDRA_SOURCES
   src/Engine/Renderer/Shader.cpp
   src/Engine/Renderer/Texture.cpp
   src/Engine/Renderer/UniformBuffer.cpp
+  src/Engine/Renderer/VulkanDeferredRenderer.cpp
   src/Engine/Renderer/VertexArray.cpp
   src/Engine/Scene/Components.cpp
   src/Engine/Scene/Entity.cpp
@@ -32,6 +33,7 @@ set(SYNDRA_SOURCES
   src/Engine/Scene/Scene.cpp
   src/Engine/Scene/SceneCamera.cpp
   src/Engine/Scene/SceneSerializer.cpp
+  src/Engine/Utils/AssetPath.cpp
   src/Engine/Utils/Math.cpp
   src/lpch.cpp
   src/Platform/OpenGL/OpenGLBuffer.cpp
@@ -43,6 +45,16 @@ set(SYNDRA_SOURCES
   src/Platform/OpenGL/OpenGLTexture2D.cpp
   src/Platform/OpenGL/OpenGLUniformBuffer.cpp
   src/Platform/OpenGL/OpenGLVertexArray.cpp
+  src/Platform/Vulkan/VmaBuild.cpp
+  src/Platform/Vulkan/VulkanBuffer.cpp
+  src/Platform/Vulkan/VulkanContext.cpp
+  src/Platform/Vulkan/VulkanFrameBuffer.cpp
+  src/Platform/Vulkan/VulkanImGuiTextureRegistry.cpp
+  src/Platform/Vulkan/VulkanRendererAPI.cpp
+  src/Platform/Vulkan/VulkanShader.cpp
+  src/Platform/Vulkan/VulkanTexture.cpp
+  src/Platform/Vulkan/VulkanUniformBuffer.cpp
+  src/Platform/Vulkan/VulkanVertexArray.cpp
   src/Platform/Windows/WindowsInput.cpp
   src/Platform/Windows/WindowsUtils.cpp
   src/Platform/Windows/WindowsWindow.cpp
@@ -91,6 +103,7 @@ set(SYNDRA_HEADERS
   src/Engine/Renderer/Shader.h
   src/Engine/Renderer/Texture.h
   src/Engine/Renderer/UniformBuffer.h
+  src/Engine/Renderer/VulkanDeferredRenderer.h
   src/Engine/Renderer/VertexArray.h
   src/Engine/Scene/Components.h
   src/Engine/Scene/Entity.h
@@ -98,6 +111,7 @@ set(SYNDRA_HEADERS
   src/Engine/Scene/Scene.h
   src/Engine/Scene/SceneCamera.h
   src/Engine/Scene/SceneSerializer.h
+  src/Engine/Utils/AssetPath.h
   src/Engine/Utils/Math.h
   src/Engine/Utils/PlatformUtils.h
   src/Engine/Utils/PoissonGenerator.h
@@ -111,6 +125,15 @@ set(SYNDRA_HEADERS
   src/Platform/OpenGL/OpenGLTexture2D.h
   src/Platform/OpenGL/OpenGLUniformBuffer.h
   src/Platform/OpenGL/OpenGLVertexArray.h
+  src/Platform/Vulkan/VulkanBuffer.h
+  src/Platform/Vulkan/VulkanContext.h
+  src/Platform/Vulkan/VulkanFrameBuffer.h
+  src/Platform/Vulkan/VulkanImGuiTextureRegistry.h
+  src/Platform/Vulkan/VulkanRendererAPI.h
+  src/Platform/Vulkan/VulkanShader.h
+  src/Platform/Vulkan/VulkanTexture.h
+  src/Platform/Vulkan/VulkanUniformBuffer.h
+  src/Platform/Vulkan/VulkanVertexArray.h
   src/Platform/Windows/WindowsWindow.h
   vendor/stb_image/stb_image.h
 )
@@ -143,19 +166,37 @@ endif()
 
 set(SHADERC_DEBUG_LIB "${SYNDRA_VULKAN_LIB_DIR}/shaderc_sharedd.lib")
 set(SHADERC_RELEASE_LIB "${SYNDRA_VULKAN_LIB_DIR}/shaderc_shared.lib")
-set(SPIRV_CROSS_DEBUG_LIB "${SYNDRA_VULKAN_LIB_DIR}/spirv-cross-cored.lib")
-set(SPIRV_CROSS_RELEASE_LIB "${SYNDRA_VULKAN_LIB_DIR}/spirv-cross-core.lib")
-set(SPIRV_CROSS_GLSL_DEBUG_LIB "${SYNDRA_VULKAN_LIB_DIR}/spirv-cross-glsld.lib")
-set(SPIRV_CROSS_GLSL_RELEASE_LIB "${SYNDRA_VULKAN_LIB_DIR}/spirv-cross-glsl.lib")
 set(VULKAN_LIB "${SYNDRA_VULKAN_LIB_DIR}/vulkan-1.lib")
+set(SPIRV_CROSS_LIBS "")
+
+if(SYNDRA_USE_VULKAN_SDK_SPIRV_CROSS)
+  set(SPIRV_CROSS_DEBUG_LIB "${SYNDRA_VULKAN_LIB_DIR}/spirv-cross-cored.lib")
+  set(SPIRV_CROSS_RELEASE_LIB "${SYNDRA_VULKAN_LIB_DIR}/spirv-cross-core.lib")
+  set(SPIRV_CROSS_GLSL_DEBUG_LIB "${SYNDRA_VULKAN_LIB_DIR}/spirv-cross-glsld.lib")
+  set(SPIRV_CROSS_GLSL_RELEASE_LIB "${SYNDRA_VULKAN_LIB_DIR}/spirv-cross-glsl.lib")
+  set(SPIRV_CROSS_LIBS
+    debug "${SPIRV_CROSS_DEBUG_LIB}"
+    optimized "${SPIRV_CROSS_RELEASE_LIB}"
+    debug "${SPIRV_CROSS_GLSL_DEBUG_LIB}"
+    optimized "${SPIRV_CROSS_GLSL_RELEASE_LIB}"
+  )
+else()
+  if(NOT TARGET spirv-cross-core OR NOT TARGET spirv-cross-glsl)
+    message(FATAL_ERROR "SPIRV-Cross targets are not available. Set SYNDRA_USE_VULKAN_SDK_SPIRV_CROSS=ON to use Vulkan SDK binaries.")
+  endif()
+  set(SPIRV_CROSS_LIBS
+    spirv-cross-core
+    spirv-cross-glsl
+  )
+endif()
 
 if(NOT EXISTS "${SHADERC_DEBUG_LIB}")
   message(WARNING "shaderc debug library not found: ${SHADERC_DEBUG_LIB}")
 endif()
-if(NOT EXISTS "${SPIRV_CROSS_DEBUG_LIB}")
+if(SYNDRA_USE_VULKAN_SDK_SPIRV_CROSS AND NOT EXISTS "${SPIRV_CROSS_DEBUG_LIB}")
   message(WARNING "spirv-cross debug library not found: ${SPIRV_CROSS_DEBUG_LIB}")
 endif()
-if(NOT EXISTS "${SPIRV_CROSS_GLSL_DEBUG_LIB}")
+if(SYNDRA_USE_VULKAN_SDK_SPIRV_CROSS AND NOT EXISTS "${SPIRV_CROSS_GLSL_DEBUG_LIB}")
   message(WARNING "spirv-cross-glsl debug library not found: ${SPIRV_CROSS_GLSL_DEBUG_LIB}")
 endif()
 if(NOT EXISTS "${VULKAN_LIB}")
@@ -178,13 +219,12 @@ target_link_libraries(Syndra PUBLIC
   imgui
   ImGuizmo
   yaml-cpp
+  volk
+  VulkanMemoryAllocatorHeaders
   "${VULKAN_LIB}"
   debug "${SHADERC_DEBUG_LIB}"
   optimized "${SHADERC_RELEASE_LIB}"
-  debug "${SPIRV_CROSS_DEBUG_LIB}"
-  optimized "${SPIRV_CROSS_RELEASE_LIB}"
-  debug "${SPIRV_CROSS_GLSL_DEBUG_LIB}"
-  optimized "${SPIRV_CROSS_GLSL_RELEASE_LIB}"
+  ${SPIRV_CROSS_LIBS}
   debug "${ASSIMP_DEBUG_LIB}"
   optimized "${ASSIMP_RELEASE_LIB}"
 )

@@ -1,6 +1,7 @@
 #pragma once
 #include "DeferredRenderer.h"
 #include "ForwardPlusRenderer.h"
+#include "VulkanDeferredRenderer.h"
 
 namespace Syndra {
 
@@ -13,7 +14,7 @@ namespace Syndra {
 		static void Initialize();
 		static void InitializeShaders();
 		static void InitializeEnvironment();
-		
+
 		static void BeginScene(const PerspectiveCamera& camera);
 		static void RenderScene();
 
@@ -37,6 +38,9 @@ namespace Syndra {
 		static Ref<FrameBuffer> GetMainFrameBuffer();
 
 		static ShaderLibrary& GetShaderLibrary();
+		static Ref<Shader> ResolveShader(const std::string& shaderName);
+		static Ref<Shader> GetDefaultMaterialShader();
+		static bool SupportsEnvironmentControls();
 
 
 	public:

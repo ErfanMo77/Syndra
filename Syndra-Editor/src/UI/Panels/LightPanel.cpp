@@ -19,7 +19,7 @@ namespace Syndra {
 
 			ImGui::PopStyleVar();
 			ImGui::NextColumn();
-			ImGui::PushItemWidth(ImGui::GetContentRegionAvailWidth());
+			ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x);
 			std::string label = LightTypeToLightName(component.type);
 
 			static int item_current_idx = 0;                    // Here our selection data is an index.
@@ -61,7 +61,7 @@ namespace Syndra {
 			ImGui::Text("Color\0");
 			ImGui::SameLine();
 			ImGui::NextColumn();
-			ImGui::PushItemWidth(ImGui::GetContentRegionAvailWidth());
+			ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x);
 			ImGuiColorEditFlags colorFlags = ImGuiColorEditFlags_HDR;
 			ImGui::ColorEdit4("##color", glm::value_ptr(color4), colorFlags);
 			ImGui::PopItemWidth();
@@ -76,7 +76,7 @@ namespace Syndra {
 			ImGui::Text("Intensity\0");
 			ImGui::SameLine();
 			ImGui::NextColumn();
-			ImGui::PushItemWidth(ImGui::GetContentRegionAvailWidth());
+			ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x);
 			ImGui::DragFloat("##Intensity", &intensity, 0.1, 0, 100);
 			ImGui::PopItemWidth();
 			ImGui::Columns(1);
@@ -93,7 +93,7 @@ namespace Syndra {
 				ImGui::Text("Direction\0");
 				ImGui::SameLine();
 				ImGui::NextColumn();
-				ImGui::PushItemWidth(ImGui::GetContentRegionAvailWidth());
+				ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x);
 				ImGui::SliderFloat3("##direction", glm::value_ptr(dir), -2 * PI, 2 * PI, "%.3f");
 				ImGui::PopItemWidth();
 				ImGui::Columns(1);
@@ -122,7 +122,7 @@ namespace Syndra {
 				ImGui::Text("Direction\0");
 				ImGui::SameLine();
 				ImGui::NextColumn();
-				ImGui::PushItemWidth(ImGui::GetContentRegionAvailWidth());
+				ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x);
 				ImGui::SliderFloat3("##direction", glm::value_ptr(dir), -2 * PI, 2 * PI, "%.3f");
 				ImGui::PopItemWidth();
 				ImGui::Columns(1);

@@ -23,40 +23,47 @@ namespace Syndra {
 	OpenGLTexture2D::OpenGLTexture2D(const std::string& path, bool sRGB, bool HDR)
 		: m_Path(path)
 	{
-		int width, height, channels;
-		
-		stbi_uc* data = nullptr;
 		if (HDR) {
 			LoadHDR();
 		}
 		else
 		{
+			int width = 0;
+			int height = 0;
+			int channels = 0;
 			stbi_set_flip_vertically_on_load(1);
-			{
-				data = stbi_load(path.c_str(), &width, &height, &channels, 0);
-			}
+			stbi_uc* data = stbi_load(path.c_str(), &width, &height, &channels, STBI_rgb_alpha);
 
-			//SN_CORE_ASSERT(data, "Failed to load image!");
-			m_Width = width;
-			m_Height = height;
-
-			GLenum internalFormat = 0, dataFormat = 0;
-			if (channels == 4)
-			{
-				internalFormat = sRGB ? GL_SRGB8_ALPHA8 : GL_RGBA8;
-				dataFormat = GL_RGBA;
-			}
-			else if (channels == 3)
-			{
-				internalFormat = sRGB ? GL_SRGB8 : GL_RGB8;
-				dataFormat = GL_RGB;
-			}
-
-			uint32_t mipmapLevels;
+			const GLenum internalFormat = sRGB ? GL_SRGB8_ALPHA8 : GL_RGBA8;
+			const GLenum dataFormat = GL_RGBA;
 			m_InternalFormat = internalFormat;
 			m_DataFormat = dataFormat;
-			mipmapLevels = (GLsizei)floor(log2(std::max(width, height)));
-			//SN_CORE_ASSERT(internalFormat & dataFormat, "Format not supported!");
+
+			if (!data || width <= 0 || height <= 0)
+			{
+				SN_CORE_ERROR("Failed to load texture '{}'. Using 1x1 fallback texture.", path);
+				const unsigned char fallbackPixel[4] = { 255, 0, 255, 255 };
+				m_Width = 1;
+				m_Height = 1;
+
+				glCreateTextures(GL_TEXTURE_2D, 1, &m_RendererID);
+				glBindTexture(GL_TEXTURE_2D, m_RendererID);
+				glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+				glTextureStorage2D(m_RendererID, 1, internalFormat, m_Width, m_Height);
+				glTextureParameteri(m_RendererID, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+				glTextureParameteri(m_RendererID, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+				glTextureParameteri(m_RendererID, GL_TEXTURE_WRAP_S, GL_REPEAT);
+				glTextureParameteri(m_RendererID, GL_TEXTURE_WRAP_T, GL_REPEAT);
+				glTextureSubImage2D(m_RendererID, 0, 0, 0, m_Width, m_Height, dataFormat, GL_UNSIGNED_BYTE, fallbackPixel);
+				glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
+				if (data)
+					stbi_image_free(data);
+				return;
+			}
+
+			m_Width = width;
+			m_Height = height;
+			const uint32_t mipmapLevels = static_cast<uint32_t>(std::floor(std::log2(static_cast<float>(std::max(1, std::max(width, height)))))) + 1;
 
 			glCreateTextures(GL_TEXTURE_2D, 1, &m_RendererID);
 			glBindTexture(GL_TEXTURE_2D, m_RendererID);
@@ -78,39 +85,15 @@ namespace Syndra {
 
 	OpenGLTexture2D::OpenGLTexture2D(uint32_t mWidth, uint32_t mHeight,const unsigned char* data, bool sRGB)
 	{
-		int width, height, channels;
-		stbi_set_flip_vertically_on_load(1);
-		stbi_uc* mdata = nullptr;
-		if (mHeight == 0)
-		{
-			mdata = stbi_load_from_memory(data, mWidth, &width, &height, &channels, 0);
-		}
-		else
-		{
-			mdata = stbi_load_from_memory(data, mWidth * mHeight, &width, &height, &channels, 0);
-		}
+		SN_CORE_ASSERT(mWidth > 0 && mHeight > 0, "OpenGLTexture2D dimensions must be greater than zero.");
+		m_Width = static_cast<int>(mWidth);
+		m_Height = static_cast<int>(mHeight);
 
-		//SN_CORE_ASSERT(data, "Failed to load image!");
-		m_Width = width;
-		m_Height = height;
-
-		GLenum internalFormat = 0, dataFormat = 0;
-		if (channels == 4)
-		{
-			internalFormat = sRGB ? GL_SRGB8_ALPHA8 : GL_RGBA8;
-			dataFormat = GL_RGBA;
-		}
-		else if (channels == 3)
-		{
-			internalFormat = sRGB ? GL_SRGB8 : GL_RGB8;
-			dataFormat = GL_RGB;
-		}
-
-		uint32_t mipmapLevels;
+		const GLenum internalFormat = sRGB ? GL_SRGB8_ALPHA8 : GL_RGBA8;
+		const GLenum dataFormat = GL_RGBA;
 		m_InternalFormat = internalFormat;
 		m_DataFormat = dataFormat;
-		mipmapLevels = (GLsizei)floor(log2(std::max(width, height)));
-		//SN_CORE_ASSERT(internalFormat & dataFormat, "Format not supported!");
+		const uint32_t mipmapLevels = static_cast<uint32_t>(std::floor(std::log2(static_cast<float>(std::max(1u, std::max(mWidth, mHeight)))))) + 1;
 
 		glCreateTextures(GL_TEXTURE_2D, 1, &m_RendererID);
 		glBindTexture(GL_TEXTURE_2D, m_RendererID);
@@ -123,10 +106,9 @@ namespace Syndra {
 		glTextureParameteri(m_RendererID, GL_TEXTURE_WRAP_S, GL_REPEAT);
 		glTextureParameteri(m_RendererID, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
-		glTextureSubImage2D(m_RendererID, 0, 0, 0, m_Width, m_Height, dataFormat, GL_UNSIGNED_BYTE, mdata);
+		glTextureSubImage2D(m_RendererID, 0, 0, 0, m_Width, m_Height, dataFormat, GL_UNSIGNED_BYTE, data);
 		glGenerateTextureMipmap(m_RendererID);
 		glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
-		stbi_image_free(mdata);
 	}
 
 	OpenGLTexture2D::~OpenGLTexture2D()

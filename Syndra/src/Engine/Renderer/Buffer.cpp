@@ -2,6 +2,7 @@
 #include "Engine/Renderer/Buffer.h"
 #include "Engine/Renderer/Renderer.h"
 #include "Platform/OpenGL/OpenGLBuffer.h"
+#include "Platform/Vulkan/VulkanBuffer.h"
 
 
 namespace Syndra {
@@ -13,6 +14,8 @@ namespace Syndra {
 		case RendererAPI::API::NONE:
 			SN_CORE_ASSERT(false, "RendererAPI::NONE is not supported!");
 			return nullptr;
+		case RendererAPI::API::Vulkan:
+			return CreateRef<VulkanVertexBuffer>(vertices, size);
 		case RendererAPI::API::OpenGL:
 			return CreateRef<OpenGLVertexBuffer>(vertices, size);
 		}
@@ -28,6 +31,8 @@ namespace Syndra {
 		case RendererAPI::API::NONE:
 			SN_CORE_ASSERT(false, "RendererAPI::NONE is not supported!");
 			return nullptr;
+		case RendererAPI::API::Vulkan:
+			return CreateRef<VulkanIndexBuffer>(vertices, count);
 		case RendererAPI::API::OpenGL:
 			return CreateRef<OpenGLIndexBuffer>(vertices, count);
 		}

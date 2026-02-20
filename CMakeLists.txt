@@ -108,6 +108,12 @@ function(syndra_set_debug_working_dir target_name working_dir)
   endif()
 endfunction()
 
+function(syndra_disable_vcpkg_applocal target_name)
+  if(MSVC)
+    set_property(TARGET ${target_name} PROPERTY VS_GLOBAL_VcpkgApplocalDeps false)
+  endif()
+endfunction()
+
 set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
@@ -117,11 +123,81 @@ set(YAML_CPP_BUILD_TOOLS OFF CACHE BOOL "" FORCE)
 set(YAML_CPP_INSTALL OFF CACHE BOOL "" FORCE)
 set(YAML_BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 
+include(FetchContent)
+
+option(SYNDRA_USE_VULKAN_SDK_SPIRV_CROSS
+  "Link SPIRV-Cross binaries from Vulkan SDK instead of building SPIRV-Cross from source."
+  OFF
+)
+
+if(NOT SYNDRA_USE_VULKAN_SDK_SPIRV_CROSS)
+  set(SPIRV_CROSS_ENABLE_TESTS OFF CACHE BOOL "" FORCE)
+  set(SPIRV_CROSS_ENABLE_CPP OFF CACHE BOOL "" FORCE)
+  set(SPIRV_CROSS_ENABLE_C_API OFF CACHE BOOL "" FORCE)
+  set(SPIRV_CROSS_ENABLE_REFLECT OFF CACHE BOOL "" FORCE)
+  set(SPIRV_CROSS_ENABLE_UTIL OFF CACHE BOOL "" FORCE)
+  set(SPIRV_CROSS_ENABLE_HLSL OFF CACHE BOOL "" FORCE)
+  set(SPIRV_CROSS_ENABLE_MSL OFF CACHE BOOL "" FORCE)
+
+  FetchContent_Declare(
+    spirv_cross
+    GIT_REPOSITORY https://github.com/KhronosGroup/SPIRV-Cross.git
+    GIT_TAG vulkan-sdk-1.4.335.0
+    GIT_SHALLOW TRUE
+  )
+  FetchContent_MakeAvailable(spirv_cross)
+endif()
+
+FetchContent_Declare(
+  volk
+  GIT_REPOSITORY https://github.com/zeux/volk.git
+  GIT_TAG vulkan-sdk-1.4.335.0
+  GIT_SHALLOW TRUE
+)
+FetchContent_MakeAvailable(volk)
+
+FetchContent_Declare(
+  vulkan_memory_allocator
+  GIT_REPOSITORY https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator.git
+  GIT_TAG v3.3.0
+  GIT_SHALLOW TRUE
+)
+FetchContent_MakeAvailable(vulkan_memory_allocator)
+
+add_library(VulkanMemoryAllocatorHeaders INTERFACE)
+target_include_directories(VulkanMemoryAllocatorHeaders INTERFACE
+  ${vulkan_memory_allocator_SOURCE_DIR}/include
+)
+
 add_subdirectory(Syndra/vendor/GLFW)
 add_subdirectory(Syndra/vendor/yaml-cpp)
 add_subdirectory(Syndra/vendor/Glad)
-add_subdirectory(Syndra/vendor/imgui)
-add_subdirectory(Syndra/vendor/ImGuizmo)
+
+set(SYNDRA_IMGUI_DIR "${SYNDRA_ROOT_DIR}/Syndra/vendor/imgui")
+add_library(imgui STATIC
+  ${SYNDRA_IMGUI_DIR}/imgui.cpp
+  ${SYNDRA_IMGUI_DIR}/imgui_demo.cpp
+  ${SYNDRA_IMGUI_DIR}/imgui_draw.cpp
+  ${SYNDRA_IMGUI_DIR}/imgui_tables.cpp
+  ${SYNDRA_IMGUI_DIR}/imgui_widgets.cpp
+)
+target_include_directories(imgui PUBLIC
+  ${SYNDRA_IMGUI_DIR}
+)
+target_compile_features(imgui PUBLIC cxx_std_17)
+
+set(SYNDRA_IMGUIZMO_DIR "${SYNDRA_ROOT_DIR}/Syndra/vendor/ImGuizmo")
+add_library(ImGuizmo STATIC
+  ${SYNDRA_IMGUIZMO_DIR}/ImCurveEdit.cpp
+  ${SYNDRA_IMGUIZMO_DIR}/ImGradient.cpp
+  ${SYNDRA_IMGUIZMO_DIR}/ImGuizmo.cpp
+  ${SYNDRA_IMGUIZMO_DIR}/ImSequencer.cpp
+)
+target_include_directories(ImGuizmo PUBLIC
+  ${SYNDRA_IMGUIZMO_DIR}
+)
+target_link_libraries(ImGuizmo PUBLIC imgui)
+target_compile_features(ImGuizmo PUBLIC cxx_std_17)
 
 add_subdirectory(Syndra)
 add_subdirectory(Syndra-Editor)

@@ -1,26 +1,66 @@
 #include "lpch.h"
 #include "ImGuiLayer.h"
+
 #include "GLFW/glfw3.h"
 #include "glad/glad.h"
+
 #include "Engine/Core/Application.h"
+#include "Engine/Renderer/RendererAPI.h"
+#include "Engine/Utils/AssetPath.h"
+#include "Platform/Vulkan/VulkanContext.h"
+#include "Platform/Vulkan/VulkanImGuiTextureRegistry.h"
+
 #include "backends/imgui_impl_glfw.h"
 #include "backends/imgui_impl_opengl3.h"
+#include "backends/imgui_impl_vulkan.h"
 #include "ImGuizmo.h"
 
 #include "IconsFontAwesome5.h"
 
-namespace  Syndra {
+namespace {
 
+	ImFont* AddEditorFont(ImGuiIO& io, const char* relativePath, float fontSize, const ImFontConfig* config = nullptr, const ImWchar* glyphRanges = nullptr)
+	{
+		const std::string fontPath = Syndra::AssetPath::ResolveEditorAssetPath(relativePath);
+		ImFont* font = io.Fonts->AddFontFromFileTTF(fontPath.c_str(), fontSize, config, glyphRanges);
+		SN_CORE_ASSERT(font != nullptr, "Could not load ImGui font file!");
+		return font;
+	}
+
+	void CheckVkResult(VkResult result)
+	{
+		if (result != VK_SUCCESS)
+		{
+			SN_CORE_ERROR("ImGui Vulkan backend error: {}", static_cast<int32_t>(result));
+		}
+	}
+
+	ImTextureID ToImGuiTextureID(uint64_t value)
+	{
+		return (ImTextureID)(uintptr_t)value;
+	}
+
+	ImTextureID ToImGuiTextureID(VkDescriptorSet descriptorSet)
+	{
+		return (ImTextureID)(uintptr_t)descriptorSet;
+	}
+
+}
+
+namespace Syndra {
+
+	ImGuiLayer* ImGuiLayer::s_Instance = nullptr;
 
 	ImGuiLayer::ImGuiLayer()
-		:Layer("ImGui Layer")
-		,m_time(0)
+		: Layer("ImGui Layer")
 	{
+		s_Instance = this;
 	}
 
 	ImGuiLayer::~ImGuiLayer()
 	{
-
+		if (s_Instance == this)
+			s_Instance = nullptr;
 	}
 
 	void ImGuiLayer::OnAttach()
@@ -32,33 +72,27 @@ namespace  Syndra {
 		ImGui::CreateContext();
 		ImGuiIO& io = ImGui::GetIO(); (void)io;
 		ImGuizmo::SetImGuiContext(ImGui::GetCurrentContext());
-		io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;       // Enable Keyboard Controls
-		//io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
-		io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;           // Enable Docking
-		io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;         // Enable Multi-Viewport / Platform Windows
-		//io.ConfigViewportsNoAutoMerge = true;
-		//io.ConfigViewportsNoTaskBarIcon = true;
-		io.Fonts->AddFontFromFileTTF("assets/fonts/Montserrat-Black.ttf", 16.0f);
-		io.Fonts->AddFontFromFileTTF("assets/fonts/Montserrat-Medium.ttf", 16.0f);
-		io.Fonts->AddFontFromFileTTF("assets/fonts/Montserrat-Bold.ttf", 16.0f);
-		io.FontDefault = io.Fonts->AddFontFromFileTTF("assets/fonts/Montserrat-SemiBold.ttf", 16.0f);
+		io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+		io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+		io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
+		if (RendererAPI::GetAPI() == RendererAPI::API::Vulkan)
+			io.ConfigFlags &= ~ImGuiConfigFlags_ViewportsEnable;
+		AddEditorFont(io, "assets/fonts/Montserrat-Black.ttf", 16.0f);
+		AddEditorFont(io, "assets/fonts/Montserrat-Medium.ttf", 16.0f);
+		AddEditorFont(io, "assets/fonts/Montserrat-Bold.ttf", 16.0f);
+		io.FontDefault = AddEditorFont(io, "assets/fonts/Montserrat-SemiBold.ttf", 16.0f);
 
-		// merge in icons from Font Awesome
 		static const ImWchar icons_ranges[] = { ICON_MIN_FA, ICON_MAX_FA, 0 };
-		ImFontConfig icons_config; 
+		ImFontConfig icons_config;
 		icons_config.MergeMode = true;
 		icons_config.PixelSnapH = true;
 		icons_config.GlyphMinAdvanceX = 16.0f;
-		//io.Fonts->AddFontFromFileTTF("assets/fonts/fa-solid-900.ttf", 16.0f, &icons_config, icons_ranges);
-		io.Fonts->AddFontFromFileTTF("assets/fonts/fa-regular-400.ttf", 16.0f, &icons_config, icons_ranges);
-		io.Fonts->AddFontFromFileTTF("assets/fonts/fa-light-300.ttf", 16.0f, &icons_config, icons_ranges);
+		AddEditorFont(io, "assets/fonts/fa-regular-400.ttf", 16.0f, &icons_config, icons_ranges);
+		AddEditorFont(io, "assets/fonts/fa-light-300.ttf", 16.0f, &icons_config, icons_ranges);
 
-		// Setup Dear ImGui style
-		ImGui::StyleColorsDark(); 
+		ImGui::StyleColorsDark();
 		SetDarkThemeColors();
-		//ImGui::StyleColorsClassic();
 
-		// When viewports are enabled we tweak WindowRounding/WindowBg so platform windows can look identical to regular ones.
 		ImGuiStyle& style = ImGui::GetStyle();
 		if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
 		{
@@ -66,47 +100,230 @@ namespace  Syndra {
 			style.Colors[ImGuiCol_WindowBg].w = 1.0f;
 		}
 
-		// Setup Platform/Renderer backends
-		ImGui_ImplGlfw_InitForOpenGL(window, true);
-		ImGui_ImplOpenGL3_Init("#version 450 core");
+		if (RendererAPI::GetAPI() == RendererAPI::API::Vulkan)
+		{
+			m_Backend = Backend::Vulkan;
+			VulkanContext* context = VulkanContext::GetCurrent();
+			SN_CORE_ASSERT(context != nullptr, "Vulkan context is required before ImGui initialization.");
+			SN_CORE_INFO("ImGui Vulkan: context acquired.");
+
+			ImGui_ImplGlfw_InitForVulkan(window, true);
+			SN_CORE_INFO("ImGui Vulkan: GLFW backend initialized.");
+
+			VkFormat colorAttachmentFormat = context->GetSwapchainImageFormat();
+			VkPipelineRenderingCreateInfo renderingCreateInfo{};
+			renderingCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO_KHR;
+			renderingCreateInfo.colorAttachmentCount = 1;
+			renderingCreateInfo.pColorAttachmentFormats = &colorAttachmentFormat;
+
+			ImGui_ImplVulkan_InitInfo initInfo{};
+			initInfo.ApiVersion = VK_API_VERSION_1_4;
+			initInfo.Instance = context->GetInstance();
+			initInfo.PhysicalDevice = context->GetPhysicalDevice();
+			initInfo.Device = context->GetDevice();
+			initInfo.QueueFamily = context->GetGraphicsQueueFamily();
+			initInfo.Queue = context->GetGraphicsQueue();
+			initInfo.MinImageCount = std::max(2u, context->GetSwapchainMinImageCount());
+			initInfo.ImageCount = std::max(initInfo.MinImageCount, context->GetSwapchainImageCount());
+			initInfo.DescriptorPoolSize = 2048;
+			initInfo.UseDynamicRendering = true;
+			initInfo.PipelineInfoMain.Subpass = 0;
+			initInfo.PipelineInfoMain.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
+			initInfo.PipelineInfoMain.PipelineRenderingCreateInfo = renderingCreateInfo;
+			initInfo.PipelineInfoForViewports = initInfo.PipelineInfoMain;
+			initInfo.CheckVkResultFn = CheckVkResult;
+			SN_CORE_INFO(
+				"ImGui Vulkan handles: instance={}, physicalDevice={}, device={}",
+				(void*)initInfo.Instance,
+				(void*)initInfo.PhysicalDevice,
+				(void*)initInfo.Device);
+
+			const bool initialized = ImGui_ImplVulkan_Init(&initInfo);
+			SN_CORE_INFO("ImGui Vulkan: backend init result={}.", initialized ? "true" : "false");
+			SN_CORE_ASSERT(initialized, "Failed to initialize ImGui Vulkan backend.");
+			m_LastVulkanMinImageCount = initInfo.MinImageCount;
+			SN_CORE_INFO("ImGui Vulkan: initialization complete.");
+
+			context->SetOverlayRenderCallback([this](VkCommandBuffer commandBuffer, uint32_t imageIndex)
+				{
+					RenderVulkanDrawData(commandBuffer, imageIndex);
+				});
+		}
+		else
+		{
+			m_Backend = Backend::OpenGL;
+			SN_CORE_INFO("ImGui OpenGL: initializing GLFW backend.");
+			ImGui_ImplGlfw_InitForOpenGL(window, true);
+			SN_CORE_INFO("ImGui OpenGL: initializing OpenGL3 backend.");
+			ImGui_ImplOpenGL3_Init("#version 450 core");
+			SN_CORE_INFO("ImGui OpenGL: initialization complete.");
+		}
 	}
 
 	void ImGuiLayer::OnDetach()
 	{
-		ImGui_ImplOpenGL3_Shutdown();
+		if (m_Backend == Backend::Vulkan)
+		{
+			VulkanContext* context = VulkanContext::GetCurrent();
+			if (context != nullptr)
+			{
+				vkDeviceWaitIdle(context->GetDevice());
+				context->SetOverlayRenderCallback({});
+			}
+
+			RemoveAllVulkanTextureDescriptors();
+			ImGui_ImplVulkan_Shutdown();
+		}
+		else if (m_Backend == Backend::OpenGL)
+		{
+			ImGui_ImplOpenGL3_Shutdown();
+		}
+
 		ImGui_ImplGlfw_Shutdown();
 		ImGui::DestroyContext();
+		m_Backend = Backend::None;
 	}
 
-	void ImGuiLayer::OnImGuiRender() 
+	void ImGuiLayer::OnImGuiRender()
 	{
-
-
 	}
 
-	void ImGuiLayer::Begin() 
+	void ImGuiLayer::Begin()
 	{
-		ImGui_ImplOpenGL3_NewFrame();
+		if (m_Backend == Backend::Vulkan)
+		{
+			VulkanContext* context = VulkanContext::GetCurrent();
+			if (context != nullptr)
+			{
+				const uint32_t minImageCount = std::max(2u, context->GetSwapchainMinImageCount());
+				if (minImageCount != m_LastVulkanMinImageCount)
+				{
+					ImGui_ImplVulkan_SetMinImageCount(minImageCount);
+					m_LastVulkanMinImageCount = minImageCount;
+				}
+			}
+
+			RemoveStaleVulkanTextureDescriptors();
+			ImGui_ImplVulkan_NewFrame();
+		}
+		else if (m_Backend == Backend::OpenGL)
+		{
+			ImGui_ImplOpenGL3_NewFrame();
+		}
+
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
 		ImGuizmo::BeginFrame();
 	}
 
-	void ImGuiLayer::End() 
+	void ImGuiLayer::End()
 	{
 		ImGuiIO& io = ImGui::GetIO();
 		Application& app = Application::Get();
 		io.DisplaySize = ImVec2((float)app.GetWindow().GetWidth(), (float)app.GetWindow().GetHeight());
 
 		ImGui::Render();
-		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-		if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+
+		if (m_Backend == Backend::OpenGL)
 		{
-			GLFWwindow* backup_current_context = glfwGetCurrentContext();
-			ImGui::UpdatePlatformWindows();
-			ImGui::RenderPlatformWindowsDefault();
-			glfwMakeContextCurrent(backup_current_context);
+			ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+			if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+			{
+				GLFWwindow* backupCurrentContext = glfwGetCurrentContext();
+				ImGui::UpdatePlatformWindows();
+				ImGui::RenderPlatformWindowsDefault();
+				glfwMakeContextCurrent(backupCurrentContext);
+			}
 		}
+		else if (m_Backend == Backend::Vulkan)
+		{
+			if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+			{
+				ImGui::UpdatePlatformWindows();
+				ImGui::RenderPlatformWindowsDefault();
+			}
+		}
+	}
+
+	ImTextureID ImGuiLayer::GetTextureID(uint32_t rendererID)
+	{
+		if (s_Instance == nullptr)
+		{
+			return ToImGuiTextureID(rendererID);
+		}
+
+		return s_Instance->ResolveTextureID(rendererID);
+	}
+
+	ImTextureID ImGuiLayer::ResolveTextureID(uint32_t rendererID)
+	{
+		if (rendererID == 0)
+			return (ImTextureID)0;
+
+		if (m_Backend != Backend::Vulkan)
+		{
+			return ToImGuiTextureID(rendererID);
+		}
+
+		auto descriptorIterator = m_VulkanTextureCache.find(rendererID);
+		if (descriptorIterator != m_VulkanTextureCache.end())
+		{
+			return ToImGuiTextureID(descriptorIterator->second);
+		}
+
+		VulkanImGuiTextureInfo textureInfo{};
+		if (!VulkanImGuiTextureRegistry::TryGetTextureInfo(rendererID, textureInfo))
+		{
+			if (m_MissingVulkanTextureWarnings.insert(rendererID).second)
+			{
+				SN_CORE_WARN("Missing Vulkan ImGui texture registration for renderer ID {}.", rendererID);
+			}
+			return (ImTextureID)0;
+		}
+
+		const VkDescriptorSet descriptorSet = ImGui_ImplVulkan_AddTexture(textureInfo.Sampler, textureInfo.ImageView, textureInfo.ImageLayout);
+		m_VulkanTextureCache[rendererID] = descriptorSet;
+		m_MissingVulkanTextureWarnings.erase(rendererID);
+		return ToImGuiTextureID(descriptorSet);
+	}
+
+	void ImGuiLayer::RenderVulkanDrawData(VkCommandBuffer commandBuffer, uint32_t)
+	{
+		if (m_Backend != Backend::Vulkan)
+			return;
+
+		ImDrawData* drawData = ImGui::GetDrawData();
+		if (drawData == nullptr || drawData->CmdListsCount == 0)
+			return;
+
+		ImGui_ImplVulkan_RenderDrawData(drawData, commandBuffer);
+	}
+
+	void ImGuiLayer::RemoveStaleVulkanTextureDescriptors()
+	{
+		for (auto iterator = m_VulkanTextureCache.begin(); iterator != m_VulkanTextureCache.end();)
+		{
+			if (!VulkanImGuiTextureRegistry::ContainsTexture(iterator->first))
+			{
+				ImGui_ImplVulkan_RemoveTexture(iterator->second);
+				m_MissingVulkanTextureWarnings.erase(iterator->first);
+				iterator = m_VulkanTextureCache.erase(iterator);
+				continue;
+			}
+
+			++iterator;
+		}
+	}
+
+	void ImGuiLayer::RemoveAllVulkanTextureDescriptors()
+	{
+		for (const auto& [rendererID, descriptorSet] : m_VulkanTextureCache)
+		{
+			ImGui_ImplVulkan_RemoveTexture(descriptorSet);
+			m_MissingVulkanTextureWarnings.erase(rendererID);
+		}
+
+		m_VulkanTextureCache.clear();
 	}
 
 	void ImGuiLayer::SetDarkThemeColors()
@@ -160,7 +377,6 @@ namespace  Syndra {
 		colors[ImGuiCol_SliderGrab] = ImVec4{ 0.464f, 0.464f, 0.464f, 1.000f };
 
 		colors[ImGuiCol_DockingPreview] = ImVec4(0.68f, 0.26f, 0.98f, 0.66f);
-
 	}
 
 	void ImGuiLayer::OnEvent(Event& e)

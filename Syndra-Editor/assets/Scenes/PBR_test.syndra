@@ -1,13 +1,14 @@
 Scene: PBR_test
+Environment path: assets\HDRI\GCanyon_C_YumaPoint_3k.hdr
 Camera:
-  Yaw: -56.0686188
-  Pitch: 0.124799468
-  distance: 5.76115322
+  Yaw: 3.69839787
+  Pitch: 0.532799363
+  distance: 13.0
   FOV: 45
   Near: 0.100000001
   Far: 1000
 Entities:
-  - Entity: 1
+  - Entity: 0
     TagComponent:
       Tag: Directional Light
     TransformComponent:
@@ -16,228 +17,102 @@ Entities:
       Scale: [1, 1, 1]
     LightComponent:
       Type: Directional
-      Color: [0.993750989, 1, 0.945147693]
-      Intensity: 20.2000008
-      Direction: [5.96500015, -6.28299999, -3.45600009]
+      Color: [1, 1, 1]
+      Intensity: 12
+      Direction: [-4, -6.28000021, 0]
+  - Entity: 1
+    TagComponent:
+      Tag: Plane
+    TransformComponent:
+      Translation: [0, 0, 0]
+      Rotation: [0, 0, 0]
+      Scale: [6, 6, 6]
+    MeshComponent:
+      Path: assets\Models\plane\plane.obj
+    MaterialComponent:
+      shader: ForwardShading
+      Textures:
+        - {binding: 0, path: assets\Textures\New folder\ufomabmo_4K_Albedo.jpg}
+        - {binding: 1, path: ""}
+        - {binding: 2, path: assets\Textures\New folder\ufomabmo_4K_Normal.jpg}
+        - {binding: 3, path: assets\Textures\New folder\ufomabmo_4K_Roughness.jpg}
+        - {binding: 4, path: assets\Textures\New folder\ufomabmo_4K_AO.jpg}
+      Constants:
+        - {Tiling: 1.5}
+        - {Use Albedo: 1, Albedo: [1, 1, 1, 1]}
+        - {Use MetallicMap: 0, Metallic Factor: 0}
+        - {Use NormalMap: 1}
+        - {Use RoughnessMap: 1, Roughness Factor: 1}
+        - {Use AOMap: 1, AO: 1}
   - Entity: 2
     TagComponent:
-      Tag: Entity
+      Tag: Metal Sphere
     TransformComponent:
-      Translation: [4.19024944, 0, -1.40251946]
-      Rotation: [0, 0.941652238, 0]
-      Scale: [2.27999973, 2.27999997, 2.27999973]
-    MeshComponent:
-      Path: \assets\Models\cube\cube.obj
-  - Entity: 3
-    TagComponent:
-      Tag: Entity
-    TransformComponent:
-      Translation: [0, -5.9851675, -0.628978312]
+      Translation: [-1.8, 1.2, 0]
       Rotation: [0, 0, 0]
-      Scale: [33.9451866, 1.39529276, 33.9451866]
+      Scale: [1, 1, 1]
     MeshComponent:
-      Path: \assets\Models\cube\cube.obj
+      Path: assets\Models\Sphere\Sphere.fbx
     MaterialComponent:
-      shader: GeometryPass
+      shader: ForwardShading
       Textures:
         - {binding: 0, path: ""}
         - {binding: 1, path: ""}
         - {binding: 2, path: ""}
         - {binding: 3, path: ""}
         - {binding: 4, path: ""}
-  - Entity: 4
+      Constants:
+        - {Tiling: 1}
+        - {Use Albedo: 0, Albedo: [0.92, 0.92, 0.92, 1]}
+        - {Use MetallicMap: 0, Metallic Factor: 1}
+        - {Use NormalMap: 0}
+        - {Use RoughnessMap: 0, Roughness Factor: 0.08}
+        - {Use AOMap: 0, AO: 1}
+  - Entity: 3
     TagComponent:
-      Tag: Entity
+      Tag: Rough Sphere
     TransformComponent:
-      Translation: [-0.199248672, -0.470879436, 0]
-      Rotation: [-0.0899822861, 0, 0]
+      Translation: [1.8, 1.2, 0]
+      Rotation: [0, 0, 0]
       Scale: [1, 1, 1]
     MeshComponent:
-      Path: \assets\Models\cube\cube.obj
-  - Entity: 5
-    TagComponent:
-      Tag: Entity
-    TransformComponent:
-      Translation: [-11.5773296, -5.12876892, -4.00681639]
-      Rotation: [2.17234408e-09, -0.0834946632, -2.72890315e-08]
-      Scale: [0.0386224464, 0.0386224575, 0.0386224464]
-    MeshComponent:
-      Path: D:\Bridge stuff\Downloaded\3d\container_barrel_udlmcdhqx\udlmcdhqx_LOD0.fbx
+      Path: assets\Models\Sphere\Sphere.fbx
     MaterialComponent:
-      shader: GeometryPass
+      shader: ForwardShading
       Textures:
-        - {binding: 0, path: D:\Bridge stuff\Downloaded\3d\container_barrel_udlmcdhqx\udlmcdhqx_2K_Albedo.jpg}
-        - {binding: 2, path: D:\Bridge stuff\Downloaded\3d\container_barrel_udlmcdhqx\udlmcdhqx_2K_Normal_LOD0.jpg}
-        - {binding: 3, path: D:\Bridge stuff\Downloaded\3d\container_barrel_udlmcdhqx\udlmcdhqx_2K_Roughness.jpg}
+        - {binding: 0, path: ""}
         - {binding: 1, path: ""}
+        - {binding: 2, path: ""}
+        - {binding: 3, path: ""}
         - {binding: 4, path: ""}
-  - Entity: 6
+      Constants:
+        - {Tiling: 1}
+        - {Use Albedo: 0, Albedo: [0.65, 0.20, 0.12, 1]}
+        - {Use MetallicMap: 0, Metallic Factor: 0}
+        - {Use NormalMap: 0}
+        - {Use RoughnessMap: 0, Roughness Factor: 0.85}
+        - {Use AOMap: 0, AO: 1}
+  - Entity: 4
     TagComponent:
-      Tag: Entity
+      Tag: Gold Cube
     TransformComponent:
-      Translation: [-2.73542619, 0, -1.42880309]
-      Rotation: [0, 0, 0]
-      Scale: [0.120000005, 0.120000005, 0.120000005]
+      Translation: [0, 1.2, -2.3]
+      Rotation: [0, 0.785398185, 0]
+      Scale: [1.1, 1.1, 1.1]
     MeshComponent:
-      Path: D:\Bridge stuff\Downloaded\3d\stone_sculpture_uffkcc1va\uffkcc1va_LOD0.fbx
+      Path: assets\Models\cube\cube.obj
     MaterialComponent:
-      shader: GeometryPass
+      shader: ForwardShading
       Textures:
-        - {binding: 0, path: D:\Bridge stuff\Downloaded\3d\stone_sculpture_uffkcc1va\uffkcc1va_4K_Albedo.jpg}
-        - {binding: 2, path: D:\Bridge stuff\Downloaded\3d\stone_sculpture_uffkcc1va\uffkcc1va_4K_Normal_LOD0.jpg}
-        - {binding: 3, path: D:\Bridge stuff\Downloaded\3d\stone_sculpture_uffkcc1va\uffkcc1va_4K_Roughness.jpg}
-        - {binding: 4, path: D:\Bridge stuff\Downloaded\3d\stone_sculpture_uffkcc1va\uffkcc1va_4K_AO.jpg}
-        - {binding: 1, path: ""}
-  - Entity: 1048576
-    TagComponent:
-      Tag: Entity
-    TransformComponent:
-      Translation: [0.612462521, -5.18652296, 7.65312862]
-      Rotation: [-4.67047272e-08, -1.06972444, 4.3241311e-08]
-      Scale: [0.0599994734, 0.0600000024, 0.0599994734]
-    MeshComponent:
-      Path: D:\Bridge stuff\Downloaded\3d\3d_other_udugdfvfa\udugdfvfa_LOD5.fbx
-    MaterialComponent:
-      shader: GeometryPass
-      Textures:
-        - {binding: 0, path: D:\Bridge stuff\Downloaded\3d\3d_other_udugdfvfa\udugdfvfa_4K_Albedo.jpg}
-        - {binding: 1, path: ""}
-        - {binding: 2, path: D:\Bridge stuff\Downloaded\3d\3d_other_udugdfvfa\udugdfvfa_4K_Normal_LOD5.jpg}
-        - {binding: 3, path: D:\Bridge stuff\Downloaded\3d\3d_other_udugdfvfa\udugdfvfa_4K_Roughness.jpg}
+        - {binding: 0, path: assets\Textures\Gold\schvfgwp_4K_Albedo.jpg}
+        - {binding: 1, path: assets\Textures\Gold\schvfgwp_4K_Metalness.jpg}
+        - {binding: 2, path: assets\Textures\Gold\schvfgwp_4K_Normal.jpg}
+        - {binding: 3, path: assets\Textures\Gold\schvfgwp_4K_Roughness.jpg}
         - {binding: 4, path: ""}
-  - Entity: 7
-    TagComponent:
-      Tag: Entity
-    TransformComponent:
-      Translation: [0, -2.04525447, -5.40518379]
-      Rotation: [0, 0, 0]
-      Scale: [0.0800000429, 0.0800000429, 0.0800000429]
-    MeshComponent:
-      Path: D:\Bridge stuff\Downloaded\3d\3d_man made_tjmjeazfa\tjmjeazfa_LOD1.fbx
-    MaterialComponent:
-      shader: GeometryPass
-      Textures:
-        - {binding: 0, path: D:\Bridge stuff\Downloaded\3d\3d_man made_tjmjeazfa\tjmjeazfa_2K_Albedo.jpg}
-        - {binding: 1, path: ""}
-        - {binding: 2, path: D:\Bridge stuff\Downloaded\3d\3d_man made_tjmjeazfa\tjmjeazfa_2K_Normal_LOD1.jpg}
-        - {binding: 3, path: D:\Bridge stuff\Downloaded\3d\3d_man made_tjmjeazfa\tjmjeazfa_2K_Roughness.jpg}
-        - {binding: 4, path: ""}
-  - Entity: 8
-    TagComponent:
-      Tag: Entity
-    TransformComponent:
-      Translation: [9.21594429, -1.91474235, 2.08069038]
-      Rotation: [0, 0, 0]
-      Scale: [0.0800000429, 0.0800000429, 0.0800000429]
-    MeshComponent:
-      Path: D:\Bridge stuff\Downloaded\3d\3d_man made_tjmjeazfa\tjmjeazfa_LOD1.fbx
-    MaterialComponent:
-      shader: GeometryPass
-      Textures:
-        - {binding: 0, path: D:\Bridge stuff\Downloaded\3d\3d_man made_tjmjeazfa\tjmjeazfa_2K_Albedo.jpg}
-        - {binding: 1, path: ""}
-        - {binding: 2, path: D:\Bridge stuff\Downloaded\3d\3d_man made_tjmjeazfa\tjmjeazfa_2K_Normal_LOD1.jpg}
-        - {binding: 3, path: D:\Bridge stuff\Downloaded\3d\3d_man made_tjmjeazfa\tjmjeazfa_2K_Roughness.jpg}
-        - {binding: 4, path: ""}
-  - Entity: 9
-    TagComponent:
-      Tag: Entity
-    TransformComponent:
-      Translation: [0, -2.79689169, 3.30266595]
-      Rotation: [0, 0, 0]
-      Scale: [0.0800000429, 0.0800000429, 0.0800000429]
-    MeshComponent:
-      Path: D:\Bridge stuff\Downloaded\3d\3d_man made_tjmjeazfa\tjmjeazfa_LOD1.fbx
-    MaterialComponent:
-      shader: GeometryPass
-      Textures:
-        - {binding: 0, path: D:\Bridge stuff\Downloaded\3d\3d_man made_tjmjeazfa\tjmjeazfa_2K_Albedo.jpg}
-        - {binding: 1, path: ""}
-        - {binding: 2, path: D:\Bridge stuff\Downloaded\3d\3d_man made_tjmjeazfa\tjmjeazfa_2K_Normal_LOD1.jpg}
-        - {binding: 3, path: D:\Bridge stuff\Downloaded\3d\3d_man made_tjmjeazfa\tjmjeazfa_2K_Roughness.jpg}
-        - {binding: 4, path: ""}
-  - Entity: 10
-    TagComponent:
-      Tag: Entity
-    TransformComponent:
-      Translation: [5.21279955, -1.89515841, -6.68131542]
-      Rotation: [0, 0, 0]
-      Scale: [0.0800000429, 0.0800000429, 0.0800000429]
-    MeshComponent:
-      Path: D:\Bridge stuff\Downloaded\3d\3d_man made_tjmjeazfa\tjmjeazfa_LOD1.fbx
-    MaterialComponent:
-      shader: GeometryPass
-      Textures:
-        - {binding: 0, path: D:\Bridge stuff\Downloaded\3d\3d_man made_tjmjeazfa\tjmjeazfa_2K_Albedo.jpg}
-        - {binding: 1, path: ""}
-        - {binding: 2, path: D:\Bridge stuff\Downloaded\3d\3d_man made_tjmjeazfa\tjmjeazfa_2K_Normal_LOD1.jpg}
-        - {binding: 3, path: D:\Bridge stuff\Downloaded\3d\3d_man made_tjmjeazfa\tjmjeazfa_2K_Roughness.jpg}
-        - {binding: 4, path: ""}
-  - Entity: 11
-    TagComponent:
-      Tag: Entity
-    TransformComponent:
-      Translation: [-4.32468271, -5.19789457, 5.34096527]
-      Rotation: [-4.67047272e-08, -1.06972444, 4.3241311e-08]
-      Scale: [0.0599994734, 0.0600000024, 0.0599994734]
-    MeshComponent:
-      Path: D:\Bridge stuff\Downloaded\3d\3d_other_udugdfvfa\udugdfvfa_LOD5.fbx
-    MaterialComponent:
-      shader: GeometryPass
-      Textures:
-        - {binding: 0, path: D:\Bridge stuff\Downloaded\3d\3d_other_udugdfvfa\udugdfvfa_4K_Albedo.jpg}
-        - {binding: 1, path: ""}
-        - {binding: 2, path: D:\Bridge stuff\Downloaded\3d\3d_other_udugdfvfa\udugdfvfa_4K_Normal_LOD5.jpg}
-        - {binding: 3, path: D:\Bridge stuff\Downloaded\3d\3d_other_udugdfvfa\udugdfvfa_4K_Roughness.jpg}
-        - {binding: 4, path: ""}
-  - Entity: 12
-    TagComponent:
-      Tag: Entity
-    TransformComponent:
-      Translation: [-12.0983562, -3.44465303, -3.75972247]
-      Rotation: [2.17234408e-09, -0.0834946632, -2.72890315e-08]
-      Scale: [0.0386224464, 0.0386224575, 0.0386224464]
-    MeshComponent:
-      Path: D:\Bridge stuff\Downloaded\3d\container_barrel_udlmcdhqx\udlmcdhqx_LOD0.fbx
-    MaterialComponent:
-      shader: GeometryPass
-      Textures:
-        - {binding: 0, path: D:\Bridge stuff\Downloaded\3d\container_barrel_udlmcdhqx\udlmcdhqx_2K_Albedo.jpg}
-        - {binding: 2, path: D:\Bridge stuff\Downloaded\3d\container_barrel_udlmcdhqx\udlmcdhqx_2K_Normal_LOD0.jpg}
-        - {binding: 3, path: D:\Bridge stuff\Downloaded\3d\container_barrel_udlmcdhqx\udlmcdhqx_2K_Roughness.jpg}
-        - {binding: 1, path: ""}
-        - {binding: 4, path: ""}
-  - Entity: 13
-    TagComponent:
-      Tag: Entity
-    TransformComponent:
-      Translation: [-12.8292418, -5.12876892, -4.1468811]
-      Rotation: [2.17234408e-09, -0.0834946632, -2.72890315e-08]
-      Scale: [0.0386224464, 0.0386224575, 0.0386224464]
-    MeshComponent:
-      Path: D:\Bridge stuff\Downloaded\3d\container_barrel_udlmcdhqx\udlmcdhqx_LOD0.fbx
-    MaterialComponent:
-      shader: GeometryPass
-      Textures:
-        - {binding: 0, path: D:\Bridge stuff\Downloaded\3d\container_barrel_udlmcdhqx\udlmcdhqx_2K_Albedo.jpg}
-        - {binding: 2, path: D:\Bridge stuff\Downloaded\3d\container_barrel_udlmcdhqx\udlmcdhqx_2K_Normal_LOD0.jpg}
-        - {binding: 3, path: D:\Bridge stuff\Downloaded\3d\container_barrel_udlmcdhqx\udlmcdhqx_2K_Roughness.jpg}
-        - {binding: 1, path: ""}
-        - {binding: 4, path: ""}
-  - Entity: 14
-    TagComponent:
-      Tag: Entity
-    TransformComponent:
-      Translation: [-12.1596146, -5.12876892, -3.02774858]
-      Rotation: [2.17234408e-09, -0.0834946632, -2.72890315e-08]
-      Scale: [0.0386224464, 0.0386224575, 0.0386224464]
-    MeshComponent:
-      Path: D:\Bridge stuff\Downloaded\3d\container_barrel_udlmcdhqx\udlmcdhqx_LOD0.fbx
-    MaterialComponent:
-      shader: GeometryPass
-      Textures:
-        - {binding: 0, path: D:\Bridge stuff\Downloaded\3d\container_barrel_udlmcdhqx\udlmcdhqx_2K_Albedo.jpg}
-        - {binding: 2, path: D:\Bridge stuff\Downloaded\3d\container_barrel_udlmcdhqx\udlmcdhqx_2K_Normal_LOD0.jpg}
-        - {binding: 3, path: D:\Bridge stuff\Downloaded\3d\container_barrel_udlmcdhqx\udlmcdhqx_2K_Roughness.jpg}
-        - {binding: 1, path: ""}
-        - {binding: 4, path: ""}
+      Constants:
+        - {Tiling: 1}
+        - {Use Albedo: 1, Albedo: [1, 1, 1, 1]}
+        - {Use MetallicMap: 1, Metallic Factor: 1}
+        - {Use NormalMap: 1}
+        - {Use RoughnessMap: 1, Roughness Factor: 1}
+        - {Use AOMap: 0, AO: 1}

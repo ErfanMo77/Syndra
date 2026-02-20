@@ -7,6 +7,7 @@
 #include "ImGuizmo.h"
 
 #include "Engine/Core/Instrument.h"
+#include "Engine/Renderer/RendererAPI.h"
 #include "Engine/Utils/Math.h"
 #include "Engine/Scene/SceneSerializer.h"
 #include "Engine/Utils/PlatformUtils.h"
@@ -17,8 +18,7 @@ namespace Syndra {
 
 	EditorLayer::EditorLayer()
 		:Layer("Editor Layer")
-	{	
-		m_Info = RenderCommand::GetInfo();
+	{
 	}
 
 	EditorLayer::~EditorLayer()
@@ -35,6 +35,7 @@ namespace Syndra {
 
 		m_ViewportSize = { fbSpec.Width,fbSpec.Height };
 		RenderCommand::Init();
+		m_Info = RenderCommand::GetInfo();
 		OnLoadEditor();
 
 		auto& app = Application::Get();
@@ -56,7 +57,7 @@ namespace Syndra {
 		if (FramebufferSpecification spec = m_ActiveScene->GetSpec();
 			m_ViewportSize.x > 0.0f && m_ViewportSize.y > 0.0f && // zero sized framebuffer is invalid
 			(spec.Width != (uint32_t)m_ViewportSize.x || spec.Height != (uint32_t)m_ViewportSize.y))
-		{	
+		{
 			m_ActiveScene->OnViewportResize((uint32_t)m_ViewportSize.x, (uint32_t)m_ViewportSize.y);
 		}
 
@@ -91,8 +92,8 @@ namespace Syndra {
 		if (!m_FullScreen) {
 			SceneRenderer::OnImGuiRender(&m_RendererOpen, &m_EnvironmentOpen);
 		}
-	
-		//---------------------------------------------Renderer Info------------------------------------------//	
+
+		//---------------------------------------------Renderer Info------------------------------------------//
 		if (m_InfoOpen) {
 			ShowRendererInfo();
 		}
@@ -110,12 +111,6 @@ namespace Syndra {
 			//Gizmos Icons
 			ShowIcons();
 
-			auto viewportMinRegion = ImGui::GetWindowContentRegionMin();
-			auto viewportMaxRegion = ImGui::GetWindowContentRegionMax();
-			auto viewportOffset = ImGui::GetWindowPos();
-			m_ViewportBounds[0] = { viewportMinRegion.x + viewportOffset.x, viewportMinRegion.y + viewportOffset.y };
-			m_ViewportBounds[1] = { viewportMaxRegion.x + viewportOffset.x, viewportMaxRegion.y + viewportOffset.y };
-
 			Application::Get().GetImGuiLayer()->SetBlockEvents(!m_ViewportFocused && !m_ViewportHovered);
 
 			ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
@@ -124,7 +119,18 @@ namespace Syndra {
 			}
 			m_ViewportSize = { viewportPanelSize.x, viewportPanelSize.y };
 			uint64_t textureID = m_ActiveScene->GetMainTextureID();
-			ImGui::Image((ImTextureID)textureID, ImVec2{ m_ViewportSize.x, m_ViewportSize.y }, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
+			const bool flipViewportImage = RendererAPI::GetAPI() != RendererAPI::API::Vulkan;
+			const ImVec2 uv0 = flipViewportImage ? ImVec2{ 0, 1 } : ImVec2{ 0, 0 };
+			const ImVec2 uv1 = flipViewportImage ? ImVec2{ 1, 0 } : ImVec2{ 1, 1 };
+			ImGui::Image(
+				ImGuiLayer::GetTextureID(static_cast<uint32_t>(textureID)),
+				ImVec2{ m_ViewportSize.x, m_ViewportSize.y },
+				uv0,
+				uv1);
+			const auto imageMin = ImGui::GetItemRectMin();
+			const auto imageMax = ImGui::GetItemRectMax();
+			m_ViewportBounds[0] = { imageMin.x, imageMin.y };
+			m_ViewportBounds[1] = { imageMax.x, imageMax.y };
 
 			//Gizmos
 			ShowGizmos();
@@ -154,7 +160,7 @@ namespace Syndra {
 
 		bool control = Input::IsKeyPressed(Key::LeftControl) || Input::IsKeyPressed(Key::RightControl);
 		bool shift = Input::IsKeyPressed(Key::LeftShift) || Input::IsKeyPressed(Key::RightShift);
-		
+
 		switch (e.GetKeyCode())
 		{
 		case Key::N:
@@ -242,11 +248,12 @@ namespace Syndra {
 		mx -= m_ViewportBounds[0].x;
 		my -= m_ViewportBounds[0].y;
 		glm::vec2 viewportSize = m_ViewportBounds[1] - m_ViewportBounds[0];
-		my = viewportSize.y - my;
+		if (RendererAPI::GetAPI() != RendererAPI::API::Vulkan)
+			my = viewportSize.y - my;
 		int mouseX = (int)mx;
 		int mouseY = (int)my;
 		altIsDown = Input::IsKeyPressed(Key::LeftAlt);
-		if (mouseX >= 0 && mouseY >= 0 && mouseX < (int)viewportSize.x && mouseY < (int)viewportSize.y -35.0f && !altIsDown && m_ViewportHovered && !ImGuizmo::IsOver())
+		if (mouseX >= 0 && mouseY >= 0 && mouseX < (int)viewportSize.x && mouseY < (int)viewportSize.y && !altIsDown && m_ViewportHovered && !ImGuizmo::IsOver())
 		{
 			auto& mousePickFB = m_ActiveScene->GetMainFrameBuffer();
 			mousePickFB->Bind();
@@ -263,7 +270,7 @@ namespace Syndra {
 			}
 			//SN_CORE_WARN("pixel data: {0}", pixelData);
 			mousePickFB->Unbind();
-			
+
 		}
 		return false;
 	}
@@ -301,8 +308,11 @@ namespace Syndra {
 					m_PropertiesOpen = true;
 				if (ImGui::MenuItem(ICON_FA_INFO "  Renderer Info"))
 					m_InfoOpen = true;
-				if (ImGui::MenuItem(ICON_FA_TREE"  Environment"))
-					m_EnvironmentOpen = true;
+				if (SceneRenderer::SupportsEnvironmentControls())
+				{
+					if (ImGui::MenuItem(ICON_FA_TREE"  Environment"))
+						m_EnvironmentOpen = true;
+				}
 				if (ImGui::MenuItem(ICON_FA_COGS" Renderer settings"))
 					m_RendererOpen = true;
 				if (ImGui::MenuItem(ICON_FA_CAMERA"  Camera settings"))
@@ -339,7 +349,7 @@ namespace Syndra {
 		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 0,0 });
 		ImGui::Indent(5);
 		//Full screen button
-		if (ImGui::ImageButton((ImTextureID)m_FullScreenIcon->GetRendererID(), { 35,35 })) {
+		if (ImGui::ImageButton("##FullScreenIcon", ImGuiLayer::GetTextureID(m_FullScreenIcon->GetRendererID()), { 35,35 })) {
 			m_FullScreen = !m_FullScreen;
 		}
 		if (ImGui::IsItemHovered()) {
@@ -351,7 +361,7 @@ namespace Syndra {
 		//Global or local gizmos button
 		ImGui::PushID("gizmos Type\0");
 
-		if (ImGui::ImageButton((ImTextureID)m_GizmosIcon->GetRendererID(), { 35,35 })) {
+		if (ImGui::ImageButton("##GizmoSpaceIcon", ImGuiLayer::GetTextureID(m_GizmosIcon->GetRendererID()), { 35,35 })) {
 			m_GizmosChanged = true;
 			m_GizmoMode == 0 ? m_GizmoMode = 1 : m_GizmoMode = 0;
 		}
@@ -364,7 +374,7 @@ namespace Syndra {
 
 		//Gizmos Icons
 		ImGui::SameLine();
-		if (ImGui::ImageButton((ImTextureID)m_TransformIcon->GetRendererID(), { 35,35 }, { 0, 1 }, { 1, 0 })) {
+		if (ImGui::ImageButton("##TransformIcon", ImGuiLayer::GetTextureID(m_TransformIcon->GetRendererID()), { 35,35 }, { 0, 1 }, { 1, 0 })) {
 			m_GizmoType = 7;
 		}
 		if (ImGui::IsItemHovered()) {
@@ -372,7 +382,7 @@ namespace Syndra {
 		}
 		ImGui::PopItemWidth();
 		ImGui::SameLine();
-		if (ImGui::ImageButton((ImTextureID)m_RotationIcon->GetRendererID(), { 35,35 }, { 0, 1 }, { 1, 0 })) {
+		if (ImGui::ImageButton("##RotationIcon", ImGuiLayer::GetTextureID(m_RotationIcon->GetRendererID()), { 35,35 }, { 0, 1 }, { 1, 0 })) {
 			m_GizmoType = 120;
 		}
 		if (ImGui::IsItemHovered()) {
@@ -380,7 +390,7 @@ namespace Syndra {
 		}
 		ImGui::PopItemWidth();
 		ImGui::SameLine();
-		if (ImGui::ImageButton((ImTextureID)m_ScaleIcon->GetRendererID(), { 35,35 }, { 0, 1 }, { 1, 0 })) {
+		if (ImGui::ImageButton("##ScaleIcon", ImGuiLayer::GetTextureID(m_ScaleIcon->GetRendererID()), { 35,35 }, { 0, 1 }, { 1, 0 })) {
 			m_GizmoType = 896;
 		}
 		if (ImGui::IsItemHovered()) {
@@ -462,7 +472,6 @@ namespace Syndra {
 		ImGui::Text("\nApplication average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
 		ImGui::Text("%d vertices, %d indices (%d triangles)", io.MetricsRenderVertices, io.MetricsRenderIndices, io.MetricsRenderIndices / 3);
 		ImGui::Text("%d active windows (%d visible)", io.MetricsActiveWindows, io.MetricsRenderWindows);
-		ImGui::Text("%d active allocations", io.MetricsActiveAllocations);
 		ImGui::End();
 	}
 
@@ -482,6 +491,7 @@ namespace Syndra {
 
 		SceneRenderer::InitializeEnvironment();
 		SceneRenderer::Initialize();
+		m_EnvironmentOpen = SceneRenderer::SupportsEnvironmentControls();
 		m_ActiveScene->OnViewportResize((uint32_t)m_ViewportSize.x, (uint32_t)m_ViewportSize.y);
 		Application::Get().GetWindow().SetTitle("Syndra Editor " + m_ActiveScene->m_Name + " scene");
 	}
@@ -494,7 +504,7 @@ namespace Syndra {
 		m_SceneHierarchyOpen = true;
 		m_PropertiesOpen = true;
 		m_RendererOpen = true;
-		m_EnvironmentOpen = true;
+		m_EnvironmentOpen = SceneRenderer::SupportsEnvironmentControls();
 	}
 
 	void EditorLayer::NewScene()
@@ -506,6 +516,7 @@ namespace Syndra {
 		m_ScenePanel->SetContext(m_ActiveScene);
 		SceneRenderer::InitializeEnvironment();
 		SceneRenderer::Initialize();
+		m_EnvironmentOpen = SceneRenderer::SupportsEnvironmentControls();
 	}
 
 	void EditorLayer::OpenScene()
@@ -522,6 +533,7 @@ namespace Syndra {
 			serializer.Deserialize(*filepath);
 			SceneRenderer::InitializeEnvironment();
 			SceneRenderer::Initialize();
+			m_EnvironmentOpen = SceneRenderer::SupportsEnvironmentControls();
 			Application::Get().GetWindow().SetTitle("Syndra Editor "+m_ActiveScene->m_Name+ " scene");
 		}
 	}

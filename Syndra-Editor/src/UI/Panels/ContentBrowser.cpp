@@ -1,5 +1,6 @@
 #include "lpch.h"
 #include "ContentBrowser.h"
+#include "Engine/ImGui/ImGuiLayer.h"
 
 namespace Syndra {
 
@@ -7,7 +8,7 @@ namespace Syndra {
 	ContentBrowser::ContentBrowser()
 		:m_Directory("assets")
 	{
-		m_SceneTexture = Texture2D::Create("assets/Textures/globe.png");
+		m_SceneTexture = Texture2D::Create("assets/Icons/globe.png");
 		m_DirIterator = std::filesystem::directory_iterator(m_Directory);
 	}
 
@@ -38,11 +39,13 @@ namespace Syndra {
 				}
 			}
 			else
-			{		
-				if (ImGui::ImageButton((ImTextureID)m_SceneTexture->GetRendererID(), { 40,40 }))
+			{
+				ImGui::PushID(filenameString.c_str());
+				if (ImGui::ImageButton("##FileButton", ImGuiLayer::GetTextureID(m_SceneTexture->GetRendererID()), { 40,40 }))
 				{
 
 				}
+				ImGui::PopID();
 			}
 
 		}

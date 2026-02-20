@@ -15,6 +15,8 @@ namespace Syndra{
 		virtual ~WindowsWindow();
 
 		void OnUpdate() override;
+		void BeginFrame() override;
+		void EndFrame() override;
 
 		unsigned int GetWidth() const override { return m_Data.Width; }
 		unsigned int GetHeight() const override { return m_Data.Height; }
@@ -33,7 +35,7 @@ namespace Syndra{
 		virtual void Shutdown();
 	private:
 		GLFWwindow* m_Window;
-		GraphicsContext* m_Context;
+		GraphicsContext* m_Context = nullptr;
 
 		struct WindowData
 		{

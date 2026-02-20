@@ -2,6 +2,7 @@
 #include "Engine/Renderer/Shader.h"
 #include "Engine/Renderer/Renderer.h"
 #include "Platform/OpenGL/OpenGLShader.h"
+#include "Platform/Vulkan/VulkanShader.h"
 #include "glad/glad.h"
 
 namespace Syndra {
@@ -11,6 +12,7 @@ namespace Syndra {
 		switch (Renderer::GetAPI())
 		{
 		case RendererAPI::API::NONE:    SN_CORE_ASSERT(false, "RendererAPI::None is currently not supported!"); return nullptr;
+		case RendererAPI::API::Vulkan: return CreateRef<VulkanShader>(filepath);
 		case RendererAPI::API::OpenGL:  return CreateRef<OpenGLShader>(filepath);
 		}
 
@@ -23,6 +25,7 @@ namespace Syndra {
 		switch (Renderer::GetAPI())
 		{
 		case RendererAPI::API::NONE:    SN_CORE_ASSERT(false, "RendererAPI::None is currently not supported!"); return nullptr;
+		case RendererAPI::API::Vulkan: return CreateRef<VulkanShader>(name, vertexSrc, fragmentSrc);
 		case RendererAPI::API::OpenGL:  return CreateRef<OpenGLShader>(name, vertexSrc, fragmentSrc);
 		}
 

@@ -1,6 +1,7 @@
 #include "lpch.h"
 #include "MaterialPanel.h"
 #include "Engine/Utils/PlatformUtils.h"
+#include "Engine/ImGui/ImGuiLayer.h"
 
 
 namespace Syndra {
@@ -8,7 +9,7 @@ namespace Syndra {
 	MaterialPanel::MaterialPanel()
 	{
 		m_EmptyTexture = Texture2D::Create("assets/Models/cube/default.png");
-		m_TextureId = (ImTextureID)m_EmptyTexture->GetRendererID();
+		m_TextureId = ImGuiLayer::GetTextureID(m_EmptyTexture->GetRendererID());
 	}
 
 	void MaterialPanel::DrawMaterial(Entity& entity)
@@ -25,7 +26,7 @@ namespace Syndra {
 
 			ImGui::PopStyleVar();
 			ImGui::NextColumn();
-			ImGui::PushItemWidth(ImGui::GetContentRegionAvailWidth());
+			ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x);
 			ImGui::Text("PBR shader\0");
 			ImGui::PopItemWidth();
 			ImGui::Columns(1);
@@ -54,14 +55,14 @@ namespace Syndra {
 					ImGui::SameLine();
 					ImGui::Text(sampler.name.c_str());
 
-					m_TextureId = reinterpret_cast<void*>(m_EmptyTexture->GetRendererID());
+					m_TextureId = ImGuiLayer::GetTextureID(m_EmptyTexture->GetRendererID());
 					auto& texture = component.m_Material.GetTexture(sampler);
 					if (texture)
 					{
-						m_TextureId = reinterpret_cast<void*>(texture->GetRendererID());
+						m_TextureId = ImGuiLayer::GetTextureID(texture->GetRendererID());
 					}
 
-					if (ImGui::ImageButton(m_TextureId, size, ImVec2{ 0, 1 }, ImVec2{ 1, 0 })) {
+					if (ImGui::ImageButton("##TextureButton", m_TextureId, size, ImVec2{ 0, 1 }, ImVec2{ 1, 0 })) {
 
 						auto path = FileDialogs::OpenFile("Syndra Texture (*.*)\0*.*\0");
 						if (path) {

@@ -147,22 +147,19 @@ namespace Syndra {
 
 	void OpenGLRendererAPI::Init()
 	{
-		SN_CORE_WARN("Driver: {0}", glGetString(GL_VENDOR));
-		SN_CORE_WARN("Renderer: {0}", glGetString(GL_RENDERER));
-		SN_CORE_WARN("Version: {0}", glGetString(GL_VERSION));
+		const GLubyte* vendor = glGetString(GL_VENDOR);
+		const GLubyte* renderer = glGetString(GL_RENDERER);
+		const GLubyte* version = glGetString(GL_VERSION);
+		if (vendor == nullptr || renderer == nullptr || version == nullptr)
+		{
+			SN_CORE_ERROR("OpenGL context is not initialized correctly. glGetString returned null.");
+			return;
+		}
+
+		SN_CORE_WARN("Driver: {0}", reinterpret_cast<const char*>(vendor));
+		SN_CORE_WARN("Renderer: {0}", reinterpret_cast<const char*>(renderer));
+		SN_CORE_WARN("Version: {0}", reinterpret_cast<const char*>(version));
 		SN_CORE_WARN("Vulkan SDK: {0}", GetCachedVulkanSdkVersion());
-		const VulkanDriverInfo& vkInfo = GetCachedVulkanDriverInfo();
-		if (vkInfo.available)
-		{
-			SN_CORE_WARN("Vulkan Driver: {0} ({1}, {2})",
-				FormatVulkanDriverVersion(vkInfo.vendorId, vkInfo.driverVersion),
-				VulkanVendorName(vkInfo.vendorId),
-				vkInfo.deviceName);
-		}
-		else
-		{
-			SN_CORE_WARN("Vulkan Driver: unavailable");
-		}
 #ifdef SN_DEBUG
 		glEnable(GL_DEBUG_OUTPUT);
 		glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
@@ -207,7 +204,7 @@ namespace Syndra {
 	void OpenGLRendererAPI::DrawIndexed(const Ref<VertexArray>& vertexArray)
 	{
 		uint32_t count = vertexArray->GetIndexBuffer()->GetCount();
-		
+
 		glDrawElements(GL_TRIANGLES, count, GL_UNSIGNED_INT, nullptr);
 		glBindTexture(GL_TEXTURE_2D, 0);
 	}
@@ -229,16 +226,6 @@ namespace Syndra {
 		info += "Renderer: " + std::string((char*)glGetString(GL_RENDERER))+ "\n";
 		info += "Version: " + std::string((char*)glGetString(GL_VERSION));
 		info += "\nVulkan SDK: " + GetCachedVulkanSdkVersion();
-		const VulkanDriverInfo& vkInfo = GetCachedVulkanDriverInfo();
-		if (vkInfo.available)
-		{
-			info += "\nVulkan Driver: " + FormatVulkanDriverVersion(vkInfo.vendorId, vkInfo.driverVersion);
-			info += " (" + std::string(VulkanVendorName(vkInfo.vendorId)) + ", " + vkInfo.deviceName + ")";
-		}
-		else
-		{
-			info += "\nVulkan Driver: unavailable";
-		}
 		return info;
 	}
 

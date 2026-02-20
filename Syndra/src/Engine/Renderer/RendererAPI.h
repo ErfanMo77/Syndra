@@ -17,7 +17,8 @@ namespace Syndra {
 	public:
 		enum class API {
 			NONE = 0,
-			OpenGL = 1
+			Vulkan = 1,
+			OpenGL = 2
 		};
 
 	public:
@@ -33,9 +34,15 @@ namespace Syndra {
 		virtual std::string GetRendererInfo() = 0;
 
 		static API GetAPI() { return s_API; }
+		static API GetRequestedAPI() { return s_RequestedAPI; }
+
+		static void SelectAPI(API requestedAPI);
+		static bool IsBackendSupported(API api);
+		static const char* APIToString(API api);
 		//static Scope<RendererAPI> Create();
 	private:
 		static API s_API;
+		static API s_RequestedAPI;
 	};
 
 }

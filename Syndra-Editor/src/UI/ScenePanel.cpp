@@ -64,7 +64,7 @@ namespace Syndra {
 			if (ImGui::IsMouseDown(0) && ImGui::IsWindowHovered())
 				m_SelectionContext = {};
 
-			if (ImGui::BeginPopupContextWindow(0, 1, false))
+			if (ImGui::BeginPopupContextWindow(nullptr, ImGuiPopupFlags_MouseButtonRight | ImGuiPopupFlags_NoOpenOverItems))
 			{
 				if (ImGui::MenuItem(ICON_FA_FILE" Create empty entity")) {
 					m_SelectionContext = *m_Context->CreateEntity();
@@ -228,7 +228,7 @@ namespace Syndra {
 		m_MaterialPanel->DrawMaterial(entity);
 		m_LightPanel->DrawLight(entity);
 		m_CameraPanel->DrawCamera(entity);
-		
+
 		float buttonSz = 100;
 		ImGui::PushItemWidth(buttonSz);
 		ImGui::Separator();
@@ -262,7 +262,18 @@ namespace Syndra {
 			if (ImGui::MenuItem("Material"))
 			{
 				if (!m_SelectionContext.HasComponent<MaterialComponent>())
-					m_SelectionContext.AddComponent<MaterialComponent>(m_Shaders.Get("ForwardShading"));//("GeometryPass"));
+				{
+					Ref<Shader> shader = SceneRenderer::GetDefaultMaterialShader();
+					if (!shader)
+						shader = SceneRenderer::ResolveShader("GeometryPass");
+					if (!shader)
+						shader = SceneRenderer::ResolveShader("main");
+
+					if (shader)
+						m_SelectionContext.AddComponent<MaterialComponent>(shader);
+					else
+						SN_CORE_WARN("No material shader is available for the current renderer backend.");
+				}
 				else
 					SN_CORE_WARN("This entity already has the Camera Component!");
 				ImGui::CloseCurrentPopup();

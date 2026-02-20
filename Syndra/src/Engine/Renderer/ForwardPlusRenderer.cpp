@@ -2,6 +2,7 @@
 #include "ForwardPlusRenderer.h"
 #include "imgui.h"
 #include "imgui_internal.h"
+#include "Engine/ImGui/ImGuiLayer.h"
 #include "Engine/Utils/PlatformUtils.h"
 #include "Engine/Core/Application.h"
 #include "Engine/Scene/Entity.h"
@@ -10,7 +11,7 @@
 #include <glad/glad.h>
 
 namespace Syndra {
-	
+
 	static ForwardPlusRenderer::RenderData r_Data;
 
 	void ForwardPlusRenderer::Init(const Ref<Scene>& scene, const ShaderLibrary& shaders, const Ref<Environment>& env)
@@ -18,7 +19,7 @@ namespace Syndra {
 		r_Data.scene = scene;
 		r_Data.shaders = shaders;
 		r_Data.environment = env;
-		
+
 		//-------------------------------Depth Pre Pass Framebuffer Initialization--------------------------------//
 		FramebufferSpecification depthPassFB;
 		depthPassFB.Attachments = { FramebufferTextureFormat::DEPTH32 };
@@ -66,7 +67,7 @@ namespace Syndra {
 
 		//--------------------------------Anti Aliasing Framebuffer Initialization--------------------------------//
 		FramebufferSpecification postProcFB;
-		postProcFB.Attachments = { 
+		postProcFB.Attachments = {
 			//main texture
 			FramebufferTextureFormat::RGBA8,
 			//debth debug
@@ -87,7 +88,7 @@ namespace Syndra {
 			 1.0f,  1.0f, 0.0f,    1.0f, 1.0f,   // top right
 			 1.0f, -1.0f, 0.0f,    1.0f, 0.0f,   // bottom right
 			-1.0f, -1.0f, 0.0f,    0.0f, 0.0f,   // bottom left
-			-1.0f,  1.0f, 0.0f,    0.0f, 1.0f    // top left 
+			-1.0f,  1.0f, 0.0f,    0.0f, 1.0f    // top left
 		};
 		auto vb = VertexBuffer::Create(quad, sizeof(quad));
 		BufferLayout quadLayout = {
@@ -392,7 +393,7 @@ namespace Syndra {
 
 	Ref<FrameBuffer> ForwardPlusRenderer::GetMainFrameBuffer()
 	{
-		//TODO 
+		//TODO
 		//Fix attachment ID
 		return r_Data.lightingPass->GetSpecification().TargetFrameBuffer;
 	}
@@ -421,17 +422,17 @@ namespace Syndra {
 				ImGui::Begin("Show Depth", &showDepth);
 				width = ImGui::GetContentRegionAvail().x;
 				height = ratio * width;
-				ImGui::Image((ImTextureID)r_Data.postProcPass->GetFrameBufferTextureID(1), { width, height }, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
+				ImGui::Image(ImGuiLayer::GetTextureID(r_Data.postProcPass->GetFrameBufferTextureID(1)), { width, height }, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
 				ImGui::End();
 			}
 			if (showlights) {
 				ImGui::Begin("Show lights", &showlights);
 				width = ImGui::GetContentRegionAvail().x;
 				height = ratio * width;
-				ImGui::Image((ImTextureID)r_Data.lightingPass->GetFrameBufferTextureID(1), { width, height }, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
+				ImGui::Image(ImGuiLayer::GetTextureID(r_Data.lightingPass->GetFrameBufferTextureID(1)), { width, height }, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
 				ImGui::End();
 			}
-			
+
 			ImGui::Separator();
 			//V-Sync
 			static bool vSync = true;
@@ -493,7 +494,7 @@ namespace Syndra {
 				}
 			}
 			if (r_Data.environment) {
-				ImGui::Image((ImTextureID)r_Data.environment->GetBackgroundTextureID(), { 300, 150 }, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
+				ImGui::Image(ImGuiLayer::GetTextureID(r_Data.environment->GetBackgroundTextureID()), { 300, 150 }, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
 			}
 			if (ImGui::DragFloat("Intensity", &r_Data.intensity, 0.01f, 1, 20)) {
 				if (r_Data.environment) {

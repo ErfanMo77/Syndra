@@ -29,6 +29,11 @@ namespace Syndra {
 		shader->Bind();
 		auto& meshes = model.meshes;
 		for (auto& mesh : meshes) {
+			Texture2D::BindTexture(0, 0);
+			Texture2D::BindTexture(0, 1);
+			Texture2D::BindTexture(0, 2);
+			Texture2D::BindTexture(0, 3);
+			Texture2D::BindTexture(0, 4);
 			if (mesh.textures.size() == 0) {
 				Texture2D::BindTexture(0, 0);
 			}
@@ -57,7 +62,7 @@ namespace Syndra {
 	}
 
 	void Renderer::Submit(Material& material, const Model& model)
-	{	
+	{
 		material.Bind();
 		auto& meshes = model.meshes;
 		for (auto& mesh : meshes) {

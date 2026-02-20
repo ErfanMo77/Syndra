@@ -8,40 +8,42 @@ namespace Syndra {
 	public:
 		static void Init()
 		{
-			s_RendererAPI->Init();
+			GetRendererAPI().Init();
 		}
 
 		static void SetViewport(uint32_t x, uint32_t y, uint32_t width, uint32_t height)
 		{
-			s_RendererAPI->SetViewport(x, y, width, height);
+			GetRendererAPI().SetViewport(x, y, width, height);
 		}
 
 		static void SetClearColor(const glm::vec4& color)
 		{
-			s_RendererAPI->SetClearColor(color);
+			GetRendererAPI().SetClearColor(color);
 		}
 
 		static void Clear()
 		{
-			s_RendererAPI->Clear();
+			GetRendererAPI().Clear();
 		}
 
 		static void DrawIndexed(const Ref<VertexArray>& vertexArray)
 		{
-			s_RendererAPI->DrawIndexed(vertexArray);
+			GetRendererAPI().DrawIndexed(vertexArray);
 		}
 
-		static void SetState(RenderState stateID, bool on) 
+		static void SetState(RenderState stateID, bool on)
 		{
-			s_RendererAPI->SetState(stateID, on);
+			GetRendererAPI().SetState(stateID, on);
 		}
 
-		static std::string GetInfo() 
+		static std::string GetInfo()
 		{
-			return s_RendererAPI->GetRendererInfo();
+			return GetRendererAPI().GetRendererInfo();
 		}
+
+		static void Shutdown();
 	private:
-		static RendererAPI* s_RendererAPI;
+		static RendererAPI& GetRendererAPI();
 
 	};
 }

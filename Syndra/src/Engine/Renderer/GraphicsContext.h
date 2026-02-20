@@ -8,7 +8,14 @@ namespace Syndra{
 		virtual ~GraphicsContext() = default;
 
 		virtual void Init() = 0;
-		virtual void SwapBuffers() = 0;
+		virtual void BeginFrame() = 0;
+		virtual void EndFrame() = 0;
+		virtual void SwapBuffers()
+		{
+			BeginFrame();
+			EndFrame();
+		}
+		virtual void SetVSync(bool) {}
 	};
 
 }

@@ -1,5 +1,5 @@
 Scene: Default
-Environment path: ""
+Environment path: assets\HDRI\san_giuseppe_bridge_4k.hdr
 Camera:
   Yaw: 3.69839787
   Pitch: 0.532799363
@@ -32,7 +32,7 @@ Entities:
     MaterialComponent:
       shader: ForwardShading
       Textures:
-        - {binding: 1, path: C:\dev\Syndra\Syndra-Editor\assets\Textures\Gold\schvfgwp_4K_Metalness.jpg}
+        - {binding: 1, path: assets\Textures\Gold\schvfgwp_4K_Metalness.jpg}
         - {binding: 0, path: ""}
         - {binding: 2, path: ""}
         - {binding: 3, path: ""}

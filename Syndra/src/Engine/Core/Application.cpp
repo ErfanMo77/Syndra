@@ -20,7 +20,9 @@ namespace Syndra {
 
 	Application::~Application()
 	{
-
+		m_LayerStack.Clear();
+		m_ImGuiLayer = nullptr;
+		RenderCommand::Shutdown();
 	}
 
 	void Application::OnEvent(Event& e)
@@ -41,9 +43,15 @@ namespace Syndra {
 	{
 		while (m_Running)
 		{
+			m_window->OnUpdate();
+			if (!m_Running)
+				break;
+
 			float time = (float)glfwGetTime();
 			Timestep ts = time - m_lastFrameTime;
 			m_lastFrameTime = time;
+
+			m_window->BeginFrame();
 
 			if (!m_Minimized) {
 				for (Layer* layer : m_LayerStack) {
@@ -60,7 +68,7 @@ namespace Syndra {
 				}
 			}
 
-			m_window->OnUpdate();
+			m_window->EndFrame();
 		}
 	}
 
@@ -89,7 +97,7 @@ namespace Syndra {
 	}
 
 	bool Application::OnWindowResize(WindowResizeEvent& e)
-	{	
+	{
 		if (e.GetWidth() == 0 && e.GetHeight() == 0) {
 			m_Minimized = true;
 			return false;

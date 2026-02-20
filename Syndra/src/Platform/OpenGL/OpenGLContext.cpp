@@ -18,11 +18,29 @@ namespace Syndra {
 	{
 		glfwMakeContextCurrent(m_WindowHandle);
 		int status = gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
+		if (status == 0)
+		{
+			SN_CORE_ERROR("Failed to initialize GLAD for OpenGL context.");
+		}
+	}
+
+	void OpenGLContext::BeginFrame()
+	{
+	}
+
+	void OpenGLContext::EndFrame()
+	{
+		glfwSwapBuffers(m_WindowHandle);
 	}
 
 	void OpenGLContext::SwapBuffers()
 	{
-		glfwSwapBuffers(m_WindowHandle);
+		EndFrame();
+	}
+
+	void OpenGLContext::SetVSync(bool enabled)
+	{
+		glfwSwapInterval(enabled ? 1 : 0);
 	}
 
 }

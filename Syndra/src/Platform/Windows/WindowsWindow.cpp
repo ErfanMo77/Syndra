@@ -7,7 +7,10 @@
 
 #include "Engine/Core/Instrument.h"
 
+#include "Engine/Renderer/RendererAPI.h"
+#include "Engine/Utils/AssetPath.h"
 #include "Platform/OpenGL/OpenGLContext.h"
+#include "Platform/Vulkan/VulkanContext.h"
 #include "stb_image.h"
 
 namespace Syndra {
@@ -40,38 +43,62 @@ namespace Syndra {
 		m_Data.Title = props.Title;
 		m_Data.Width = props.Width;
 		m_Data.Height = props.Height;
-		glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-		glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
-		glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-		//glfwWindowHint(GLFW_SAMPLES,8);
 		SN_CORE_INFO("Creating window {0} ({1}, {2})", props.Title, props.Width, props.Height);
-
-
 
 		if (s_GLFWWindowCount == 0)
 		{
 			//SN_PROFILE_SCOPE("glfwInit");
 			int success = glfwInit();
-			//SN_CORE_ASSERT(success, "Could not initialize GLFW!");
+			SN_CORE_ASSERT(success, "Could not initialize GLFW!");
 			glfwSetErrorCallback(GLFWErrorCallback);
+		}
+
+		if (RendererAPI::GetAPI() == RendererAPI::API::OpenGL)
+		{
+			glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+			glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
+			glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+		}
+		else if (RendererAPI::GetAPI() == RendererAPI::API::Vulkan)
+		{
+			glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 		}
 
 		{
 			//SN_PROFILE_SCOPE("glfwCreateWindow");
-//#if defined(SN_DEBUG)
-//			if (Renderer::GetAPI() == RendererAPI::API::OpenGL)
-//				glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GLFW_TRUE);
-//#endif
 			m_Window = glfwCreateWindow((int)props.Width, (int)props.Height, m_Data.Title.c_str(), nullptr, nullptr);
+			SN_CORE_ASSERT(m_Window, "Could not create GLFW window.");
 			++s_GLFWWindowCount;
 		}
 
+		const std::string iconPath = AssetPath::ResolveEditorAssetPath("assets/Logo/LOGO100.png");
 		GLFWimage images[1];
-		images[0].pixels = stbi_load("assets/Logo/LOGO100.png", &images[0].width, &images[0].height, 0, 4);
-		glfwSetWindowIcon(m_Window, 1, images);
-		stbi_image_free(images[0].pixels);
+		images[0].pixels = stbi_load(iconPath.c_str(), &images[0].width, &images[0].height, 0, 4);
+		if (images[0].pixels)
+		{
+			glfwSetWindowIcon(m_Window, 1, images);
+			stbi_image_free(images[0].pixels);
+		}
+		else
+		{
+			SN_CORE_WARN("Failed to load window icon: {}", iconPath);
+		}
 
-		m_Context = new OpenGLContext(m_Window);
+		switch (RendererAPI::GetAPI())
+		{
+		case RendererAPI::API::OpenGL:
+			m_Context = new OpenGLContext(m_Window);
+			break;
+		case RendererAPI::API::Vulkan:
+			m_Context = new VulkanContext(m_Window);
+			break;
+		case RendererAPI::API::NONE:
+		default:
+			SN_CORE_ASSERT(false, "Unsupported RendererAPI for window context.");
+			break;
+		}
+		SN_CORE_ASSERT(m_Context, "Could not create graphics context.");
+
 		m_Context->Init();
 		//SN_CORE_INFO(m_Window);
 
@@ -88,7 +115,7 @@ namespace Syndra {
 				WindowResizeEvent event(width, height);
 				data.EventCallback(event);
 			});
-		
+
 		glfwSetWindowCloseCallback(m_Window, [](GLFWwindow* window)
 			{
 				WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
@@ -167,15 +194,27 @@ namespace Syndra {
 				MouseMovedEvent event((float)xPos, (float)yPos);
 				data.EventCallback(event);
 			});
-		
+
 	}
 
 	void WindowsWindow::Shutdown()
 	{
 		//SN_PROFILE_FUNCTION();
 
-		glfwDestroyWindow(m_Window);
-		--s_GLFWWindowCount;
+		if (m_Context != nullptr)
+		{
+			delete m_Context;
+			m_Context = nullptr;
+		}
+
+		if (m_Window != nullptr)
+		{
+			glfwSetWindowUserPointer(m_Window, nullptr);
+			glfwDestroyWindow(m_Window);
+			m_Window = nullptr;
+			if (s_GLFWWindowCount > 0)
+				--s_GLFWWindowCount;
+		}
 
 		if (s_GLFWWindowCount == 0)
 		{
@@ -186,20 +225,28 @@ namespace Syndra {
 	void WindowsWindow::OnUpdate()
 	{
 		glfwPollEvents();
+	}
+
+	void WindowsWindow::BeginFrame()
+	{
+		if (m_Context)
+			m_Context->BeginFrame();
+	}
+
+	void WindowsWindow::EndFrame()
+	{
+		if (m_Context)
 		{
 			SN_PROFILE_SCOPE("swap buffers");
-			m_Context->SwapBuffers();
+			m_Context->EndFrame();
 		}
 	}
 
 	void WindowsWindow::SetVSync(bool enabled)
 	{
 		//SN_PROFILE_FUNCTION();
-
-		if (enabled)
-			glfwSwapInterval(1);
-		else
-			glfwSwapInterval(0);
+		if (m_Context)
+			m_Context->SetVSync(enabled);
 
 		m_Data.VSync = enabled;
 	}

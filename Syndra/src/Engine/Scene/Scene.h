@@ -54,7 +54,7 @@ namespace Syndra {
 
 		std::vector<Ref<Entity>> m_Entities;
 		std::string m_EnvironmentPath;
-		
+
 		std::string m_Name;
 
 		PerspectiveCamera* m_Camera;
@@ -70,6 +70,7 @@ namespace Syndra {
 		friend class SceneRenderer;
 		friend class DeferredRenderer;
 		friend class ForwardPlusRenderer;
+		friend class VulkanDeferredRenderer;
 	};
 
 }

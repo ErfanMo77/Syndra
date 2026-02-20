@@ -245,12 +245,12 @@ namespace Syndra {
 			options.version = 460;
 			options.es = false;
 			glsl.set_common_options(options);
-	
+
 			m_OpenGLSourceCode[stage] = glsl.compile();
 			//Uncomment to print the shader on console
 			//SN_CORE_TRACE(m_OpenGLSourceCode[stage]);
 		}
-		
+
 		Compile(m_OpenGLSourceCode);
 	}
 
@@ -331,7 +331,7 @@ namespace Syndra {
 	{
 		GLuint program = glCreateProgram();
 		SN_CORE_ASSERT(shaderSources.size() <= 2, "Syndra only supports 2 shaders for now");
-		std::array<GLenum, 2> glShaderIDs;
+		std::array<GLuint, 2> glShaderIDs{};
 		int glShaderIDIndex = 0;
 		for (auto& kv : shaderSources)
 		{
@@ -365,7 +365,7 @@ namespace Syndra {
 			glAttachShader(program, shader);
 			glShaderIDs[glShaderIDIndex++] = shader;
 		}
-		
+
 		m_RendererID = program;
 
 		// Link our program
@@ -386,16 +386,20 @@ namespace Syndra {
 			// We don't need the program anymore.
 			glDeleteProgram(program);
 
-			for (auto id : glShaderIDs)
+			for (int i = 0; i < glShaderIDIndex; ++i)
+			{
+				const GLuint id = glShaderIDs[i];
 				glDeleteShader(id);
+			}
 
 			SN_CORE_ERROR("{0}", infoLog.data());
 			SN_CORE_ASSERT(false, "Shader link failure!");
 			return;
 		}
 
-		for (auto id : glShaderIDs)
+		for (int i = 0; i < glShaderIDIndex; ++i)
 		{
+			const GLuint id = glShaderIDs[i];
 			glDetachShader(program, id);
 			glDeleteShader(id);
 		}
@@ -448,7 +452,7 @@ namespace Syndra {
 
 	void OpenGLShader::SetMemoryBarrier(MemoryBarrierMode mode)
 	{
-		switch (mode) 
+		switch (mode)
 		{
 		case MemoryBarrierMode::image:
 			glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
@@ -511,7 +515,7 @@ namespace Syndra {
 		std::string source = ReadFile(m_FilePath);
 		auto shaderSources = PreProcess(source);
 
-		
+
 		GLuint program = glCreateProgram();
 
 		shaderc::Compiler compiler;
@@ -549,7 +553,7 @@ namespace Syndra {
 				out.flush();
 				out.close();
 			}
-			
+
 		}
 		SN_CORE_WARN("=================================={0} Shader=======================================", m_Name);
 		for (auto&& [stage, data] : shaderData)

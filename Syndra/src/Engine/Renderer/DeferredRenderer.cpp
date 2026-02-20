@@ -2,6 +2,7 @@
 #include "DeferredRenderer.h"
 #include "imgui.h"
 #include "imgui_internal.h"
+#include "Engine/ImGui/ImGuiLayer.h"
 #include "Engine/Utils/PlatformUtils.h"
 #include "Engine/Core/Application.h"
 
@@ -10,15 +11,15 @@
 #include <glad/glad.h>
 
 namespace Syndra {
-	
+
 	static DeferredRenderer::RenderData r_Data;
-	
+
 	void DeferredRenderer::Init(const Ref<Scene>& scene, const ShaderLibrary& shaders, const Ref<Environment>& env)
 	{
 		r_Data.scene = scene;
 		r_Data.shaders = shaders;
 		r_Data.environment = env;
-		
+
 		//------------------------------------Deferred Geometry Render Pass--------------------------------------//
 		FramebufferSpecification GeoFbSpec;
 		GeoFbSpec.Attachments =
@@ -82,14 +83,14 @@ namespace Syndra {
 		r_Data.geoShader = r_Data.shaders.Get("GeometryPass");
 		r_Data.fxaa = r_Data.shaders.Get("FXAA");
 		r_Data.deferredLighting = r_Data.shaders.Get("DeferredLighting");
-		
+
 		//----------------------------------------------SCREEN QUAD---------------------------------------------//
 		r_Data.screenVao = VertexArray::Create();
 		float quad[] = {
 			 1.0f,  1.0f, 0.0f,    1.0f, 1.0f,   // top right
 			 1.0f, -1.0f, 0.0f,    1.0f, 0.0f,   // bottom right
 			-1.0f, -1.0f, 0.0f,    0.0f, 0.0f,   // bottom left
-			-1.0f,  1.0f, 0.0f,    0.0f, 1.0f    // top left 
+			-1.0f,  1.0f, 0.0f,    0.0f, 1.0f    // top left
 		};
 		auto vb = VertexBuffer::Create(quad, sizeof(quad));
 		BufferLayout quadLayout = {
@@ -104,7 +105,7 @@ namespace Syndra {
 		};
 		auto eb = IndexBuffer::Create(quadIndices, sizeof(quadIndices) / sizeof(uint32_t));
 		r_Data.screenVao->SetIndexBuffer(eb);
-		
+
 		// lighting parameters
 		r_Data.exposure = 0.5f;
 		r_Data.gamma = 1.9f;
@@ -299,7 +300,7 @@ namespace Syndra {
 				ImGui::Begin("Albedo", &showAlbedo);
 				width = ImGui::GetContentRegionAvail().x;
 				height = ratio * width;
-				ImGui::Image((ImTextureID)r_Data.geoPass->GetFrameBufferTextureID(2), { width, height }, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
+				ImGui::Image(ImGuiLayer::GetTextureID(r_Data.geoPass->GetFrameBufferTextureID(2)), { width, height }, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
 				ImGui::End();
 			}
 
@@ -307,7 +308,7 @@ namespace Syndra {
 				ImGui::Begin("Normal", &showNormal);
 				width = ImGui::GetContentRegionAvail().x;
 				height = ratio * width;
-				ImGui::Image((ImTextureID)r_Data.geoPass->GetFrameBufferTextureID(1), { width, height }, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
+				ImGui::Image(ImGuiLayer::GetTextureID(r_Data.geoPass->GetFrameBufferTextureID(1)), { width, height }, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
 				ImGui::End();
 			}
 
@@ -315,7 +316,7 @@ namespace Syndra {
 				ImGui::Begin("Position", &showPosition);
 				width = ImGui::GetContentRegionAvail().x;
 				height = ratio * width;
-				ImGui::Image((ImTextureID)r_Data.geoPass->GetFrameBufferTextureID(0), { width, height }, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
+				ImGui::Image(ImGuiLayer::GetTextureID(r_Data.geoPass->GetFrameBufferTextureID(0)), { width, height }, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
 				ImGui::End();
 			}
 
@@ -323,7 +324,7 @@ namespace Syndra {
 				ImGui::Begin("RoughMetalAO", &showRoughMetalAO);
 				width = ImGui::GetContentRegionAvail().x;
 				height = ratio * width;
-				ImGui::Image((ImTextureID)r_Data.geoPass->GetFrameBufferTextureID(3), { width, height }, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
+				ImGui::Image(ImGuiLayer::GetTextureID(r_Data.geoPass->GetFrameBufferTextureID(3)), { width, height }, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
 				ImGui::End();
 			}
 			ImGui::Separator();
@@ -386,7 +387,7 @@ namespace Syndra {
 				}
 			}
 			if (r_Data.environment) {
-				ImGui::Image((ImTextureID)r_Data.environment->GetBackgroundTextureID(), { 300, 150 }, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
+				ImGui::Image(ImGuiLayer::GetTextureID(r_Data.environment->GetBackgroundTextureID()), { 300, 150 }, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
 			}
 			if (ImGui::DragFloat("Intensity", &r_Data.intensity, 0.01f, 1, 20)) {
 				if (r_Data.environment) {
