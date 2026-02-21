@@ -13,6 +13,7 @@
 #include "Engine/Utils/PlatformUtils.h"
 #include "Engine/ImGui/IconsFontAwesome5.h"
 
+#include <algorithm>
 
 namespace Syndra {
 
@@ -228,7 +229,7 @@ namespace Syndra {
 		case Key::F:
 		{
 			if (m_ScenePanel->GetSelectedEntity()) {
-				m_ActiveScene->m_Camera->SetFocalPoint(m_ScenePanel->GetSelectedEntity().GetComponent<TransformComponent>().Translation);
+				m_ActiveScene->m_Camera->SetFocalPoint(m_ActiveScene->GetWorldTranslation(m_ScenePanel->GetSelectedEntity()));
 			}
 			break;
 		}
@@ -414,7 +415,7 @@ namespace Syndra {
 		{
 			// Entity transform
 			auto& tc = selectedEntity.GetComponent<TransformComponent>();
-			glm::mat4 transform = tc.GetTransform();
+			glm::mat4 transform = m_ActiveScene->GetWorldTransform(selectedEntity);
 
 			// Snapping
 			bool snap = Input::IsKeyPressed(Key::LeftControl);
@@ -432,7 +433,14 @@ namespace Syndra {
 			if (ImGuizmo::IsUsing())
 			{
 				glm::vec3 translation, rotation, scale;
-				Math::DecomposeTransform(transform, translation, rotation, scale);
+				glm::mat4 localTransform = transform;
+				Entity parent = m_ActiveScene->GetParent(selectedEntity);
+				if (parent)
+				{
+					const glm::mat4 parentWorld = m_ActiveScene->GetWorldTransform(parent);
+					localTransform = glm::inverse(parentWorld) * transform;
+				}
+				Math::DecomposeTransform(localTransform, translation, rotation, scale);
 
 				glm::vec3 deltaRotation = rotation - tc.Rotation;
 				tc.Translation = translation;
@@ -472,6 +480,100 @@ namespace Syndra {
 		ImGui::Text("\nApplication average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
 		ImGui::Text("%d vertices, %d indices (%d triangles)", io.MetricsRenderVertices, io.MetricsRenderIndices, io.MetricsRenderIndices / 3);
 		ImGui::Text("%d active windows (%d visible)", io.MetricsActiveWindows, io.MetricsRenderWindows);
+
+		ImGui::Separator();
+		ImGui::Text("CPU Timings");
+#if SN_PROFILE
+		static bool freezeCpuTimings = false;
+		static bool wasFreezeCpuTimings = false;
+		static CpuFrameProfile frozenCpuFrame = {};
+		static int averageFrameCount = 30;
+		static float minScopeMs = 0.05f;
+
+		averageFrameCount = std::clamp(averageFrameCount, 1, 240);
+
+		ImGui::Checkbox("Freeze", &freezeCpuTimings);
+		ImGui::SameLine();
+		ImGui::SetNextItemWidth(200.0f);
+		ImGui::SliderInt("Average Frames", &averageFrameCount, 1, 240);
+		ImGui::SetNextItemWidth(180.0f);
+		ImGui::DragFloat("Min Scope (ms)", &minScopeMs, 0.005f, 0.0f, 1000.0f, "%.3f");
+
+		if (freezeCpuTimings && !wasFreezeCpuTimings)
+			frozenCpuFrame = Instrumentor::Get().GetAveragedCpuFrameProfile(static_cast<size_t>(averageFrameCount));
+		wasFreezeCpuTimings = freezeCpuTimings;
+
+		CpuFrameProfile cpuFrame = freezeCpuTimings
+			? frozenCpuFrame
+			: Instrumentor::Get().GetAveragedCpuFrameProfile(static_cast<size_t>(averageFrameCount));
+		if (!cpuFrame.Valid || cpuFrame.Root.Name.empty())
+		{
+			ImGui::TextDisabled("Waiting for profiling data...");
+		}
+		else
+		{
+			ImGui::Text("Frame CPU: %.3f ms", cpuFrame.FrameTimeMs);
+			ImGui::Text("Source: %s", freezeCpuTimings ? "Frozen snapshot" : "Rolling average");
+
+			const ImVec2 tableSize = ImVec2(0.0f, 320.0f);
+			const ImGuiTableFlags tableFlags =
+				ImGuiTableFlags_RowBg |
+				ImGuiTableFlags_Borders |
+				ImGuiTableFlags_Resizable |
+				ImGuiTableFlags_SizingStretchProp |
+				ImGuiTableFlags_ScrollY;
+
+			if (ImGui::BeginTable("CpuTimingTable", 5, tableFlags, tableSize))
+			{
+				ImGui::TableSetupColumn("Scope", ImGuiTableColumnFlags_WidthStretch, 3.0f);
+				ImGui::TableSetupColumn("Total (ms)", ImGuiTableColumnFlags_WidthStretch, 1.1f);
+				ImGui::TableSetupColumn("Self (ms)", ImGuiTableColumnFlags_WidthStretch, 1.1f);
+				ImGui::TableSetupColumn("Calls", ImGuiTableColumnFlags_WidthStretch, 0.8f);
+				ImGui::TableSetupColumn("% Parent", ImGuiTableColumnFlags_WidthStretch, 0.9f);
+				ImGui::TableHeadersRow();
+
+				auto drawNode = [&](auto&& self, const CpuProfileNode& node, double parentTimeMs, const std::string& parentPath) -> void
+				{
+					if (node.TotalTimeMs < minScopeMs)
+						return;
+
+					const std::string nodePath = parentPath.empty() ? node.Name : parentPath + "/" + node.Name;
+
+					ImGui::TableNextRow();
+					ImGui::TableSetColumnIndex(0);
+					ImGuiTreeNodeFlags nodeFlags = ImGuiTreeNodeFlags_SpanFullWidth;
+					if (node.Children.empty())
+						nodeFlags |= ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen;
+
+					ImGui::PushID(nodePath.c_str());
+					bool opened = ImGui::TreeNodeEx("ScopeNode", nodeFlags, "%s", node.Name.c_str());
+
+					ImGui::TableSetColumnIndex(1);
+					ImGui::Text("%.3f", node.TotalTimeMs);
+					ImGui::TableSetColumnIndex(2);
+					ImGui::Text("%.3f", node.SelfTimeMs);
+					ImGui::TableSetColumnIndex(3);
+					ImGui::Text("%u", node.CallCount);
+					ImGui::TableSetColumnIndex(4);
+					const double parentPercent = (parentTimeMs > 0.0) ? (node.TotalTimeMs / parentTimeMs) * 100.0 : 0.0;
+					ImGui::Text("%.1f%%", parentPercent);
+
+					if (opened && !node.Children.empty())
+					{
+						for (const CpuProfileNode& child : node.Children)
+							self(self, child, node.TotalTimeMs, nodePath);
+						ImGui::TreePop();
+					}
+					ImGui::PopID();
+				};
+
+				drawNode(drawNode, cpuFrame.Root, cpuFrame.Root.TotalTimeMs, "");
+				ImGui::EndTable();
+			}
+		}
+#else
+		ImGui::TextDisabled("CPU profiling is disabled in this build.");
+#endif
 		ImGui::End();
 	}
 

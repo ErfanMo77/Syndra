@@ -40,6 +40,10 @@ namespace Syndra {
 		uint32_t GetSwapchainImageCount() const { return static_cast<uint32_t>(m_SwapchainImages.size()); }
 		uint32_t GetSwapchainMinImageCount() const { return m_SwapchainMinImageCount; }
 		VkCommandPool GetCommandPool() const { return m_CommandPool; }
+		VkCommandBuffer GetActiveFrameCommandBuffer() const { return m_FrameInProgress ? m_CommandBuffers[m_CurrentFrame] : VK_NULL_HANDLE; }
+		uint32_t GetCurrentFrameIndex() const { return m_CurrentFrame; }
+		uint32_t GetFramesInFlight() const { return static_cast<uint32_t>(m_CommandBuffers.size()); }
+		uint64_t GetFrameNumber() const { return m_FrameNumber; }
 		VmaAllocator GetAllocator() const { return m_Allocator; }
 		void SetOverlayRenderCallback(const std::function<void(VkCommandBuffer, uint32_t)>& callback) { m_OverlayRenderCallback = callback; }
 
@@ -111,6 +115,7 @@ namespace Syndra {
 		bool m_FrameInProgress = false;
 		uint32_t m_AcquiredImageIndex = 0;
 		uint32_t m_CurrentFrame = 0;
+		uint64_t m_FrameNumber = 0;
 
 		VkInstance m_Instance = VK_NULL_HANDLE;
 		VkDebugUtilsMessengerEXT m_DebugMessenger = VK_NULL_HANDLE;

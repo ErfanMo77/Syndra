@@ -2,6 +2,7 @@
 
 #include "Platform/Vulkan/VulkanRendererAPI.h"
 
+#include "Engine/Core/Instrument.h"
 #include "Platform/Vulkan/VulkanBuffer.h"
 #include "Platform/Vulkan/VulkanContext.h"
 #include "Platform/Vulkan/VulkanFrameBuffer.h"
@@ -21,6 +22,8 @@ namespace Syndra {
 		constexpr uint32_t kDescriptorPoolTypeSlack = 32;
 		constexpr uint32_t kDescriptorPoolMinSets = 64;
 		constexpr uint32_t kDescriptorPoolMinTypeCount = 128;
+		constexpr uint32_t kDescriptorPoolFrameMinSets = 4096;
+		constexpr uint32_t kDescriptorPoolFrameMinTypeCount = 4096;
 
 		struct PipelineKey
 		{
@@ -111,6 +114,50 @@ namespace Syndra {
 				hash ^= static_cast<uint64_t>(element.Type) + 0x9e3779b97f4a7c15ull + (hash << 6) + (hash >> 2);
 			}
 			return hash;
+		}
+
+		void BeginDynamicRendering(VkCommandBuffer commandBuffer, VulkanFrameBuffer* frameBuffer)
+		{
+			SN_CORE_ASSERT(frameBuffer != nullptr, "Vulkan framebuffer is required for dynamic rendering.");
+
+			std::vector<VkRenderingAttachmentInfo> colorAttachments;
+			colorAttachments.resize(frameBuffer->GetColorAttachmentCount());
+			for (uint32_t i = 0; i < frameBuffer->GetColorAttachmentCount(); ++i)
+			{
+				VkRenderingAttachmentInfo& colorAttachment = colorAttachments[i];
+				colorAttachment.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
+				colorAttachment.imageView = frameBuffer->GetColorAttachmentImageView(i);
+				colorAttachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+				colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
+				colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+			}
+
+			VkRenderingAttachmentInfo depthAttachment{};
+			VkRenderingAttachmentInfo* depthAttachmentPtr = nullptr;
+			if (frameBuffer->HasDepthImage())
+			{
+				depthAttachment.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
+				depthAttachment.imageView = frameBuffer->GetDepthAttachmentImageView();
+				depthAttachment.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+				depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
+				depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+				depthAttachmentPtr = &depthAttachment;
+			}
+
+			VkRect2D renderArea{};
+			renderArea.offset = { 0, 0 };
+			renderArea.extent.width = frameBuffer->GetSpecification().Width;
+			renderArea.extent.height = frameBuffer->GetSpecification().Height;
+
+			VkRenderingInfo renderingInfo{};
+			renderingInfo.sType = VK_STRUCTURE_TYPE_RENDERING_INFO;
+			renderingInfo.renderArea = renderArea;
+			renderingInfo.layerCount = 1;
+			renderingInfo.colorAttachmentCount = static_cast<uint32_t>(colorAttachments.size());
+			renderingInfo.pColorAttachments = colorAttachments.empty() ? nullptr : colorAttachments.data();
+			renderingInfo.pDepthAttachment = depthAttachmentPtr;
+
+			vkCmdBeginRendering(commandBuffer, &renderingInfo);
 		}
 
 		VkPipeline CreateGraphicsPipeline(
@@ -323,17 +370,19 @@ namespace Syndra {
 
 	VulkanRendererAPI::~VulkanRendererAPI()
 	{
+		Flush();
+
 		VulkanContext* context = VulkanContext::GetCurrent();
 		if (context != nullptr && context->GetDevice() != VK_NULL_HANDLE)
 		{
 			vkDeviceWaitIdle(context->GetDevice());
 			DestroyCachedPipelines(context->GetDevice());
-			DestroyTransientDescriptorPool(context->GetDevice());
+			DestroyTransientDescriptorPools(context->GetDevice());
 		}
 		else
 		{
 			GetPipelineCache().clear();
-			DestroyTransientDescriptorPool(VK_NULL_HANDLE);
+			DestroyTransientDescriptorPools(VK_NULL_HANDLE);
 		}
 
 		m_FallbackUniformBuffer = nullptr;
@@ -422,11 +471,20 @@ namespace Syndra {
 
 	bool VulkanRendererAPI::EnsureTransientDescriptorPool(
 		VulkanContext* context,
+		uint32_t frameIndex,
 		uint32_t requiredSetCount,
-		const std::unordered_map<VkDescriptorType, uint32_t>& requiredDescriptorCounts)
+		const std::unordered_map<VkDescriptorType, uint32_t>& requiredDescriptorCounts,
+		bool forceReset)
 	{
 		if (context == nullptr || context->GetDevice() == VK_NULL_HANDLE)
 			return false;
+		if (frameIndex >= context->GetFramesInFlight())
+			return false;
+
+		if (m_TransientDescriptorPools.size() < context->GetFramesInFlight())
+			m_TransientDescriptorPools.resize(context->GetFramesInFlight());
+
+		TransientDescriptorPoolState& poolState = m_TransientDescriptorPools[frameIndex];
 
 		const uint32_t desiredMaxSets = std::max(kDescriptorPoolMinSets, requiredSetCount * kDescriptorPoolSetSlack);
 		std::unordered_map<VkDescriptorType, uint32_t> desiredTypeCounts;
@@ -436,14 +494,30 @@ namespace Syndra {
 			const uint32_t desiredCount = std::max(kDescriptorPoolMinTypeCount, requiredCount * kDescriptorPoolTypeSlack);
 			desiredTypeCounts[descriptorType] = desiredCount;
 		}
+		uint32_t adjustedDesiredMaxSets = desiredMaxSets;
+		if (!forceReset)
+		{
+			adjustedDesiredMaxSets = std::max(adjustedDesiredMaxSets, kDescriptorPoolFrameMinSets);
+			const std::array<VkDescriptorType, 4> frameBaselineTypes = {
+				VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+				VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+				VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+				VK_DESCRIPTOR_TYPE_STORAGE_IMAGE
+			};
+			for (const VkDescriptorType descriptorType : frameBaselineTypes)
+			{
+				uint32_t& desiredCount = desiredTypeCounts[descriptorType];
+				desiredCount = std::max(desiredCount, kDescriptorPoolFrameMinTypeCount);
+			}
+		}
 
-		bool recreatePool = (m_TransientDescriptorPool == VK_NULL_HANDLE) || (desiredMaxSets > m_TransientDescriptorPoolMaxSets);
+		bool recreatePool = (poolState.Pool == VK_NULL_HANDLE) || (adjustedDesiredMaxSets > poolState.MaxSets);
 		if (!recreatePool)
 		{
 			for (const auto& [descriptorType, desiredCount] : desiredTypeCounts)
 			{
-				const auto capIt = m_TransientDescriptorPoolTypeCaps.find(descriptorType);
-				if (capIt == m_TransientDescriptorPoolTypeCaps.end() || capIt->second < desiredCount)
+				const auto capIt = poolState.TypeCaps.find(descriptorType);
+				if (capIt == poolState.TypeCaps.end() || capIt->second < desiredCount)
 				{
 					recreatePool = true;
 					break;
@@ -453,7 +527,9 @@ namespace Syndra {
 
 		if (recreatePool)
 		{
-			DestroyTransientDescriptorPool(context->GetDevice());
+			if (poolState.Pool != VK_NULL_HANDLE)
+				vkDestroyDescriptorPool(context->GetDevice(), poolState.Pool, nullptr);
+			poolState = {};
 
 			std::vector<VkDescriptorPoolSize> poolSizes;
 			poolSizes.reserve(desiredTypeCounts.size());
@@ -473,29 +549,44 @@ namespace Syndra {
 
 			VkDescriptorPoolCreateInfo poolInfo{};
 			poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-			poolInfo.maxSets = desiredMaxSets;
+			poolInfo.maxSets = adjustedDesiredMaxSets;
 			poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
 			poolInfo.pPoolSizes = poolSizes.data();
 
-			if (vkCreateDescriptorPool(context->GetDevice(), &poolInfo, nullptr, &m_TransientDescriptorPool) != VK_SUCCESS)
+			if (vkCreateDescriptorPool(context->GetDevice(), &poolInfo, nullptr, &poolState.Pool) != VK_SUCCESS)
 				return false;
 
-			m_TransientDescriptorPoolMaxSets = desiredMaxSets;
-			m_TransientDescriptorPoolTypeCaps = std::move(desiredTypeCounts);
+			poolState.MaxSets = adjustedDesiredMaxSets;
+			poolState.TypeCaps = std::move(desiredTypeCounts);
+			poolState.NeedsReset = false;
 			return true;
 		}
 
-		return vkResetDescriptorPool(context->GetDevice(), m_TransientDescriptorPool, 0) == VK_SUCCESS;
+		if (forceReset || poolState.NeedsReset)
+		{
+			if (vkResetDescriptorPool(context->GetDevice(), poolState.Pool, 0) != VK_SUCCESS)
+				return false;
+			poolState.NeedsReset = false;
+		}
+
+		return true;
 	}
 
-	void VulkanRendererAPI::DestroyTransientDescriptorPool(VkDevice device)
+	void VulkanRendererAPI::DestroyTransientDescriptorPools(VkDevice device)
 	{
-		if (m_TransientDescriptorPool != VK_NULL_HANDLE && device != VK_NULL_HANDLE)
-			vkDestroyDescriptorPool(device, m_TransientDescriptorPool, nullptr);
+		if (device != VK_NULL_HANDLE)
+		{
+			for (const auto& poolState : m_TransientDescriptorPools)
+			{
+				if (poolState.Pool != VK_NULL_HANDLE)
+					vkDestroyDescriptorPool(device, poolState.Pool, nullptr);
+			}
+		}
 
-		m_TransientDescriptorPool = VK_NULL_HANDLE;
-		m_TransientDescriptorPoolMaxSets = 0;
-		m_TransientDescriptorPoolTypeCaps.clear();
+		m_TransientDescriptorPools.clear();
+		m_DescriptorSetCache.clear();
+		m_LastDescriptorPoolFrameSerial = std::numeric_limits<uint64_t>::max();
+		m_LastDescriptorCacheFrameSerial = std::numeric_limits<uint64_t>::max();
 	}
 
 	void VulkanRendererAPI::SetViewport(uint32_t x, uint32_t y, uint32_t width, uint32_t height)
@@ -513,6 +604,8 @@ namespace Syndra {
 
 	void VulkanRendererAPI::Clear()
 	{
+		Flush();
+
 		VulkanFrameBuffer* boundFramebuffer = VulkanFrameBuffer::GetBoundFrameBuffer();
 		if (boundFramebuffer != nullptr)
 		{
@@ -522,6 +615,7 @@ namespace Syndra {
 
 	void VulkanRendererAPI::DrawIndexed(const Ref<VertexArray>& vertexArray)
 	{
+		SN_PROFILE_SCOPE("VulkanRendererAPI::DrawIndexed");
 		VulkanContext* context = VulkanContext::GetCurrent();
 		if (context == nullptr || vertexArray == nullptr)
 			return;
@@ -573,76 +667,81 @@ namespace Syndra {
 		};
 
 		VkPipeline pipeline = VK_NULL_HANDLE;
-		auto& pipelineCache = GetPipelineCache();
-		auto pipelineIt = pipelineCache.find(pipelineKey);
-		if (pipelineIt != pipelineCache.end())
 		{
-			pipeline = pipelineIt->second;
-		}
-		else
-		{
-			pipeline = CreateGraphicsPipeline(
-				context->GetDevice(),
-				shader,
-				frameBuffer,
-				layout,
-				m_DepthTestEnabled,
-				m_BlendEnabled,
-				m_CullEnabled);
-			if (pipeline == VK_NULL_HANDLE)
-				return;
+			SN_PROFILE_SCOPE("DrawIndexed::PipelineLookupCreate");
+			auto& pipelineCache = GetPipelineCache();
+			auto pipelineIt = pipelineCache.find(pipelineKey);
+			if (pipelineIt != pipelineCache.end())
+			{
+				pipeline = pipelineIt->second;
+			}
+			else
+			{
+				pipeline = CreateGraphicsPipeline(
+					context->GetDevice(),
+					shader,
+					frameBuffer,
+					layout,
+					m_DepthTestEnabled,
+					m_BlendEnabled,
+					m_CullEnabled);
+				if (pipeline == VK_NULL_HANDLE)
+					return;
 
-			pipelineCache.emplace(pipelineKey, pipeline);
+				pipelineCache.emplace(pipelineKey, pipeline);
+			}
 		}
 
 		std::vector<VkDescriptorSet> descriptorSets;
 		const auto& descriptorSetLayouts = shader->GetDescriptorSetLayouts();
 		const auto& reflectedBindings = shader->GetReflectedBindings();
+		const VkCommandBuffer activeFrameCommandBuffer = context->GetActiveFrameCommandBuffer();
+		const bool useFrameCommandBuffer = (activeFrameCommandBuffer != VK_NULL_HANDLE);
+		const uint32_t frameIndex = context->GetCurrentFrameIndex();
+		const uint64_t frameSerial = context->GetFrameNumber();
+
+		if (useFrameCommandBuffer && frameSerial != m_LastDescriptorPoolFrameSerial)
+		{
+			if (frameIndex >= context->GetFramesInFlight())
+				return;
+			if (m_TransientDescriptorPools.size() < context->GetFramesInFlight())
+				m_TransientDescriptorPools.resize(context->GetFramesInFlight());
+
+			m_TransientDescriptorPools[frameIndex].NeedsReset = true;
+			m_LastDescriptorPoolFrameSerial = frameSerial;
+		}
+
+		if (useFrameCommandBuffer && frameSerial != m_LastDescriptorCacheFrameSerial)
+		{
+			if (frameIndex >= context->GetFramesInFlight())
+				return;
+			if (m_DescriptorSetCache.size() < context->GetFramesInFlight())
+				m_DescriptorSetCache.resize(context->GetFramesInFlight());
+
+			m_DescriptorSetCache[frameIndex].clear();
+			m_LastDescriptorCacheFrameSerial = frameSerial;
+		}
 
 		if (!descriptorSetLayouts.empty())
 		{
+			SN_PROFILE_SCOPE("DrawIndexed::DescriptorSets");
 			std::unordered_map<VkDescriptorType, uint32_t> descriptorTypeCounts;
+			descriptorTypeCounts.reserve(reflectedBindings.size());
 			for (const auto& reflectedBinding : reflectedBindings)
 				descriptorTypeCounts[reflectedBinding.Type] += reflectedBinding.DescriptorCount;
 
-			if (!EnsureTransientDescriptorPool(
-				context,
-				static_cast<uint32_t>(descriptorSetLayouts.size()),
-				descriptorTypeCounts))
-				return;
-
-			VkDescriptorSetAllocateInfo allocInfo{};
-			allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-			allocInfo.descriptorPool = m_TransientDescriptorPool;
-			allocInfo.descriptorSetCount = static_cast<uint32_t>(descriptorSetLayouts.size());
-			allocInfo.pSetLayouts = descriptorSetLayouts.data();
-
-			descriptorSets.resize(descriptorSetLayouts.size(), VK_NULL_HANDLE);
-			if (vkAllocateDescriptorSets(context->GetDevice(), &allocInfo, descriptorSets.data()) != VK_SUCCESS)
-				return;
-
-			size_t uniformBufferBindingCount = 0;
-			size_t combinedImageBindingCount = 0;
-			for (const auto& reflectedBinding : reflectedBindings)
-			{
-				if (reflectedBinding.Type == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER)
-					++uniformBufferBindingCount;
-				if (reflectedBinding.Type == VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER)
-					++combinedImageBindingCount;
-			}
-
-			std::vector<VkDescriptorBufferInfo> bufferInfos;
-			std::vector<VkDescriptorImageInfo> imageInfos;
-			std::vector<VkWriteDescriptorSet> writes;
-			bufferInfos.reserve(uniformBufferBindingCount);
-			imageInfos.reserve(combinedImageBindingCount);
-			writes.reserve(reflectedBindings.size());
-
 			auto fallbackUniform = std::dynamic_pointer_cast<VulkanUniformBuffer>(m_FallbackUniformBuffer);
+			std::vector<DescriptorBindingEntry> descriptorBindings;
+			descriptorBindings.reserve(reflectedBindings.size());
 			for (const auto& reflectedBinding : reflectedBindings)
 			{
-				if (reflectedBinding.Set >= descriptorSets.size())
+				if (reflectedBinding.Set >= descriptorSetLayouts.size())
 					continue;
+
+				DescriptorBindingEntry descriptorBinding{};
+				descriptorBinding.Set = reflectedBinding.Set;
+				descriptorBinding.Binding = reflectedBinding.Binding;
+				descriptorBinding.Type = reflectedBinding.Type;
 
 				if (reflectedBinding.Type == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER)
 				{
@@ -652,19 +751,10 @@ namespace Syndra {
 					if (uniformBuffer == nullptr)
 						continue;
 
-					VkDescriptorBufferInfo& bufferInfo = bufferInfos.emplace_back();
-					bufferInfo.buffer = uniformBuffer->GetBuffer();
-					bufferInfo.offset = 0;
-					bufferInfo.range = uniformBuffer->GetSize();
-
-					VkWriteDescriptorSet& write = writes.emplace_back();
-					write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-					write.dstSet = descriptorSets[reflectedBinding.Set];
-					write.dstBinding = reflectedBinding.Binding;
-					write.dstArrayElement = 0;
-					write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-					write.descriptorCount = 1;
-					write.pBufferInfo = &bufferInfo;
+					descriptorBinding.Buffer = uniformBuffer->GetBuffer();
+					descriptorBinding.BufferOffset = 0;
+					descriptorBinding.BufferRange = uniformBuffer->GetSize();
+					descriptorBindings.push_back(descriptorBinding);
 					continue;
 				}
 
@@ -684,76 +774,157 @@ namespace Syndra {
 					if (textureInfo.Sampler == VK_NULL_HANDLE || textureInfo.ImageView == VK_NULL_HANDLE)
 						continue;
 
-					VkDescriptorImageInfo& imageInfo = imageInfos.emplace_back();
-					imageInfo.sampler = textureInfo.Sampler;
-					imageInfo.imageView = textureInfo.ImageView;
-					imageInfo.imageLayout = (textureInfo.ImageLayout != VK_IMAGE_LAYOUT_UNDEFINED)
+					descriptorBinding.Sampler = textureInfo.Sampler;
+					descriptorBinding.ImageView = textureInfo.ImageView;
+					descriptorBinding.ImageLayout = (textureInfo.ImageLayout != VK_IMAGE_LAYOUT_UNDEFINED)
 						? textureInfo.ImageLayout
 						: VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-
-					VkWriteDescriptorSet& write = writes.emplace_back();
-					write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-					write.dstSet = descriptorSets[reflectedBinding.Set];
-					write.dstBinding = reflectedBinding.Binding;
-					write.dstArrayElement = 0;
-					write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-					write.descriptorCount = 1;
-					write.pImageInfo = &imageInfo;
+					descriptorBindings.push_back(descriptorBinding);
 				}
 			}
 
-			if (!writes.empty())
+			auto allocateAndWriteDescriptorSets = [&](bool forcePoolReset) -> bool
 			{
-				vkUpdateDescriptorSets(
-					context->GetDevice(),
-					static_cast<uint32_t>(writes.size()),
-					writes.data(),
-					0,
-					nullptr);
+				if (!EnsureTransientDescriptorPool(
+					context,
+					frameIndex,
+					static_cast<uint32_t>(descriptorSetLayouts.size()),
+					descriptorTypeCounts,
+					forcePoolReset))
+					return false;
+
+				VkDescriptorSetAllocateInfo allocInfo{};
+				allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+				allocInfo.descriptorPool = m_TransientDescriptorPools[frameIndex].Pool;
+				allocInfo.descriptorSetCount = static_cast<uint32_t>(descriptorSetLayouts.size());
+				allocInfo.pSetLayouts = descriptorSetLayouts.data();
+
+				descriptorSets.resize(descriptorSetLayouts.size(), VK_NULL_HANDLE);
+				if (vkAllocateDescriptorSets(context->GetDevice(), &allocInfo, descriptorSets.data()) != VK_SUCCESS)
+					return false;
+
+				std::vector<VkDescriptorBufferInfo> bufferInfos;
+				std::vector<VkDescriptorImageInfo> imageInfos;
+				std::vector<VkWriteDescriptorSet> writes;
+				bufferInfos.reserve(descriptorBindings.size());
+				imageInfos.reserve(descriptorBindings.size());
+				writes.reserve(descriptorBindings.size());
+
+				for (const auto& descriptorBinding : descriptorBindings)
+				{
+					if (descriptorBinding.Set >= descriptorSets.size())
+						continue;
+
+					if (descriptorBinding.Type == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER)
+					{
+						VkDescriptorBufferInfo& bufferInfo = bufferInfos.emplace_back();
+						bufferInfo.buffer = descriptorBinding.Buffer;
+						bufferInfo.offset = descriptorBinding.BufferOffset;
+						bufferInfo.range = descriptorBinding.BufferRange;
+
+						VkWriteDescriptorSet& write = writes.emplace_back();
+						write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+						write.dstSet = descriptorSets[descriptorBinding.Set];
+						write.dstBinding = descriptorBinding.Binding;
+						write.dstArrayElement = 0;
+						write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+						write.descriptorCount = 1;
+						write.pBufferInfo = &bufferInfo;
+						continue;
+					}
+
+					if (descriptorBinding.Type == VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER)
+					{
+						VkDescriptorImageInfo& imageInfo = imageInfos.emplace_back();
+						imageInfo.sampler = descriptorBinding.Sampler;
+						imageInfo.imageView = descriptorBinding.ImageView;
+						imageInfo.imageLayout = descriptorBinding.ImageLayout;
+
+						VkWriteDescriptorSet& write = writes.emplace_back();
+						write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+						write.dstSet = descriptorSets[descriptorBinding.Set];
+						write.dstBinding = descriptorBinding.Binding;
+						write.dstArrayElement = 0;
+						write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+						write.descriptorCount = 1;
+						write.pImageInfo = &imageInfo;
+					}
+				}
+
+				if (!writes.empty())
+				{
+					vkUpdateDescriptorSets(
+						context->GetDevice(),
+						static_cast<uint32_t>(writes.size()),
+						writes.data(),
+						0,
+						nullptr);
+				}
+
+				return true;
+			};
+
+			if (useFrameCommandBuffer)
+			{
+				if (frameIndex >= context->GetFramesInFlight())
+					return;
+				if (m_DescriptorSetCache.size() < context->GetFramesInFlight())
+					m_DescriptorSetCache.resize(context->GetFramesInFlight());
+
+				DescriptorSetCacheKey cacheKey{};
+				cacheKey.Shader = shader;
+				cacheKey.PipelineLayout = shader->GetPipelineLayout();
+				cacheKey.Bindings = descriptorBindings;
+
+				auto& frameCache = m_DescriptorSetCache[frameIndex];
+				auto cacheIt = frameCache.find(cacheKey);
+				if (cacheIt != frameCache.end())
+				{
+					descriptorSets = cacheIt->second;
+				}
+				else
+				{
+					if (!allocateAndWriteDescriptorSets(false))
+						return;
+
+					frameCache.emplace(std::move(cacheKey), descriptorSets);
+				}
+			}
+			else
+			{
+				if (!allocateAndWriteDescriptorSets(true))
+					return;
 			}
 		}
 
-		const VkCommandBuffer commandBuffer = context->BeginSingleTimeCommands();
-		frameBuffer->PrepareForRendering(commandBuffer);
+		VkCommandBuffer commandBuffer = activeFrameCommandBuffer;
+		const bool ownsCommandBuffer = (commandBuffer == VK_NULL_HANDLE);
+		if (ownsCommandBuffer && m_ActiveRenderingCommandBuffer != VK_NULL_HANDLE)
+			Flush();
 
-		std::vector<VkRenderingAttachmentInfo> colorAttachments;
-		colorAttachments.resize(frameBuffer->GetColorAttachmentCount());
-		for (uint32_t i = 0; i < frameBuffer->GetColorAttachmentCount(); ++i)
+		if (ownsCommandBuffer)
+			commandBuffer = context->BeginSingleTimeCommands();
+		else if (m_ActiveRenderingCommandBuffer != VK_NULL_HANDLE &&
+			(m_ActiveRenderingCommandBuffer != commandBuffer || m_ActiveRenderingFrameBuffer != frameBuffer))
 		{
-			VkRenderingAttachmentInfo& colorAttachment = colorAttachments[i];
-			colorAttachment.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
-			colorAttachment.imageView = frameBuffer->GetColorAttachmentImageView(i);
-			colorAttachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-			colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
-			colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+			Flush();
 		}
 
-		VkRenderingAttachmentInfo depthAttachment{};
-		VkRenderingAttachmentInfo* depthAttachmentPtr = nullptr;
-		if (frameBuffer->HasDepthImage())
 		{
-			depthAttachment.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
-			depthAttachment.imageView = frameBuffer->GetDepthAttachmentImageView();
-			depthAttachment.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-			depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
-			depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-			depthAttachmentPtr = &depthAttachment;
-		}
+			SN_PROFILE_SCOPE("DrawIndexed::RecordCommands");
+			if (ownsCommandBuffer)
+			{
+				frameBuffer->PrepareForRendering(commandBuffer);
+				BeginDynamicRendering(commandBuffer, frameBuffer);
+			}
+			else if (m_ActiveRenderingCommandBuffer == VK_NULL_HANDLE)
+			{
+				frameBuffer->PrepareForRendering(commandBuffer);
+				BeginDynamicRendering(commandBuffer, frameBuffer);
+				m_ActiveRenderingCommandBuffer = commandBuffer;
+				m_ActiveRenderingFrameBuffer = frameBuffer;
+			}
 
-		VkRect2D renderArea{};
-		renderArea.offset = { 0, 0 };
-		renderArea.extent.width = frameBuffer->GetSpecification().Width;
-		renderArea.extent.height = frameBuffer->GetSpecification().Height;
-
-		VkRenderingInfo renderingInfo{};
-		renderingInfo.sType = VK_STRUCTURE_TYPE_RENDERING_INFO;
-		renderingInfo.renderArea = renderArea;
-		renderingInfo.layerCount = 1;
-		renderingInfo.colorAttachmentCount = static_cast<uint32_t>(colorAttachments.size());
-		renderingInfo.pColorAttachments = colorAttachments.empty() ? nullptr : colorAttachments.data();
-		renderingInfo.pDepthAttachment = depthAttachmentPtr;
-
-		vkCmdBeginRendering(commandBuffer, &renderingInfo);
 		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 
 		VkViewport viewport{};
@@ -812,11 +983,15 @@ namespace Syndra {
 				pushConstantData.data() + range.offset);
 		}
 
-		vkCmdDrawIndexed(commandBuffer, vkIndexBuffer->GetCount(), 1, 0, 0, 0);
-		vkCmdEndRendering(commandBuffer);
-
-		frameBuffer->FinalizeAfterRendering(commandBuffer);
-		context->EndSingleTimeCommands(commandBuffer);
+			vkCmdDrawIndexed(commandBuffer, vkIndexBuffer->GetCount(), 1, 0, 0, 0);
+			if (ownsCommandBuffer)
+			{
+				vkCmdEndRendering(commandBuffer);
+				frameBuffer->FinalizeAfterRendering(commandBuffer);
+			}
+		}
+		if (ownsCommandBuffer)
+			context->EndSingleTimeCommands(commandBuffer);
 
 	}
 
@@ -837,6 +1012,28 @@ namespace Syndra {
 			m_SRGBEnabled = on;
 			break;
 		}
+	}
+
+	void VulkanRendererAPI::Flush()
+	{
+		if (m_ActiveRenderingCommandBuffer == VK_NULL_HANDLE || m_ActiveRenderingFrameBuffer == nullptr)
+			return;
+
+		SN_PROFILE_SCOPE("VulkanRendererAPI::Flush");
+		vkCmdEndRendering(m_ActiveRenderingCommandBuffer);
+		m_ActiveRenderingFrameBuffer->FinalizeAfterRendering(m_ActiveRenderingCommandBuffer);
+		m_ActiveRenderingCommandBuffer = VK_NULL_HANDLE;
+		m_ActiveRenderingFrameBuffer = nullptr;
+	}
+
+	void VulkanRendererAPI::WaitForIdle()
+	{
+		Flush();
+		VulkanContext* context = VulkanContext::GetCurrent();
+		if (context == nullptr || context->GetDevice() == VK_NULL_HANDLE)
+			return;
+
+		vkDeviceWaitIdle(context->GetDevice());
 	}
 
 	std::string VulkanRendererAPI::GetRendererInfo()

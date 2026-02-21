@@ -2,6 +2,7 @@
 
 #include "Platform/Vulkan/VulkanContext.h"
 
+#include "Engine/Core/Instrument.h"
 #include "GLFW/glfw3.h"
 #include "vk_mem_alloc.h"
 
@@ -181,6 +182,7 @@ namespace Syndra {
 
 	void VulkanContext::BeginFrame()
 	{
+		SN_PROFILE_SCOPE("VulkanContext::BeginFrame");
 		if (!m_Initialized)
 			return;
 
@@ -200,15 +202,22 @@ namespace Syndra {
 		if (static_cast<uint32_t>(width) != m_SwapchainExtent.width || static_cast<uint32_t>(height) != m_SwapchainExtent.height)
 			m_FramebufferResized = true;
 
-		ValidateVulkanResult(vkWaitForFences(m_Device, 1, &m_InFlightFences[m_CurrentFrame], VK_TRUE, UINT64_MAX), "vkWaitForFences");
+		{
+			SN_PROFILE_SCOPE("vkWaitForFences(frame)");
+			ValidateVulkanResult(vkWaitForFences(m_Device, 1, &m_InFlightFences[m_CurrentFrame], VK_TRUE, UINT64_MAX), "vkWaitForFences");
+		}
 
-		VkResult acquireResult = vkAcquireNextImageKHR(
-			m_Device,
-			m_Swapchain,
-			UINT64_MAX,
-			m_ImageAvailableSemaphores[m_CurrentFrame],
-			VK_NULL_HANDLE,
-			&m_AcquiredImageIndex);
+		VkResult acquireResult = VK_SUCCESS;
+		{
+			SN_PROFILE_SCOPE("vkAcquireNextImageKHR");
+			acquireResult = vkAcquireNextImageKHR(
+				m_Device,
+				m_Swapchain,
+				UINT64_MAX,
+				m_ImageAvailableSemaphores[m_CurrentFrame],
+				VK_NULL_HANDLE,
+				&m_AcquiredImageIndex);
+		}
 
 		if (acquireResult == VK_ERROR_OUT_OF_DATE_KHR)
 		{
@@ -223,22 +232,42 @@ namespace Syndra {
 
 		if (m_ImagesInFlight[m_AcquiredImageIndex] != VK_NULL_HANDLE)
 		{
+			SN_PROFILE_SCOPE("vkWaitForFences(image)");
 			ValidateVulkanResult(vkWaitForFences(m_Device, 1, &m_ImagesInFlight[m_AcquiredImageIndex], VK_TRUE, UINT64_MAX), "vkWaitForFences(image)");
 		}
 
 		m_ImagesInFlight[m_AcquiredImageIndex] = m_InFlightFences[m_CurrentFrame];
-		ValidateVulkanResult(vkResetFences(m_Device, 1, &m_InFlightFences[m_CurrentFrame]), "vkResetFences");
-		ValidateVulkanResult(vkResetCommandBuffer(m_CommandBuffers[m_CurrentFrame], 0), "vkResetCommandBuffer");
+		{
+			SN_PROFILE_SCOPE("vkResetFences");
+			ValidateVulkanResult(vkResetFences(m_Device, 1, &m_InFlightFences[m_CurrentFrame]), "vkResetFences");
+		}
+		{
+			SN_PROFILE_SCOPE("vkResetCommandBuffer");
+			ValidateVulkanResult(vkResetCommandBuffer(m_CommandBuffers[m_CurrentFrame], 0), "vkResetCommandBuffer");
+		}
+
+		VkCommandBufferBeginInfo beginInfo{};
+		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+		beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+		{
+			SN_PROFILE_SCOPE("vkBeginCommandBuffer(frame)");
+			ValidateVulkanResult(vkBeginCommandBuffer(m_CommandBuffers[m_CurrentFrame], &beginInfo), "vkBeginCommandBuffer(frame)");
+		}
 
 		m_FrameInProgress = true;
+		++m_FrameNumber;
 	}
 
 	void VulkanContext::EndFrame()
 	{
+		SN_PROFILE_SCOPE("VulkanContext::EndFrame");
 		if (!m_Initialized || !m_FrameInProgress)
 			return;
 
-		RecordCommandBuffer(m_CommandBuffers[m_CurrentFrame], m_AcquiredImageIndex);
+		{
+			SN_PROFILE_SCOPE("RecordCommandBuffer");
+			RecordCommandBuffer(m_CommandBuffers[m_CurrentFrame], m_AcquiredImageIndex);
+		}
 
 		VkCommandBufferSubmitInfo commandBufferInfo{};
 		commandBufferInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO;
@@ -265,7 +294,10 @@ namespace Syndra {
 		submitInfo.signalSemaphoreInfoCount = 1;
 		submitInfo.pSignalSemaphoreInfos = &signalSemaphoreInfo;
 
-		ValidateVulkanResult(vkQueueSubmit2(m_GraphicsQueue, 1, &submitInfo, m_InFlightFences[m_CurrentFrame]), "vkQueueSubmit2");
+		{
+			SN_PROFILE_SCOPE("vkQueueSubmit2(frame)");
+			ValidateVulkanResult(vkQueueSubmit2(m_GraphicsQueue, 1, &submitInfo, m_InFlightFences[m_CurrentFrame]), "vkQueueSubmit2");
+		}
 
 		VkPresentInfoKHR presentInfo{};
 		presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
@@ -275,7 +307,11 @@ namespace Syndra {
 		presentInfo.pSwapchains = &m_Swapchain;
 		presentInfo.pImageIndices = &m_AcquiredImageIndex;
 
-		const VkResult presentResult = vkQueuePresentKHR(m_PresentQueue, &presentInfo);
+		VkResult presentResult = VK_SUCCESS;
+		{
+			SN_PROFILE_SCOPE("vkQueuePresentKHR");
+			presentResult = vkQueuePresentKHR(m_PresentQueue, &presentInfo);
+		}
 		if (presentResult == VK_ERROR_OUT_OF_DATE_KHR || presentResult == VK_SUBOPTIMAL_KHR || m_FramebufferResized)
 		{
 			if (!glfwWindowShouldClose(m_WindowHandle))
@@ -704,10 +740,7 @@ namespace Syndra {
 
 	void VulkanContext::RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex)
 	{
-		VkCommandBufferBeginInfo beginInfo{};
-		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-		ValidateVulkanResult(vkBeginCommandBuffer(commandBuffer, &beginInfo), "vkBeginCommandBuffer");
-
+		SN_PROFILE_SCOPE("VulkanContext::RecordCommandBuffer");
 		const VkImageLayout oldLayout = m_SwapchainImageLayouts[imageIndex];
 		TransitionSwapchainImage(commandBuffer, m_SwapchainImages[imageIndex], oldLayout, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 
@@ -737,7 +770,7 @@ namespace Syndra {
 		TransitionSwapchainImage(commandBuffer, m_SwapchainImages[imageIndex], VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
 		m_SwapchainImageLayouts[imageIndex] = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
-		ValidateVulkanResult(vkEndCommandBuffer(commandBuffer), "vkEndCommandBuffer");
+		ValidateVulkanResult(vkEndCommandBuffer(commandBuffer), "vkEndCommandBuffer(frame)");
 	}
 
 	void VulkanContext::TransitionSwapchainImage(VkCommandBuffer commandBuffer, VkImage image, VkImageLayout oldLayout, VkImageLayout newLayout)

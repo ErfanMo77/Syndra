@@ -21,6 +21,20 @@ namespace Syndra {
 		std::string path;
 	};
 
+	struct MeshMaterialData
+	{
+		bool IsPBR = false;
+		glm::vec4 BaseColorFactor = glm::vec4(1.0f);
+		float MetallicFactor = 1.0f;
+		float RoughnessFactor = 1.0f;
+		float AOFactor = 1.0f;
+		uint32_t AlbedoTextureID = 0;
+		uint32_t MetallicTextureID = 0;
+		uint32_t NormalTextureID = 0;
+		uint32_t RoughnessTextureID = 0;
+		uint32_t AOTextureID = 0;
+	};
+
 	class Mesh
 	{
 	public:
@@ -28,17 +42,28 @@ namespace Syndra {
 		std::vector<Vertex> vertices;
 		std::vector<unsigned int> indices;
 		std::vector<texture> textures;
+		MeshMaterialData materialData;
 		
-		Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<texture> textures);
+		Mesh(
+			std::vector<Vertex> vertices,
+			std::vector<unsigned int> indices,
+			std::vector<texture> textures,
+			const MeshMaterialData& materialData = MeshMaterialData{});
 		~Mesh() = default;
 
 		Ref<VertexArray> GetVertexArray() const  { return m_VertexArray; }
+		const MeshMaterialData& GetMaterialData() const { return materialData; }
+		const glm::vec3& GetBoundsMin() const { return m_BoundsMin; }
+		const glm::vec3& GetBoundsMax() const { return m_BoundsMax; }
+		bool HasBounds() const { return !vertices.empty(); }
 		void BindVertexArray() const { m_VertexArray->Bind(); }
 
 	private:
 		Ref<VertexArray> m_VertexArray;
 		Ref<VertexBuffer> m_VertexBuffer;
 		Ref<IndexBuffer> m_IndexBuffer;
+		glm::vec3 m_BoundsMin = glm::vec3(0.0f);
+		glm::vec3 m_BoundsMax = glm::vec3(0.0f);
 		void setupMesh();
 	};
 

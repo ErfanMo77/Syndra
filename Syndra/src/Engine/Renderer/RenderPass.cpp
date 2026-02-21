@@ -1,5 +1,6 @@
 #include "lpch.h"
 #include "Engine/Renderer/RenderPass.h"
+#include "Engine/Renderer/RenderCommand.h"
 
 namespace Syndra {
 
@@ -14,11 +15,13 @@ namespace Syndra {
 
 	void RenderPass::BindTargetFrameBuffer()
 	{
+		RenderCommand::Flush();
 		m_Specification.TargetFrameBuffer->Bind();
 	}
 
 	void RenderPass::UnbindTargetFrameBuffer()
 	{
+		RenderCommand::Flush();
 		m_Specification.TargetFrameBuffer->Unbind();
 	}
 

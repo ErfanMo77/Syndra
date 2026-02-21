@@ -1,6 +1,7 @@
 #include "lpch.h"
 #include "MeshPanel.h"
 #include "Engine/Utils/PlatformUtils.h"
+#include "Engine/Scene/Entity.h"
 
 namespace Syndra {
 
@@ -38,8 +39,43 @@ namespace Syndra {
 					else {
 						filePath = *path;
 					}
-					tag = filePath;
-					entity.GetComponent<MeshComponent>().model = Model(*path);
+
+					Model loadedModel(*path);
+					auto& meshComponent = entity.GetComponent<MeshComponent>();
+					Scene* scene = Entity::s_Scene;
+
+					// Import multi-mesh models as a hierarchy of child entities instead of a single flattened mesh owner.
+					if (scene && loadedModel.meshes.size() > 1)
+					{
+						std::string baseName = entity.GetComponent<TagComponent>().Tag;
+						if (entity.HasComponent<RelationshipComponent>())
+						{
+							auto children = entity.GetComponent<RelationshipComponent>().Children;
+							for (entt::entity child : children)
+								scene->DestroyEntity(Entity{ child });
+						}
+
+						meshComponent.path.clear();
+						meshComponent.model = Model{};
+						if (entity.HasComponent<MaterialComponent>())
+							entity.RemoveComponent<MaterialComponent>();
+
+						for (size_t meshIndex = 0; meshIndex < loadedModel.meshes.size(); ++meshIndex)
+						{
+							auto child = scene->CreateEntity(baseName + "_Part" + std::to_string(meshIndex));
+							auto& childMesh = child->AddComponent<MeshComponent>();
+							childMesh.path = filePath;
+							childMesh.model = Model{};
+							childMesh.model.meshes.push_back(loadedModel.meshes[meshIndex]);
+							childMesh.model.syndraTextures = loadedModel.syndraTextures;
+							scene->SetParent(*child, entity);
+						}
+					}
+					else
+					{
+						tag = filePath;
+						meshComponent.model = std::move(loadedModel);
+					}
 				}
 			}
 			ImGui::PopStyleVar();

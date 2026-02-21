@@ -150,11 +150,11 @@ namespace Syndra {
 			RenderCommand::Clear();
 			for (auto ent : view)
 			{
-				auto& tc = view.get<TransformComponent>(ent);
 				auto& mc = view.get<MeshComponent>(ent);
 				if (!mc.path.empty())
 				{
-					r_Data.depthShader->SetMat4("transform.u_trans", tc.GetTransform());
+					const glm::mat4 worldTransform = r_Data.scene->GetWorldTransform(Entity{ ent });
+					r_Data.depthShader->SetMat4("transform.u_trans", worldTransform);
 					Renderer::Submit(r_Data.depthShader, mc.model);
 				}
 			}
@@ -170,11 +170,11 @@ namespace Syndra {
 			RenderCommand::Clear();
 			for (auto ent : view)
 			{
-				auto& tc = view.get<TransformComponent>(ent);
 				auto& mc = view.get<MeshComponent>(ent);
 				if (!mc.path.empty())
 				{
-					r_Data.shadowDepthShader->SetMat4("transform.u_trans", tc.GetTransform());
+					const glm::mat4 worldTransform = r_Data.scene->GetWorldTransform(Entity{ ent });
+					r_Data.shadowDepthShader->SetMat4("transform.u_trans", worldTransform);
 					Renderer::Submit(r_Data.shadowDepthShader, mc.model);
 				}
 			}
@@ -229,14 +229,14 @@ namespace Syndra {
 			r_Data.forwardLightingShader->Bind();
 			for (auto ent : view)
 			{
-				auto& tc = view.get<TransformComponent>(ent);
 				auto& mc = view.get<MeshComponent>(ent);
 				if (!mc.path.empty())
 				{
+					const glm::mat4 worldTransform = r_Data.scene->GetWorldTransform(Entity{ ent });
 					if (r_Data.scene->m_Registry.has<MaterialComponent>(ent)) {
 						auto& mat = r_Data.scene->m_Registry.get<MaterialComponent>(ent);
 						r_Data.forwardLightingShader->SetInt("transform.id", (uint32_t)ent);
-						r_Data.forwardLightingShader->SetMat4("transform.u_trans", tc.GetTransform());
+						r_Data.forwardLightingShader->SetMat4("transform.u_trans", worldTransform);
 						Renderer::Submit(mat.m_Material, mc.model);
 					}
 					else
@@ -250,7 +250,7 @@ namespace Syndra {
 						r_Data.forwardLightingShader->SetFloat("push.material.MetallicFactor", 0);
 						r_Data.forwardLightingShader->SetFloat("push.material.RoughnessFactor", 1);
 						r_Data.forwardLightingShader->SetFloat("push.material.AO", 1);
-						r_Data.forwardLightingShader->SetMat4("transform.u_trans", tc.GetTransform());
+						r_Data.forwardLightingShader->SetMat4("transform.u_trans", worldTransform);
 						r_Data.forwardLightingShader->SetInt("transform.id", (uint32_t)ent);
 						Renderer::Submit(r_Data.forwardLightingShader, mc.model);
 					}
@@ -339,14 +339,14 @@ namespace Syndra {
 
 		for (auto ent : viewLights)
 		{
-			auto& tc = viewLights.get<TransformComponent>(ent);
 			auto& lc = viewLights.get<LightComponent>(ent);
+			const glm::vec3 worldTranslation = r_Data.scene->GetWorldTranslation(Entity{ ent });
 
 			if (lc.type == LightType::Directional) {
 				auto p = dynamic_cast<DirectionalLight*>(lc.light.get());
 				r_Data.dirLight.color = glm::vec4(p->GetColor(), 0) * p->GetIntensity();
 				r_Data.dirLight.direction = glm::vec4(p->GetDirection(), 0);
-				r_Data.dirLight.position = glm::vec4(tc.Translation, 0);
+				r_Data.dirLight.position = glm::vec4(worldTranslation, 0);
 				//shadow
 				r_Data.lightView = glm::lookAt(-(glm::normalize(p->GetDirection()) * r_Data.lightFar / 4.0f), glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 				r_Data.shadowData.lightViewProj = r_Data.lightProj * r_Data.lightView;
@@ -360,7 +360,7 @@ namespace Syndra {
 
 					pointLight& light = r_Data.pLights.lights[pIndex];
 					light.color = glm::vec4(p->GetColor(), 1) * p->GetIntensity();
-					light.position = glm::vec4(tc.Translation, 1);
+					light.position = glm::vec4(worldTranslation, 1);
 					light.paddingAndRadius = glm::vec4(glm::vec3(0), p->GetRange());
 
 					pIndex++;

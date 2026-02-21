@@ -7,6 +7,7 @@
 #include "Engine/Renderer/Model.h"
 #include <glm/gtc/type_ptr.hpp>
 
+#include <algorithm>
 #include <cstring>
 
 namespace Syndra {
@@ -15,7 +16,6 @@ namespace Syndra {
 	{
 		SetContext(scene);
 		m_Shaders = scene->GetShaderLibrary();
-		int index = 0;
 		for (auto&& [name, shader] : m_Shaders.GetShaders())
 		{
 			m_ShaderNames.push_back(name);
@@ -49,15 +49,33 @@ namespace Syndra {
 		if (*sceneHierarchyOpen) {
 			ImGui::Begin(ICON_FA_LIST_UL " Scene Hierarchy", sceneHierarchyOpen);
 
-			for (auto ent : m_Context->m_Entities)
+			std::vector<Entity> rootEntities;
+			rootEntities.reserve(m_Context->m_Entities.size());
+			for (auto& ent : m_Context->m_Entities)
 			{
-				if (ent) {
-					DrawEntity(ent);
-				}
+				if (!ent)
+					continue;
+
+				Entity entity = *ent;
+				if (m_Context->GetParent(entity))
+					continue;
+
+				rootEntities.push_back(entity);
 			}
 
-			if (m_EntityCreated) {
-				m_Context->CreateEntity(m_SelectionContext);
+			for (Entity rootEntity : rootEntities)
+			{
+				if (!rootEntity || !m_Context->m_Registry.valid(rootEntity))
+					continue;
+				DrawEntity(rootEntity);
+			}
+
+			if (m_EntityCreated && m_SelectionContext) {
+				auto duplicated = m_Context->CreateEntity(m_SelectionContext);
+				Entity parent = m_Context->GetParent(m_SelectionContext);
+				if (parent)
+					m_Context->SetParent(*duplicated, parent);
+				m_SelectionContext = *duplicated;
 				m_EntityCreated = false;
 			}
 
@@ -99,6 +117,7 @@ namespace Syndra {
 
 			ImGui::End();
 		}
+
 		//-------------------------------------------Properties--------------------------------------//
 		if (*propertiesOpen) {
 			ImGui::Begin(ICON_FA_SLIDERS_H " Properties", propertiesOpen);
@@ -121,23 +140,32 @@ namespace Syndra {
 		m_EntityCreated = true;
 	}
 
-	void ScenePanel::DrawEntity(Ref<Entity>& entity)
+	void ScenePanel::DrawEntity(Entity entity)
 	{
-		auto& tag = entity->GetComponent<TagComponent>();
-		ImGuiTreeNodeFlags flags = ((m_SelectionContext == *entity) ? ImGuiTreeNodeFlags_Selected : 0) | ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_FramePadding;
+		auto& tag = entity.GetComponent<TagComponent>();
+		const auto& relationship = entity.GetComponent<RelationshipComponent>();
+		const bool hasChildren = std::any_of(relationship.Children.begin(), relationship.Children.end(),
+			[&](entt::entity child)
+			{
+				return child != entt::null && m_Context->FindEntity(static_cast<uint32_t>(child));
+			});
+
+		ImGuiTreeNodeFlags flags = ((m_SelectionContext == entity) ? ImGuiTreeNodeFlags_Selected : 0) | ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_FramePadding;
 		flags |= ImGuiTreeNodeFlags_SpanAvailWidth;
+		if (!hasChildren)
+			flags |= ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen;
 		const char* name="";
-		if (entity->HasComponent<MeshComponent>()) {
+		if (entity.HasComponent<MeshComponent>()) {
 			name = ICON_FA_CUBE;
 		}
-		if (entity->HasComponent<LightComponent>()) {
+		if (entity.HasComponent<LightComponent>()) {
 			name = ICON_FA_LIGHTBULB;
 		}
 		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 0,2 });
-		bool opened = ImGui::TreeNodeEx((void*)(uint64_t)(uint32_t)*entity, flags, (std::string(name) + " " + tag.Tag).c_str());
+		bool opened = ImGui::TreeNodeEx((void*)(uint64_t)(uint32_t)entity, flags, (std::string(name) + " " + tag.Tag).c_str());
 		ImGui::PopStyleVar();
 		if (ImGui::IsItemClicked()) {
-			m_SelectionContext = *entity;
+			m_SelectionContext = entity;
 		}
 
 		bool entityDeleted = false;
@@ -148,13 +176,13 @@ namespace Syndra {
 			}
 
 			if (ImGui::MenuItem(ICON_FA_CLONE"  Duplicate entity")) {
-				m_SelectionContext = *entity;
+				m_SelectionContext = entity;
 				m_EntityCreated = true;
 			}
 
 			ImGui::EndPopup();
 		}
-		if (m_SelectionContext == *entity && Input::IsKeyPressed(Key::Delete)) {
+		if (m_SelectionContext == entity && Input::IsKeyPressed(Key::Delete)) {
 			entityDeleted = true;
 		}
 
@@ -177,15 +205,27 @@ namespace Syndra {
 		//	}
 		//}
 
-		if (opened) {
+		if (opened && hasChildren) {
+			for (entt::entity child : relationship.Children)
+			{
+				if (child == entt::null)
+					continue;
+
+				Entity childEntity = m_Context->FindEntity(static_cast<uint32_t>(child));
+				if (!childEntity)
+					continue;
+
+				DrawEntity(childEntity);
+			}
+
 			ImGui::TreePop();
 		}
 
 		if (entityDeleted)
 		{
-			if (m_SelectionContext == *entity)
+			if (m_SelectionContext == entity)
 				m_SelectionContext = {};
-			m_Context->DestroyEntity(*entity);
+			m_Context->DestroyEntity(entity);
 		}
 
 	}

@@ -172,6 +172,7 @@ target_include_directories(VulkanMemoryAllocatorHeaders INTERFACE
 add_subdirectory(Syndra/vendor/GLFW)
 add_subdirectory(Syndra/vendor/yaml-cpp)
 add_subdirectory(Syndra/vendor/Glad)
+add_subdirectory(Syndra/vendor/fastgltf)
 
 set(SYNDRA_IMGUI_DIR "${SYNDRA_ROOT_DIR}/Syndra/vendor/imgui")
 add_library(imgui STATIC

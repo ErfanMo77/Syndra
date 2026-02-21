@@ -14,6 +14,7 @@
 
 #include <imgui/imgui.h>
 #include <imgui/imgui_internal.h>
+#include <vector>
 
 namespace Syndra {
 
@@ -31,7 +32,7 @@ namespace Syndra {
 
 		void CreateDuplicate();
 	private:
-		void DrawEntity(Ref<Entity>& entity);
+		void DrawEntity(Entity entity);
 		void DrawComponents(Entity& entity);
 
 	private:

@@ -23,7 +23,9 @@ Syndra is my bachelor's thesis project, where I wanted to study how to build 3D 
   * Entity Component System (ECS)
   * Event system
   * Console logging
-  * Model and texture loading (40+ model file formats support using Assimp)
+  * Model and texture loading:
+    * glTF 2.0 (`.gltf`/`.glb`) via **fastgltf**
+    * Additional model formats via Assimp
   * Scene saving and loading using YAML serialization and deserialization
   * Debug visualizer (GBuffer, HDRI map, ...)
   * Immediate mode GUI
@@ -64,7 +66,7 @@ Syndra only supports Windows for now.
 Visual Studio 2019+ is recommended.
 
 Start by cloning the repository with `git clone --recursive https://github.com/ErfanMo77/Syndra`.
-If the repository was cloned non-recursively previously, use `git submodule update --init` to clone the necessary submodules.
+If the repository was cloned non-recursively previously, use `git submodule update --init --recursive` to clone the necessary submodules.
 
 Install Vulkan SDK 1.4+ and make sure the `VULKAN_SDK` environment variable is set (CMake uses it to locate shaderc/spirv libraries).
 
@@ -97,6 +99,15 @@ bin/debug-windows-x86_64/Syndra-Editor/Syndra-Editor.exe --renderer=opengl
 - Vulkan path uses dynamic rendering and synchronization2.
 - Vulkan deferred path includes direct lighting, shadows, optional FXAA, and equirectangular environment IBL.
 
+# glTF Scene Import (fastgltf)
+- Syndra supports glTF 2.0 scene/model loading (`.gltf` and `.glb`) through `fastgltf`.
+- In the editor:
+  - Select (or create) an entity.
+  - Add a `Mesh` component.
+  - Click `Open` in the Mesh panel and choose a `.gltf` or `.glb` file.
+- Multi-mesh glTF files are imported as a parent-child hierarchy (one child entity per mesh).
+- Other non-glTF formats continue to load through Assimp.
+
 # Regression Checklist
 - Build `Syndra-Editor` and `Sandbox` in Debug from a clean state.
 - Run the automated smoke matrix: `powershell -ExecutionPolicy Bypass -File scripts/smoke_renderer_matrix.ps1 -Configuration Debug`
@@ -116,7 +127,8 @@ bin/debug-windows-x86_64/Syndra-Editor/Syndra-Editor.exe --renderer=opengl
 - [ImGuizmo](https://github.com/CedricGuillemet/ImGuizmo) : Editor gizmos.
 - [Entt](https://github.com/skypjack/entt) : Used in Entity Component System (ECS).
 - [GLM](https://github.com/g-truc/glm) : Matrix and vector operations.
-- [Assimp](https://github.com/assimp/assimp) : Loading 3D models with support for more than 40 file formats.
+- [fastgltf](https://github.com/spnda/fastgltf) : glTF 2.0 parser/loader used for `.gltf` and `.glb`.
+- [Assimp](https://github.com/assimp/assimp) : Loading non-glTF 3D model formats.
 - [yaml-cpp](https://github.com/jbeder/yaml-cpp) : Scene serialization and deserialization.
 - [Vulkan SDK](https://www.lunarg.com/vulkan-sdk) : Shader compilation and reflection.
 

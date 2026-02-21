@@ -2,16 +2,38 @@
 
 #include "Engine/Renderer/VulkanDeferredRenderer.h"
 
+#include "Engine/Core/Instrument.h"
 #include "Engine/ImGui/ImGuiLayer.h"
+#include "Engine/Scene/Entity.h"
 #include "Engine/Scene/Scene.h"
 #include "Engine/Utils/PlatformUtils.h"
 #include "imgui.h"
 
+#include <algorithm>
+#include <array>
 #include <filesystem>
 
 namespace Syndra {
 
 	namespace {
+
+		struct FrustumPlane
+		{
+			glm::vec3 Normal = glm::vec3(0.0f);
+			float Distance = 0.0f;
+		};
+
+		using FrustumPlanes = std::array<FrustumPlane, 6>;
+
+		enum FrustumPlaneIndex : size_t
+		{
+			Left = 0,
+			Right,
+			Bottom,
+			Top,
+			Near,
+			Far
+		};
 
 		glm::mat4 ConvertOpenGLClipToVulkanClip(const glm::mat4& matrix)
 		{
@@ -20,6 +42,118 @@ namespace Syndra {
 			clip[2][2] = 0.5f;
 			clip[3][2] = 0.5f;
 			return clip * matrix;
+		}
+
+		FrustumPlane NormalizePlane(const glm::vec4& plane)
+		{
+			FrustumPlane result{};
+			const glm::vec3 normal = glm::vec3(plane);
+			const float length = glm::length(normal);
+			if (length <= 1e-6f)
+				return result;
+
+			result.Normal = normal / length;
+			result.Distance = plane.w / length;
+			return result;
+		}
+
+		FrustumPlanes BuildFrustumPlanes(const glm::mat4& viewProjection)
+		{
+			FrustumPlanes planes{};
+
+			planes[FrustumPlaneIndex::Left] = NormalizePlane(glm::vec4(
+				viewProjection[0][3] + viewProjection[0][0],
+				viewProjection[1][3] + viewProjection[1][0],
+				viewProjection[2][3] + viewProjection[2][0],
+				viewProjection[3][3] + viewProjection[3][0]));
+			planes[FrustumPlaneIndex::Right] = NormalizePlane(glm::vec4(
+				viewProjection[0][3] - viewProjection[0][0],
+				viewProjection[1][3] - viewProjection[1][0],
+				viewProjection[2][3] - viewProjection[2][0],
+				viewProjection[3][3] - viewProjection[3][0]));
+			planes[FrustumPlaneIndex::Bottom] = NormalizePlane(glm::vec4(
+				viewProjection[0][3] + viewProjection[0][1],
+				viewProjection[1][3] + viewProjection[1][1],
+				viewProjection[2][3] + viewProjection[2][1],
+				viewProjection[3][3] + viewProjection[3][1]));
+			planes[FrustumPlaneIndex::Top] = NormalizePlane(glm::vec4(
+				viewProjection[0][3] - viewProjection[0][1],
+				viewProjection[1][3] - viewProjection[1][1],
+				viewProjection[2][3] - viewProjection[2][1],
+				viewProjection[3][3] - viewProjection[3][1]));
+			planes[FrustumPlaneIndex::Near] = NormalizePlane(glm::vec4(
+				viewProjection[0][3] + viewProjection[0][2],
+				viewProjection[1][3] + viewProjection[1][2],
+				viewProjection[2][3] + viewProjection[2][2],
+				viewProjection[3][3] + viewProjection[3][2]));
+			planes[FrustumPlaneIndex::Far] = NormalizePlane(glm::vec4(
+				viewProjection[0][3] - viewProjection[0][2],
+				viewProjection[1][3] - viewProjection[1][2],
+				viewProjection[2][3] - viewProjection[2][2],
+				viewProjection[3][3] - viewProjection[3][2]));
+
+			return planes;
+		}
+
+		bool IsSphereInsideFrustum(const FrustumPlanes& planes, const glm::vec3& center, float radius)
+		{
+			for (const auto& plane : planes)
+			{
+				const float distanceToPlane = glm::dot(plane.Normal, center) + plane.Distance;
+				if (distanceToPlane < -radius)
+					return false;
+			}
+
+			return true;
+		}
+
+		bool ComputeModelBounds(const Model& model, glm::vec3& outMin, glm::vec3& outMax)
+		{
+			bool hasBounds = false;
+			for (const auto& mesh : model.meshes)
+			{
+				if (!mesh.HasBounds())
+					continue;
+
+				if (!hasBounds)
+				{
+					outMin = mesh.GetBoundsMin();
+					outMax = mesh.GetBoundsMax();
+					hasBounds = true;
+					continue;
+				}
+
+				outMin = glm::min(outMin, mesh.GetBoundsMin());
+				outMax = glm::max(outMax, mesh.GetBoundsMax());
+			}
+
+			return hasBounds;
+		}
+
+		float ComputeTransformMaxScale(const glm::mat4& transform)
+		{
+			const glm::vec3 xAxis = glm::vec3(transform[0]);
+			const glm::vec3 yAxis = glm::vec3(transform[1]);
+			const glm::vec3 zAxis = glm::vec3(transform[2]);
+			return std::max({ glm::length(xAxis), glm::length(yAxis), glm::length(zAxis), 1e-4f });
+		}
+
+		bool IsModelVisibleInCameraFrustum(const Model& model, const glm::mat4& worldTransform, const FrustumPlanes& cameraFrustum)
+		{
+			glm::vec3 localMin(0.0f);
+			glm::vec3 localMax(0.0f);
+			if (!ComputeModelBounds(model, localMin, localMax))
+				return true;
+
+			const glm::vec3 localCenter = (localMin + localMax) * 0.5f;
+			const glm::vec3 localExtents = (localMax - localMin) * 0.5f;
+			const float localRadius = glm::length(localExtents);
+			if (localRadius <= 1e-6f)
+				return true;
+
+			const glm::vec3 worldCenter = glm::vec3(worldTransform * glm::vec4(localCenter, 1.0f));
+			const float worldRadius = localRadius * ComputeTransformMaxScale(worldTransform);
+			return IsSphereInsideFrustum(cameraFrustum, worldCenter, worldRadius);
 		}
 
 	}
@@ -150,13 +284,51 @@ namespace Syndra {
 
 	void VulkanDeferredRenderer::Render()
 	{
+		SN_PROFILE_SCOPE("VulkanDeferredRenderer::Render");
 		if (!r_Data.scene || !r_Data.geometryPass)
 			return;
 
 		auto view = r_Data.scene->m_Registry.view<TransformComponent, MeshComponent>();
+		struct RenderItem
+		{
+			entt::entity EntityHandle = entt::null;
+			MeshComponent* Mesh = nullptr;
+			MaterialComponent* Material = nullptr;
+			glm::mat4 WorldTransform = glm::mat4(1.0f);
+		};
+
+		std::vector<RenderItem> visibleItems;
+		visibleItems.reserve(view.size_hint());
+		r_Data.visibleMeshEntityCount = 0;
+		r_Data.culledMeshEntityCount = 0;
+
+		FrustumPlanes cameraFrustum{};
+		if (r_Data.scene->m_Camera)
+			cameraFrustum = BuildFrustumPlanes(r_Data.scene->m_Camera->GetViewProjection());
+
+		for (auto ent : view)
+		{
+			auto& meshComponent = view.get<MeshComponent>(ent);
+			if (meshComponent.path.empty())
+				continue;
+
+			const glm::mat4 worldTransform = r_Data.scene->GetWorldTransform(Entity{ ent });
+			if (r_Data.useFrustumCulling && r_Data.scene->m_Camera &&
+				!IsModelVisibleInCameraFrustum(meshComponent.model, worldTransform, cameraFrustum))
+			{
+				++r_Data.culledMeshEntityCount;
+				continue;
+			}
+
+			MaterialComponent* materialComponent = r_Data.scene->m_Registry.try_get<MaterialComponent>(ent);
+			visibleItems.push_back(RenderItem{ ent, &meshComponent, materialComponent, worldTransform });
+		}
+
+		r_Data.visibleMeshEntityCount = static_cast<uint32_t>(visibleItems.size());
 
 		if (r_Data.useShadows && r_Data.shadowPass && r_Data.shadowShader && r_Data.shadowUniformBuffer)
 		{
+			SN_PROFILE_SCOPE("VulkanDeferredRenderer::ShadowPass");
 			glm::vec3 lightDirection = glm::vec3(r_Data.lightsData.dLight.direction);
 			if (glm::length(lightDirection) < 0.0001f)
 				lightDirection = glm::vec3(-0.6f, -1.0f, -0.35f);
@@ -189,72 +361,65 @@ namespace Syndra {
 			RenderCommand::Clear();
 
 			r_Data.shadowShader->Bind();
-			for (auto ent : view)
+			for (const auto& item : visibleItems)
 			{
-				auto& tc = view.get<TransformComponent>(ent);
-				auto& mc = view.get<MeshComponent>(ent);
-				if (mc.path.empty())
-					continue;
-
-				r_Data.shadowShader->SetMat4("push.u_trans", tc.GetTransform());
-				r_Data.shadowShader->SetInt("push.id", static_cast<uint32_t>(ent));
-				Renderer::Submit(r_Data.shadowShader, mc.model);
+				r_Data.shadowShader->SetMat4("push.u_trans", item.WorldTransform);
+				r_Data.shadowShader->SetInt("push.id", static_cast<uint32_t>(item.EntityHandle));
+				Renderer::Submit(r_Data.shadowShader, item.Mesh->model);
 			}
 			r_Data.shadowShader->Unbind();
 			r_Data.shadowPass->UnbindTargetFrameBuffer();
 		}
 
-		r_Data.geometryPass->BindTargetFrameBuffer();
-		RenderCommand::SetState(RenderState::DEPTH_TEST, true);
-		RenderCommand::SetClearColor(r_Data.geometryPass->GetSpecification().TargetFrameBuffer->GetSpecification().ClearColor);
-		r_Data.geometryPass->GetSpecification().TargetFrameBuffer->ClearAttachment(4, -1);
-		RenderCommand::Clear();
-
-		if (r_Data.geometryShader)
-			r_Data.geometryShader->Bind();
-
-		for (auto ent : view)
 		{
-			auto& tc = view.get<TransformComponent>(ent);
-			auto& mc = view.get<MeshComponent>(ent);
-			if (mc.path.empty())
-				continue;
+			SN_PROFILE_SCOPE("VulkanDeferredRenderer::GeometryPass");
+			r_Data.geometryPass->BindTargetFrameBuffer();
+			RenderCommand::SetState(RenderState::DEPTH_TEST, true);
+			RenderCommand::SetClearColor(r_Data.geometryPass->GetSpecification().TargetFrameBuffer->GetSpecification().ClearColor);
+			r_Data.geometryPass->GetSpecification().TargetFrameBuffer->ClearAttachment(4, -1);
+			RenderCommand::Clear();
 
-			if (r_Data.scene->m_Registry.has<MaterialComponent>(ent))
+			if (r_Data.geometryShader)
+				r_Data.geometryShader->Bind();
+
+			for (const auto& item : visibleItems)
 			{
-				auto& mat = r_Data.scene->m_Registry.get<MaterialComponent>(ent);
-				if (r_Data.geometryShader)
+				if (item.Material)
 				{
-					r_Data.geometryShader->SetInt("transform.id", static_cast<uint32_t>(ent));
-					r_Data.geometryShader->SetMat4("transform.u_trans", tc.GetTransform());
+					if (r_Data.geometryShader)
+					{
+						r_Data.geometryShader->SetInt("transform.id", static_cast<uint32_t>(item.EntityHandle));
+						r_Data.geometryShader->SetMat4("transform.u_trans", item.WorldTransform);
+					}
+					Renderer::Submit(item.Material->m_Material, item.Mesh->model);
 				}
-				Renderer::Submit(mat.m_Material, mc.model);
+				else if (r_Data.geometryShader)
+				{
+					r_Data.geometryShader->SetInt("transform.id", static_cast<uint32_t>(item.EntityHandle));
+					r_Data.geometryShader->SetMat4("transform.u_trans", item.WorldTransform);
+					r_Data.geometryShader->SetFloat4("push.material.color", glm::vec4(0.8f, 0.8f, 0.8f, 1.0f));
+					r_Data.geometryShader->SetFloat("push.material.RoughnessFactor", 0.6f);
+					r_Data.geometryShader->SetFloat("push.material.MetallicFactor", 0.0f);
+					r_Data.geometryShader->SetFloat("push.material.AO", 1.0f);
+					r_Data.geometryShader->SetFloat("push.tiling", 1.0f);
+					r_Data.geometryShader->SetInt("push.HasAlbedoMap", 0);
+					r_Data.geometryShader->SetInt("push.HasNormalMap", 0);
+					r_Data.geometryShader->SetInt("push.HasRoughnessMap", 0);
+					r_Data.geometryShader->SetInt("push.HasMetallicMap", 0);
+					r_Data.geometryShader->SetInt("push.HasAOMap", 0);
+					Renderer::Submit(r_Data.geometryShader, item.Mesh->model);
+				}
 			}
-			else if (r_Data.geometryShader)
-			{
-				r_Data.geometryShader->SetInt("transform.id", static_cast<uint32_t>(ent));
-				r_Data.geometryShader->SetMat4("transform.u_trans", tc.GetTransform());
-				r_Data.geometryShader->SetFloat4("push.material.color", glm::vec4(0.8f, 0.8f, 0.8f, 1.0f));
-				r_Data.geometryShader->SetFloat("push.material.RoughnessFactor", 0.6f);
-				r_Data.geometryShader->SetFloat("push.material.MetallicFactor", 0.0f);
-				r_Data.geometryShader->SetFloat("push.material.AO", 1.0f);
-				r_Data.geometryShader->SetFloat("push.tiling", 1.0f);
-				r_Data.geometryShader->SetInt("push.HasAlbedoMap", 0);
-				r_Data.geometryShader->SetInt("push.HasNormalMap", 0);
-				r_Data.geometryShader->SetInt("push.HasRoughnessMap", 0);
-				r_Data.geometryShader->SetInt("push.HasMetallicMap", 0);
-				r_Data.geometryShader->SetInt("push.HasAOMap", 0);
-				Renderer::Submit(r_Data.geometryShader, mc.model);
-			}
-		}
 
-		if (r_Data.geometryShader)
-			r_Data.geometryShader->Unbind();
-		r_Data.geometryPass->UnbindTargetFrameBuffer();
+			if (r_Data.geometryShader)
+				r_Data.geometryShader->Unbind();
+			r_Data.geometryPass->UnbindTargetFrameBuffer();
+		}
 	}
 
 	void VulkanDeferredRenderer::End()
 	{
+		SN_PROFILE_SCOPE("VulkanDeferredRenderer::End");
 		if (!r_Data.lightingPass)
 			return;
 
@@ -265,6 +430,7 @@ namespace Syndra {
 
 		if (r_Data.lightingShader && r_Data.screenVao)
 		{
+			SN_PROFILE_SCOPE("VulkanDeferredRenderer::LightingPass");
 			r_Data.lightingShader->Bind();
 			r_Data.lightingShader->SetFloat("push.exposure", r_Data.exposure);
 			r_Data.lightingShader->SetFloat("push.gamma", r_Data.gamma);
@@ -293,6 +459,7 @@ namespace Syndra {
 
 		if (r_Data.useFxaa && r_Data.aaPass && r_Data.fxaaShader && r_Data.screenVao)
 		{
+			SN_PROFILE_SCOPE("VulkanDeferredRenderer::FXAAPass");
 			r_Data.aaPass->BindTargetFrameBuffer();
 			RenderCommand::SetState(RenderState::DEPTH_TEST, false);
 			RenderCommand::SetClearColor(r_Data.aaPass->GetSpecification().TargetFrameBuffer->GetSpecification().ClearColor);
@@ -319,6 +486,7 @@ namespace Syndra {
 
 	void VulkanDeferredRenderer::UpdateLights()
 	{
+		SN_PROFILE_SCOPE("VulkanDeferredRenderer::UpdateLights");
 		r_Data.directionalLightCount = 0;
 		r_Data.pointLightCount = 0;
 		r_Data.lightsData = {};
@@ -330,8 +498,8 @@ namespace Syndra {
 		uint32_t pointIndex = 0;
 		for (auto ent : viewLights)
 		{
-			const auto& transform = viewLights.get<TransformComponent>(ent);
 			const auto& light = viewLights.get<LightComponent>(ent);
+			const glm::vec3 worldTranslation = r_Data.scene->GetWorldTranslation(Entity{ ent });
 			if (light.type == LightType::Directional)
 			{
 				auto directional = reinterpret_cast<DirectionalLight*>(light.light.get());
@@ -347,7 +515,7 @@ namespace Syndra {
 				auto point = reinterpret_cast<PointLight*>(light.light.get());
 				if (point && pointIndex < 4)
 				{
-					r_Data.lightsData.pLight[pointIndex].position = glm::vec4(transform.Translation, 1.0f);
+					r_Data.lightsData.pLight[pointIndex].position = glm::vec4(worldTranslation, 1.0f);
 					r_Data.lightsData.pLight[pointIndex].color = glm::vec4(point->GetColor() * point->GetIntensity(), 1.0f);
 					++pointIndex;
 				}
@@ -401,8 +569,11 @@ namespace Syndra {
 			ImGui::Text("Vulkan Deferred Renderer");
 			ImGui::Text("Directional lights: %u", r_Data.directionalLightCount);
 			ImGui::Text("Point lights: %u", r_Data.pointLightCount);
+			ImGui::Text("Visible mesh entities: %u", r_Data.visibleMeshEntityCount);
+			ImGui::Text("Culled mesh entities: %u", r_Data.culledMeshEntityCount);
 			ImGui::Checkbox("Shadows", &r_Data.useShadows);
 			ImGui::Checkbox("FXAA", &r_Data.useFxaa);
+			ImGui::Checkbox("Frustum Culling", &r_Data.useFrustumCulling);
 			ImGui::DragFloat("Exposure", &r_Data.exposure, 0.01f, 0.01f, 8.0f);
 			ImGui::DragFloat("Gamma", &r_Data.gamma, 0.01f, 0.5f, 4.0f);
 			ImGui::DragFloat("Intensity", &r_Data.intensity, 0.01f, 0.0f, 8.0f);

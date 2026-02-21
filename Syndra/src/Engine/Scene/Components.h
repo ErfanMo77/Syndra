@@ -10,6 +10,7 @@
 #include "Engine/Renderer/Model.h"
 #include "Engine/Renderer/Material.h"
 #include "Engine/Scene/Light.h"
+#include "entt.hpp"
 
 namespace Syndra {
 
@@ -42,6 +43,15 @@ namespace Syndra {
 				* rotation
 				* glm::scale(glm::mat4(1.0f), Scale);
 		}
+	};
+
+	struct RelationshipComponent
+	{
+		entt::entity Parent = entt::null;
+		std::vector<entt::entity> Children;
+
+		RelationshipComponent() = default;
+		RelationshipComponent(const RelationshipComponent&) = default;
 	};
 
 	struct MeshComponent {

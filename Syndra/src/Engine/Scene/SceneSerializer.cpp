@@ -7,6 +7,8 @@
 
 #include <fstream>
 #include <filesystem>
+#include <unordered_map>
+#include <unordered_set>
 #include <yaml-cpp/yaml.h>
 
 namespace YAML {
@@ -157,6 +159,18 @@ namespace Syndra {
 			out << YAML::Key << "Scale" << YAML::Value << tc.Scale;
 
 			out << YAML::EndMap; // TransformComponent
+		}
+
+		if (entity.HasComponent<RelationshipComponent>())
+		{
+			out << YAML::Key << "RelationshipComponent";
+			out << YAML::BeginMap; // RelationshipComponent
+
+			const auto& relationship = entity.GetComponent<RelationshipComponent>();
+			const int64_t parent = relationship.Parent == entt::null ? -1 : static_cast<int64_t>(static_cast<uint32_t>(relationship.Parent));
+			out << YAML::Key << "Parent" << YAML::Value << parent;
+
+			out << YAML::EndMap; // RelationshipComponent
 		}
 
 		if (entity.HasComponent<CameraComponent>())
@@ -310,9 +324,23 @@ namespace Syndra {
 		auto entities = data["Entities"];
 		if (entities)
 		{
+			std::unordered_map<uint32_t, Entity> deserializedEntitiesById;
+			std::vector<std::pair<Entity, uint32_t>> pendingParentLinks;
+			std::unordered_set<uint32_t> serializedEntitiesWithChildren;
+			for (const auto& serializedEntity : entities)
+			{
+				auto relationshipComponent = serializedEntity["RelationshipComponent"];
+				if (!relationshipComponent)
+					continue;
+
+				const int64_t serializedParent = relationshipComponent["Parent"].as<int64_t>(-1);
+				if (serializedParent >= 0)
+					serializedEntitiesWithChildren.insert(static_cast<uint32_t>(serializedParent));
+			}
+
 			for (auto entity : entities)
 			{
-				uint64_t uuid = entity["Entity"].as<uint64_t>();
+				uint32_t uuid = entity["Entity"].as<uint32_t>();
 
 				std::string name;
 				auto tagComponent = entity["TagComponent"];
@@ -322,6 +350,14 @@ namespace Syndra {
 				SN_CORE_TRACE("Deserialized entity with ID = {0}, name = {1}", uuid, name);
 
 				auto deserializedEntity = m_Scene->CreateEntity(name);
+				deserializedEntitiesById[uuid] = *deserializedEntity;
+
+				if (auto relationshipComponent = entity["RelationshipComponent"])
+				{
+					const int64_t parent = relationshipComponent["Parent"].as<int64_t>(-1);
+					if (parent >= 0)
+						pendingParentLinks.emplace_back(*deserializedEntity, static_cast<uint32_t>(parent));
+				}
 
 				auto transformComponent = entity["TransformComponent"];
 				if (transformComponent)
@@ -365,6 +401,34 @@ namespace Syndra {
 					}
 					if (!filepath.empty())
 						mc.model = Model(filepath);
+
+					// Keep explicit material overrides intact on root entities.
+					const bool hasMaterialOverride = entity["MaterialComponent"].IsDefined();
+					const bool hasSerializedChildren = serializedEntitiesWithChildren.find(uuid) != serializedEntitiesWithChildren.end();
+					if (!hasMaterialOverride && !hasSerializedChildren && mc.model.meshes.size() > 1)
+					{
+						const std::string baseName = deserializedEntity->GetComponent<TagComponent>().Tag;
+						const std::string importedPath = mc.path;
+						std::vector<Mesh> importedMeshes = std::move(mc.model.meshes);
+						auto importedTextures = mc.model.syndraTextures;
+						const size_t importedMeshCount = importedMeshes.size();
+
+						mc.path.clear();
+						mc.model = Model{};
+
+						for (size_t meshIndex = 0; meshIndex < importedMeshes.size(); ++meshIndex)
+						{
+							auto childEntity = m_Scene->CreateEntity(baseName + "_Part" + std::to_string(meshIndex));
+							auto& childMesh = childEntity->AddComponent<MeshComponent>();
+							childMesh.path = importedPath;
+							childMesh.model = Model{};
+							childMesh.model.meshes.push_back(std::move(importedMeshes[meshIndex]));
+							childMesh.model.syndraTextures = importedTextures;
+							m_Scene->SetParent(*childEntity, *deserializedEntity);
+						}
+
+						SN_CORE_INFO("Expanded model '{}' into {} mesh entities under '{}'.", importedPath, importedMeshCount, baseName);
+					}
 				}
 
 				auto lightComponent = entity["LightComponent"];
@@ -459,6 +523,18 @@ namespace Syndra {
 					//mc.model = Model(filepath);
 				}
 
+			}
+
+			for (const auto& [child, serializedParent] : pendingParentLinks)
+			{
+				const auto parentIt = deserializedEntitiesById.find(serializedParent);
+				if (parentIt == deserializedEntitiesById.end())
+				{
+					SN_CORE_WARN("Missing parent entity {} while restoring hierarchy for child {}.", serializedParent, static_cast<uint32_t>(child));
+					continue;
+				}
+
+				m_Scene->SetParent(child, parentIt->second);
 			}
 		}
 

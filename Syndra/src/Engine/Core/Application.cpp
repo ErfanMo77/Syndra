@@ -1,6 +1,7 @@
 #include "lpch.h"
 #include "Engine/Core/Application.h"
 #include "Engine/Core/Input.h"
+#include "Engine/Renderer/RenderCommand.h"
 #include "GLFW/glfw3.h"
 #include "Instrument.h"
 
@@ -43,7 +44,11 @@ namespace Syndra {
 	{
 		while (m_Running)
 		{
-			m_window->OnUpdate();
+			SN_PROFILE_SCOPE("Frame");
+			{
+				SN_PROFILE_SCOPE("Window::OnUpdate");
+				m_window->OnUpdate();
+			}
 			if (!m_Running)
 				break;
 
@@ -51,11 +56,21 @@ namespace Syndra {
 			Timestep ts = time - m_lastFrameTime;
 			m_lastFrameTime = time;
 
-			m_window->BeginFrame();
+			{
+				SN_PROFILE_SCOPE("Window::BeginFrame");
+				m_window->BeginFrame();
+			}
 
 			if (!m_Minimized) {
-				for (Layer* layer : m_LayerStack) {
-					layer->OnUpdate(ts);
+				{
+					SN_PROFILE_SCOPE("Layers::OnUpdate");
+					for (Layer* layer : m_LayerStack) {
+						layer->OnUpdate(ts);
+					}
+				}
+				{
+					SN_PROFILE_SCOPE("RenderCommand::Flush(Update)");
+					RenderCommand::Flush();
 				}
 				{
 					SN_PROFILE_SCOPE("ImGui");
@@ -68,7 +83,15 @@ namespace Syndra {
 				}
 			}
 
-			m_window->EndFrame();
+			{
+				SN_PROFILE_SCOPE("RenderCommand::Flush(EndFrame)");
+				RenderCommand::Flush();
+			}
+
+			{
+				SN_PROFILE_SCOPE("Window::EndFrame");
+				m_window->EndFrame();
+			}
 		}
 	}
 

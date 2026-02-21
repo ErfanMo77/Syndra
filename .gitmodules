@@ -16,3 +16,6 @@
 [submodule "Syndra/vendor/ImGuizmo"]
 	path = Syndra/vendor/ImGuizmo
 	url = https://github.com/CedricGuillemet/ImGuizmo.git
+[submodule "Syndra/vendor/fastgltf"]
+	path = Syndra/vendor/fastgltf
+	url = https://github.com/spnda/fastgltf.git

@@ -3,11 +3,28 @@
 
 namespace Syndra {
 
-	Mesh::Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<texture> textures)
+	Mesh::Mesh(
+		std::vector<Vertex> vertices,
+		std::vector<unsigned int> indices,
+		std::vector<texture> textures,
+		const MeshMaterialData& materialData)
 	{
 		this->vertices = vertices;
 		this->indices = indices;
 		this->textures = textures;
+		this->materialData = materialData;
+
+		if (!this->vertices.empty())
+		{
+			m_BoundsMin = this->vertices[0].Position;
+			m_BoundsMax = this->vertices[0].Position;
+			for (const auto& vertex : this->vertices)
+			{
+				m_BoundsMin = glm::min(m_BoundsMin, vertex.Position);
+				m_BoundsMax = glm::max(m_BoundsMax, vertex.Position);
+			}
+		}
+
 		setupMesh();
 	}
 

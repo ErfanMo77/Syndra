@@ -44,8 +44,11 @@ namespace Syndra {
 			bool useFxaa = false;
 			bool useShadows = true;
 			bool useIBL = true;
+			bool useFrustumCulling = true;
 			uint32_t directionalLightCount = 0;
 			uint32_t pointLightCount = 0;
+			uint32_t visibleMeshEntityCount = 0;
+			uint32_t culledMeshEntityCount = 0;
 			uint32_t shadowMapSize = 2048;
 			float exposure = 1.0f;
 			float gamma = 2.2f;

@@ -219,6 +219,7 @@ target_link_libraries(Syndra PUBLIC
   imgui
   ImGuizmo
   yaml-cpp
+  fastgltf::fastgltf
   volk
   VulkanMemoryAllocatorHeaders
   "${VULKAN_LIB}"

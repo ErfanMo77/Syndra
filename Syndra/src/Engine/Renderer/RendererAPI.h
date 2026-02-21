@@ -30,6 +30,8 @@ namespace Syndra {
 		virtual void Clear() = 0;
 		virtual void DrawIndexed(const Ref<VertexArray>&vertexArray) = 0;
 		virtual void SetState(RenderState stateID, bool on) = 0;
+		virtual void Flush() {}
+		virtual void WaitForIdle() {}
 
 		virtual std::string GetRendererInfo() = 0;
 

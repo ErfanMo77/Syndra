@@ -36,6 +36,16 @@ namespace Syndra {
 			GetRendererAPI().SetState(stateID, on);
 		}
 
+		static void Flush()
+		{
+			GetRendererAPI().Flush();
+		}
+
+		static void WaitForIdle()
+		{
+			GetRendererAPI().WaitForIdle();
+		}
+
 		static std::string GetInfo()
 		{
 			return GetRendererAPI().GetRendererInfo();

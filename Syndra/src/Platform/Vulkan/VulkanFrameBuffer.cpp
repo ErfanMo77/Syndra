@@ -513,7 +513,44 @@ namespace Syndra {
 
 		ColorAttachment& attachment = m_ColorAttachments[attachmentIndex];
 		const VkClearColorValue clearColor = BuildClearColorValue(attachment.Format, m_Specification.ClearColor, value);
-		InitializeColorAttachmentImage(context, attachment.Image, attachment.Format, clearColor, 1);
+
+		VkCommandBuffer commandBuffer = context->GetActiveFrameCommandBuffer();
+		const bool ownsCommandBuffer = (commandBuffer == VK_NULL_HANDLE);
+		if (ownsCommandBuffer)
+			commandBuffer = context->BeginSingleTimeCommands();
+
+		TransitionTrackedImageLayout(
+			commandBuffer,
+			attachment.Image,
+			VK_IMAGE_ASPECT_COLOR_BIT,
+			attachment.Layout,
+			VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+			1);
+
+		VkImageSubresourceRange clearRange{};
+		clearRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		clearRange.baseMipLevel = 0;
+		clearRange.levelCount = 1;
+		clearRange.baseArrayLayer = 0;
+		clearRange.layerCount = 1;
+		vkCmdClearColorImage(
+			commandBuffer,
+			attachment.Image,
+			VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+			&clearColor,
+			1,
+			&clearRange);
+
+		TransitionTrackedImageLayout(
+			commandBuffer,
+			attachment.Image,
+			VK_IMAGE_ASPECT_COLOR_BIT,
+			attachment.Layout,
+			VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+			1);
+		if (ownsCommandBuffer)
+			context->EndSingleTimeCommands(commandBuffer);
+
 		attachment.Layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 		VulkanImGuiTextureRegistry::UpdateTextureLayout(attachment.RendererID, attachment.Layout);
 	}
@@ -524,7 +561,10 @@ namespace Syndra {
 		if (context == nullptr)
 			return;
 
-		const VkCommandBuffer commandBuffer = context->BeginSingleTimeCommands();
+		VkCommandBuffer commandBuffer = context->GetActiveFrameCommandBuffer();
+		const bool ownsCommandBuffer = (commandBuffer == VK_NULL_HANDLE);
+		if (ownsCommandBuffer)
+			commandBuffer = context->BeginSingleTimeCommands();
 
 		for (size_t i = 0; i < m_ColorAttachments.size(); ++i)
 		{
@@ -642,7 +682,8 @@ namespace Syndra {
 			VulkanImGuiTextureRegistry::UpdateTextureLayout(m_CubemapAttachmentRendererID, m_CubemapImageLayout);
 		}
 
-		context->EndSingleTimeCommands(commandBuffer);
+		if (ownsCommandBuffer)
+			context->EndSingleTimeCommands(commandBuffer);
 		m_Specification.ClearColor = clearColor;
 	}
 

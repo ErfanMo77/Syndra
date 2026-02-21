@@ -2,6 +2,7 @@
 
 #include "Engine/Renderer/SceneRenderer.h"
 
+#include "Engine/Core/Instrument.h"
 #include "Engine/Scene/Entity.h"
 #include "Engine/Scene/Scene.h"
 #include "imgui.h"
@@ -121,6 +122,7 @@ namespace Syndra {
 	//Initializing camera, uniform buffers and environment map
 	void SceneRenderer::BeginScene(const PerspectiveCamera& camera)
 	{
+		SN_PROFILE_SCOPE("SceneRenderer::BeginScene");
 		if (s_Data.environment)
 		{
 			s_Data.environment->SetViewProjection(camera.GetViewMatrix(), camera.GetProjection());
@@ -138,6 +140,7 @@ namespace Syndra {
 
 	void SceneRenderer::RenderScene()
 	{
+		SN_PROFILE_SCOPE("SceneRenderer::RenderScene");
 		if (!s_Data.renderPipeline)
 			return;
 
@@ -148,6 +151,7 @@ namespace Syndra {
 
 	void SceneRenderer::EndScene()
 	{
+		SN_PROFILE_SCOPE("SceneRenderer::EndScene");
 		if (s_Data.renderPipeline)
 			s_Data.renderPipeline->End();
 	}

@@ -56,6 +56,8 @@ namespace Syndra {
 	void RenderCommand::Shutdown()
 	{
 		std::unique_ptr<RendererAPI>& rendererAPI = GetRendererAPIStorage();
+		if (rendererAPI)
+			rendererAPI->Flush();
 		rendererAPI.reset();
 		GetActiveAPIStorage() = RendererAPI::API::NONE;
 	}

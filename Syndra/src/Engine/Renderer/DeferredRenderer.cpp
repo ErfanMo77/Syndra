@@ -142,11 +142,11 @@ namespace Syndra {
 		RenderCommand::Clear();
 		for (auto ent : view)
 		{
-			auto& tc = view.get<TransformComponent>(ent);
 			auto& mc = view.get<MeshComponent>(ent);
 			if (!mc.path.empty())
 			{
-				r_Data.depth->SetMat4("transform.u_trans", tc.GetTransform());
+				const glm::mat4 worldTransform = r_Data.scene->GetWorldTransform(Entity{ ent });
+				r_Data.depth->SetMat4("transform.u_trans", worldTransform);
 				Renderer::Submit(r_Data.depth, mc.model);
 			}
 		}
@@ -161,14 +161,14 @@ namespace Syndra {
 		RenderCommand::Clear();
 		for (auto ent : view)
 		{
-			auto& tc = view.get<TransformComponent>(ent);
 			auto& mc = view.get<MeshComponent>(ent);
 			if (!mc.path.empty())
 			{
+				const glm::mat4 worldTransform = r_Data.scene->GetWorldTransform(Entity{ ent });
 				if (r_Data.scene->m_Registry.has<MaterialComponent>(ent)) {
 					auto& mat = r_Data.scene->m_Registry.get<MaterialComponent>(ent);
 					r_Data.geoShader->SetInt("transform.id", (uint32_t)ent);
-					r_Data.geoShader->SetMat4("transform.u_trans", tc.GetTransform());
+					r_Data.geoShader->SetMat4("transform.u_trans", worldTransform);
 					Renderer::Submit(mat.m_Material, mc.model);
 				}
 				else
@@ -182,7 +182,7 @@ namespace Syndra {
 					r_Data.geoShader->SetFloat("push.material.MetallicFactor", 0);
 					r_Data.geoShader->SetFloat("push.material.RoughnessFactor", 1);
 					r_Data.geoShader->SetFloat("push.material.AO", 1);
-					r_Data.geoShader->SetMat4("transform.u_trans", tc.GetTransform());
+					r_Data.geoShader->SetMat4("transform.u_trans", worldTransform);
 					r_Data.geoShader->SetInt("transform.id", (uint32_t)ent);
 					Renderer::Submit(r_Data.geoShader, mc.model);
 				}
@@ -416,12 +416,12 @@ namespace Syndra {
 		//Set light values for each entity that has a light component
 		for (auto ent : viewLights)
 		{
-			auto& tc = viewLights.get<TransformComponent>(ent);
 			auto& lc = viewLights.get<LightComponent>(ent);
+			const glm::vec3 worldTranslation = r_Data.scene->GetWorldTranslation(Entity{ ent });
 
 			if (lc.type == LightType::Directional) {
 				auto p = dynamic_cast<DirectionalLight*>(lc.light.get());
-				r_Data.lightManager->UpdateDirLight(p, tc.Translation);
+				r_Data.lightManager->UpdateDirLight(p, worldTranslation);
 				//shadow
 				r_Data.lightView = glm::lookAt(-(glm::normalize(p->GetDirection()) * r_Data.lightFar / 4.0f), glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 				r_Data.shadowData.lightViewProj = r_Data.lightProj * r_Data.lightView;
@@ -431,7 +431,7 @@ namespace Syndra {
 			if (lc.type == LightType::Point) {
 				if (pIndex < 4) {
 					auto p = dynamic_cast<PointLight*>(lc.light.get());
-					r_Data.lightManager->UpdatePointLights(p, tc.Translation, pIndex);
+					r_Data.lightManager->UpdatePointLights(p, worldTranslation, pIndex);
 					pIndex++;
 					p = nullptr;
 				}
@@ -439,7 +439,7 @@ namespace Syndra {
 			if (lc.type == LightType::Spot) {
 				if (sIndex < 4) {
 					auto p = dynamic_cast<SpotLight*>(lc.light.get());
-					r_Data.lightManager->UpdateSpotLights(p, tc.Translation, sIndex);
+					r_Data.lightManager->UpdateSpotLights(p, worldTranslation, sIndex);
 					sIndex++;
 					p = nullptr;
 				}

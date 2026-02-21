@@ -4,6 +4,7 @@
 #include "Engine/Renderer/PerspectiveCamera.h"
 #include "Engine/Renderer/FrameBuffer.h"
 #include "Engine/Renderer/SceneRenderer.h"
+#include <glm/glm.hpp>
 
 namespace Syndra {
 
@@ -32,6 +33,11 @@ namespace Syndra {
 
 		void DestroyEntity(const Entity& entity);
 		Entity FindEntity(uint32_t id);
+		void SetParent(const Entity& child, const Entity& parent);
+		void Unparent(const Entity& child);
+		Entity GetParent(const Entity& entity) const;
+		glm::mat4 GetWorldTransform(const Entity& entity) const;
+		glm::vec3 GetWorldTranslation(const Entity& entity) const;
 
 		void OnUpdateRuntime(Timestep ts);
 		void OnUpdateEditor(Timestep ts);
@@ -48,11 +54,15 @@ namespace Syndra {
 	private:
 		template<typename T>
 		void OnComponentAdded(Entity entity, T& component);
+		void DestroyEntityRecursive(const Entity& entity);
+		bool HasRenderableResourcesInHierarchy(const Entity& entity) const;
+		void ProcessPendingEntityDestruction();
 
 	private:
 		entt::registry m_Registry;
 
 		std::vector<Ref<Entity>> m_Entities;
+		std::vector<entt::entity> m_EntitiesPendingDestroy;
 		std::string m_EnvironmentPath;
 
 		std::string m_Name;
