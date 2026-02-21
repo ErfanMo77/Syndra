@@ -87,10 +87,10 @@ namespace Syndra {
 		switch (RendererAPI::GetAPI())
 		{
 		case RendererAPI::API::OpenGL:
-			m_Context = new OpenGLContext(m_Window);
+			m_Context = CreateScope<OpenGLContext>(m_Window);
 			break;
 		case RendererAPI::API::Vulkan:
-			m_Context = new VulkanContext(m_Window);
+			m_Context = CreateScope<VulkanContext>(m_Window);
 			break;
 		case RendererAPI::API::NONE:
 		default:
@@ -201,11 +201,7 @@ namespace Syndra {
 	{
 		//SN_PROFILE_FUNCTION();
 
-		if (m_Context != nullptr)
-		{
-			delete m_Context;
-			m_Context = nullptr;
-		}
+		m_Context.reset();
 
 		if (m_Window != nullptr)
 		{

@@ -75,6 +75,8 @@
 
 namespace Syndra {
 
+	// Scope<T>: single-owner lifetime. Prefer this for members created and
+	// destroyed by one owning object (window, context, scene internals, etc.).
 	template<typename T>
 	using Scope = std::unique_ptr<T>;
 	template<typename T, typename ... Args>
@@ -83,6 +85,8 @@ namespace Syndra {
 		return std::make_unique<T>(std::forward<Args>(args)...);
 	}
 
+	// Ref<T>: shared lifetime via reference counting. Use only when multiple
+	// systems intentionally co-own a resource (renderer assets, scene refs, etc.).
 	template<typename T>
 	using Ref = std::shared_ptr<T>;
 	template<typename T, typename ... Args>

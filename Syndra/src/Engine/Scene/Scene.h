@@ -21,8 +21,11 @@ namespace Syndra {
 	{
 	public:
 		Scene(const std::string& name = "Untitled");
-		Scene(const Scene& other) = default;
-		~Scene();
+		Scene(const Scene& other) = delete;
+		Scene& operator=(const Scene& other) = delete;
+		Scene(Scene&& other) = delete;
+		Scene& operator=(Scene&& other) = delete;
+		~Scene() = default;
 
 		Ref<Entity> CreateEntity(const std::string& name = std::string());
 		Ref<Entity> CreateEntity(const Entity& entity);
@@ -67,7 +70,7 @@ namespace Syndra {
 
 		std::string m_Name;
 
-		PerspectiveCamera* m_Camera;
+		Scope<PerspectiveCamera> m_Camera;
 		ShaderLibrary m_Shaders;
 
 		uint32_t m_ViewportWidth = 0;

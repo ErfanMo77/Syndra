@@ -30,7 +30,7 @@ namespace Syndra {
 			glm::mat4 ViewProjectionMatrix;
 		};
 
-		static SceneData* m_SceneData;
+		static SceneData m_SceneData;
 	};
 
 }

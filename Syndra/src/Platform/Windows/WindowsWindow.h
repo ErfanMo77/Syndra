@@ -35,7 +35,7 @@ namespace Syndra{
 		virtual void Shutdown();
 	private:
 		GLFWwindow* m_Window;
-		GraphicsContext* m_Context = nullptr;
+		Scope<GraphicsContext> m_Context;
 
 		struct WindowData
 		{

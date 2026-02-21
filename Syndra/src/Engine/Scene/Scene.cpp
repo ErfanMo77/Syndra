@@ -25,12 +25,7 @@ namespace Syndra {
 	{
 		Entity::s_Scene = this;
 		m_Shaders = SceneRenderer::GetShaderLibrary();
-		m_Camera = new PerspectiveCamera(45.0f, 1.66f, 0.1f, 1000.0f);
-	}
-
-	Scene::~Scene()
-	{
-		delete m_Camera;
+		m_Camera = CreateScope<PerspectiveCamera>(45.0f, 1.66f, 0.1f, 1000.0f);
 	}
 
 	Ref<Entity> Scene::CreateEntity(const std::string& name)

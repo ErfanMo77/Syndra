@@ -5,11 +5,11 @@
 #include <glad/glad.h>
 namespace Syndra {
 
-	Renderer::SceneData* Renderer::m_SceneData = new Renderer::SceneData;
+	Renderer::SceneData Renderer::m_SceneData{};
 
 	void Renderer::BeginScene(const PerspectiveCamera& camera)
 	{
-		m_SceneData->ViewProjectionMatrix = camera.GetViewProjection();
+		m_SceneData.ViewProjectionMatrix = camera.GetViewProjection();
 	}
 
 	void Renderer::EndScene()
@@ -20,7 +20,7 @@ namespace Syndra {
 	{
 		SN_PROFILE_SCOPE("Renderer::Submit(VertexArray)");
 		shader->Bind();
-		//shader->SetMat4("u_ViewProjection", m_SceneData->ViewProjectionMatrix);
+		//shader->SetMat4("u_ViewProjection", m_SceneData.ViewProjectionMatrix);
 		vertexArray->Bind();
 		RenderCommand::DrawIndexed(vertexArray);
 	}

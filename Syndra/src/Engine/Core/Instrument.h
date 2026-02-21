@@ -86,7 +86,7 @@ namespace Syndra {
 
 			if (m_OutputStream.is_open())
 			{
-				m_CurrentSession = new InstrumentationSession({ name });
+				m_CurrentSession = std::make_unique<InstrumentationSession>(InstrumentationSession{ name });
 				WriteHeader();
 			}
 			else
@@ -396,14 +396,13 @@ namespace Syndra {
 			{
 				WriteFooter();
 				m_OutputStream.close();
-				delete m_CurrentSession;
-				m_CurrentSession = nullptr;
+				m_CurrentSession.reset();
 			}
 		}
 	private:
 		static constexpr size_t kMaxCpuFrameHistory = 240;
 		std::mutex m_Mutex;
-		InstrumentationSession* m_CurrentSession;
+		std::unique_ptr<InstrumentationSession> m_CurrentSession;
 		std::ofstream m_OutputStream;
 		std::thread::id m_MainThreadID;
 		CpuProfileNodeAccum m_CpuRoot;
