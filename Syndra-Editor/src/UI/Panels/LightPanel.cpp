@@ -82,8 +82,6 @@ namespace Syndra {
 			ImGui::Columns(1);
 			component.light->SetIntensity(intensity);
 
-			auto PI = glm::pi<float>();
-
 			if (component.type == LightType::Directional) {
 				auto p = dynamic_cast<DirectionalLight*>(component.light.get());
 				auto dir = p->GetDirection();
@@ -94,9 +92,11 @@ namespace Syndra {
 				ImGui::SameLine();
 				ImGui::NextColumn();
 				ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x);
-				ImGui::SliderFloat3("##direction", glm::value_ptr(dir), -2 * PI, 2 * PI, "%.3f");
+				ImGui::SliderFloat3("##direction", glm::value_ptr(dir), -1.0f, 1.0f, "%.3f");
 				ImGui::PopItemWidth();
 				ImGui::Columns(1);
+				if (glm::length(dir) > 0.0001f)
+					dir = glm::normalize(dir);
 				p->SetDirection(dir);
 				p = nullptr;
 			}
@@ -123,18 +123,23 @@ namespace Syndra {
 				ImGui::SameLine();
 				ImGui::NextColumn();
 				ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x);
-				ImGui::SliderFloat3("##direction", glm::value_ptr(dir), -2 * PI, 2 * PI, "%.3f");
+				ImGui::SliderFloat3("##direction", glm::value_ptr(dir), -1.0f, 1.0f, "%.3f");
 				ImGui::PopItemWidth();
 				ImGui::Columns(1);
+				if (glm::length(dir) > 0.0001f)
+					dir = glm::normalize(dir);
 				p->SetDirection(dir);
 
 				float iCut = p->GetInnerCutOff();
 				float oCut = p->GetOuterCutOff();
+				float range = p->GetRange();
 
 				UI::DragFloat("Cutoff", &iCut, 0.5f, 0, p->GetOuterCutOff() - 0.01f);
-				UI::DragFloat("Outer Cutoff", &oCut, 0.5f, p->GetOuterCutOff() + 0.01f, 180);
+				UI::DragFloat("Outer Cutoff", &oCut, 0.5f, iCut + 0.01f, 180.0f);
+				UI::DragFloat("Range", &range, 0.5f, 0.1f, 500.0f);
 
 				p->SetCutOff(iCut, oCut);
+				p->SetRange(range);
 				p = nullptr;
 			}
 

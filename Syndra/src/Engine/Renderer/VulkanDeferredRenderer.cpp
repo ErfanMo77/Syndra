@@ -11,6 +11,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cmath>
 #include <filesystem>
 
 namespace Syndra {
@@ -177,6 +178,17 @@ namespace Syndra {
 		shadowPassSpec.TargetFrameBuffer = FrameBuffer::Create(shadowSpec);
 		r_Data.shadowPass = RenderPass::Create(shadowPassSpec);
 
+		FramebufferSpecification spotShadowSpec;
+		spotShadowSpec.Attachments = { FramebufferTextureFormat::DEPTH32 };
+		spotShadowSpec.Width = r_Data.spotShadowMapSize;
+		spotShadowSpec.Height = r_Data.spotShadowMapSize;
+		spotShadowSpec.Samples = 1;
+		spotShadowSpec.ClearColor = glm::vec4(1.0f);
+
+		RenderPassSpecification spotShadowPassSpec;
+		spotShadowPassSpec.TargetFrameBuffer = FrameBuffer::Create(spotShadowSpec);
+		r_Data.spotShadowPass = RenderPass::Create(spotShadowPassSpec);
+
 		FramebufferSpecification geometrySpec;
 		geometrySpec.Attachments =
 		{
@@ -255,9 +267,9 @@ namespace Syndra {
 		}
 
 		r_Data.lightsUniformBuffer = UniformBuffer::Create(sizeof(RenderData::LightsData), 2);
-		r_Data.shadowUniformBuffer = UniformBuffer::Create(sizeof(glm::mat4), 3);
+		r_Data.shadowUniformBuffer = UniformBuffer::Create(sizeof(RenderData::ShadowData), 3);
 		if (r_Data.shadowUniformBuffer)
-			r_Data.shadowUniformBuffer->SetData(glm::value_ptr(r_Data.shadowViewProjection), sizeof(glm::mat4));
+			r_Data.shadowUniformBuffer->SetData(&r_Data.shadowData, sizeof(RenderData::ShadowData));
 
 		r_Data.screenVao = VertexArray::Create();
 		float quad[] = {
@@ -297,7 +309,9 @@ namespace Syndra {
 			glm::mat4 WorldTransform = glm::mat4(1.0f);
 		};
 
+		std::vector<RenderItem> renderItems;
 		std::vector<RenderItem> visibleItems;
+		renderItems.reserve(view.size_hint());
 		visibleItems.reserve(view.size_hint());
 		r_Data.visibleMeshEntityCount = 0;
 		r_Data.culledMeshEntityCount = 0;
@@ -313,6 +327,9 @@ namespace Syndra {
 				continue;
 
 			const glm::mat4 worldTransform = r_Data.scene->GetWorldTransform(Entity{ ent });
+			MaterialComponent* materialComponent = r_Data.scene->m_Registry.try_get<MaterialComponent>(ent);
+			renderItems.push_back(RenderItem{ ent, &meshComponent, materialComponent, worldTransform });
+
 			if (r_Data.useFrustumCulling && r_Data.scene->m_Camera &&
 				!IsModelVisibleInCameraFrustum(meshComponent.model, worldTransform, cameraFrustum))
 			{
@@ -320,15 +337,15 @@ namespace Syndra {
 				continue;
 			}
 
-			MaterialComponent* materialComponent = r_Data.scene->m_Registry.try_get<MaterialComponent>(ent);
 			visibleItems.push_back(RenderItem{ ent, &meshComponent, materialComponent, worldTransform });
 		}
 
 		r_Data.visibleMeshEntityCount = static_cast<uint32_t>(visibleItems.size());
+		r_Data.shadowData = {};
 
-		if (r_Data.useShadows && r_Data.shadowPass && r_Data.shadowShader && r_Data.shadowUniformBuffer)
+		const bool hasDirectionalLight = r_Data.directionalLightCount > 0;
+		if (hasDirectionalLight)
 		{
-			SN_PROFILE_SCOPE("VulkanDeferredRenderer::ShadowPass");
 			glm::vec3 lightDirection = glm::vec3(r_Data.lightsData.dLight.direction);
 			if (glm::length(lightDirection) < 0.0001f)
 				lightDirection = glm::vec3(-0.6f, -1.0f, -0.35f);
@@ -352,23 +369,80 @@ namespace Syndra {
 				shadowFar);
 
 			const glm::mat4 lightViewProjection = lightProjection * lightView;
-			r_Data.shadowViewProjection = ConvertOpenGLClipToVulkanClip(lightViewProjection);
-			r_Data.shadowUniformBuffer->SetData(glm::value_ptr(r_Data.shadowViewProjection), sizeof(glm::mat4));
+			r_Data.shadowData.directionalLightViewProjection = ConvertOpenGLClipToVulkanClip(lightViewProjection);
+		}
 
-			r_Data.shadowPass->BindTargetFrameBuffer();
-			RenderCommand::SetState(RenderState::DEPTH_TEST, true);
-			RenderCommand::SetClearColor(glm::vec4(1.0f));
-			RenderCommand::Clear();
+		const bool hasSpotLight = r_Data.spotLightCount > 0;
+		if (hasSpotLight)
+		{
+			glm::vec3 lightPosition = glm::vec3(r_Data.lightsData.sLight.position);
+			glm::vec3 lightDirection = glm::vec3(r_Data.lightsData.sLight.direction);
+			if (glm::length(lightDirection) < 0.0001f)
+				lightDirection = glm::vec3(0.0f, -1.0f, 0.0f);
+			lightDirection = glm::normalize(lightDirection);
 
-			r_Data.shadowShader->Bind();
-			for (const auto& item : visibleItems)
+			glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
+			if (glm::abs(glm::dot(lightDirection, up)) > 0.98f)
+				up = glm::vec3(0.0f, 0.0f, 1.0f);
+
+			float outerCutoffRadians = r_Data.lightsData.sLight.params.w;
+			if (outerCutoffRadians <= 0.0f)
+				outerCutoffRadians = glm::radians(20.0f);
+			const float fovRadians = glm::clamp(outerCutoffRadians * 2.0f, glm::radians(1.0f), glm::radians(179.0f));
+			const float nearClip = std::max(0.01f, r_Data.spotShadowNearPlane);
+			const float farClip = std::max(nearClip + 0.01f, r_Data.lightsData.sLight.params.z);
+
+			const glm::mat4 lightView = glm::lookAt(lightPosition, lightPosition + lightDirection, up);
+			const glm::mat4 lightProjection = glm::perspective(fovRadians, 1.0f, nearClip, farClip);
+			r_Data.shadowData.spotlightViewProjection = ConvertOpenGLClipToVulkanClip(lightProjection * lightView);
+		}
+
+		if (r_Data.shadowUniformBuffer)
+			r_Data.shadowUniformBuffer->SetData(&r_Data.shadowData, sizeof(RenderData::ShadowData));
+
+		if (r_Data.useShadows && r_Data.shadowShader && r_Data.shadowUniformBuffer)
+		{
+			if (hasDirectionalLight && r_Data.shadowPass)
 			{
-				r_Data.shadowShader->SetMat4("push.u_trans", item.WorldTransform);
-				r_Data.shadowShader->SetInt("push.id", static_cast<uint32_t>(item.EntityHandle));
-				Renderer::Submit(r_Data.shadowShader, item.Mesh->model);
+				SN_PROFILE_SCOPE("VulkanDeferredRenderer::DirectionalShadowPass");
+
+				r_Data.shadowPass->BindTargetFrameBuffer();
+				RenderCommand::SetState(RenderState::DEPTH_TEST, true);
+				RenderCommand::SetClearColor(glm::vec4(1.0f));
+				RenderCommand::Clear();
+
+				r_Data.shadowShader->Bind();
+				for (const auto& item : renderItems)
+				{
+					r_Data.shadowShader->SetMat4("push.u_trans", item.WorldTransform);
+					r_Data.shadowShader->SetInt("push.id", static_cast<uint32_t>(item.EntityHandle));
+					r_Data.shadowShader->SetInt("push.useSpot", 0);
+					Renderer::Submit(r_Data.shadowShader, item.Mesh->model);
+				}
+				r_Data.shadowShader->Unbind();
+				r_Data.shadowPass->UnbindTargetFrameBuffer();
 			}
-			r_Data.shadowShader->Unbind();
-			r_Data.shadowPass->UnbindTargetFrameBuffer();
+
+			if (hasSpotLight && r_Data.spotShadowPass)
+			{
+				SN_PROFILE_SCOPE("VulkanDeferredRenderer::SpotShadowPass");
+
+				r_Data.spotShadowPass->BindTargetFrameBuffer();
+				RenderCommand::SetState(RenderState::DEPTH_TEST, true);
+				RenderCommand::SetClearColor(glm::vec4(1.0f));
+				RenderCommand::Clear();
+
+				r_Data.shadowShader->Bind();
+				for (const auto& item : renderItems)
+				{
+					r_Data.shadowShader->SetMat4("push.u_trans", item.WorldTransform);
+					r_Data.shadowShader->SetInt("push.id", static_cast<uint32_t>(item.EntityHandle));
+					r_Data.shadowShader->SetInt("push.useSpot", 1);
+					Renderer::Submit(r_Data.shadowShader, item.Mesh->model);
+				}
+				r_Data.shadowShader->Unbind();
+				r_Data.spotShadowPass->UnbindTargetFrameBuffer();
+			}
 		}
 
 		{
@@ -386,12 +460,22 @@ namespace Syndra {
 			{
 				if (item.Material)
 				{
-					if (r_Data.geometryShader)
+					auto material = r_Data.scene->GetMaterial(item.Material->MaterialId);
+					if (material)
+					{
+						if (r_Data.geometryShader)
+						{
+							r_Data.geometryShader->SetInt("transform.id", static_cast<uint32_t>(item.EntityHandle));
+							r_Data.geometryShader->SetMat4("transform.u_trans", item.WorldTransform);
+						}
+						Renderer::Submit(*material, item.Mesh->model);
+					}
+					else if (r_Data.geometryShader)
 					{
 						r_Data.geometryShader->SetInt("transform.id", static_cast<uint32_t>(item.EntityHandle));
 						r_Data.geometryShader->SetMat4("transform.u_trans", item.WorldTransform);
+						Renderer::Submit(r_Data.geometryShader, item.Mesh->model);
 					}
-					Renderer::Submit(item.Material->m_Material, item.Mesh->model);
 				}
 				else if (r_Data.geometryShader)
 				{
@@ -436,6 +520,7 @@ namespace Syndra {
 			r_Data.lightingShader->SetFloat("push.gamma", r_Data.gamma);
 			r_Data.lightingShader->SetFloat("push.intensity", r_Data.intensity);
 			r_Data.lightingShader->SetInt("push.useShadows", r_Data.useShadows ? 1 : 0);
+			r_Data.lightingShader->SetInt("push.hasSpotLight", r_Data.spotLightCount > 0 ? 1 : 0);
 			const bool hasEnvironment = (r_Data.environmentMap != nullptr);
 			r_Data.lightingShader->SetInt("push.useIBL", (r_Data.useIBL && hasEnvironment) ? 1 : 0);
 			r_Data.lightingShader->SetFloat("push.iblStrength", r_Data.iblStrength);
@@ -447,6 +532,10 @@ namespace Syndra {
 				Texture2D::BindTexture(r_Data.shadowPass->GetSpecification().TargetFrameBuffer->GetDepthAttachmentRendererID(), 4);
 			else
 				Texture2D::BindTexture(0, 4);
+			if (r_Data.useShadows && r_Data.spotShadowPass && r_Data.spotLightCount > 0)
+				Texture2D::BindTexture(r_Data.spotShadowPass->GetSpecification().TargetFrameBuffer->GetDepthAttachmentRendererID(), 6);
+			else
+				Texture2D::BindTexture(0, 6);
 			if (hasEnvironment)
 				r_Data.environmentMap->Bind(5);
 			else
@@ -489,6 +578,7 @@ namespace Syndra {
 		SN_PROFILE_SCOPE("VulkanDeferredRenderer::UpdateLights");
 		r_Data.directionalLightCount = 0;
 		r_Data.pointLightCount = 0;
+		r_Data.spotLightCount = 0;
 		r_Data.lightsData = {};
 
 		if (!r_Data.scene)
@@ -496,6 +586,7 @@ namespace Syndra {
 
 		auto viewLights = r_Data.scene->m_Registry.view<TransformComponent, LightComponent>();
 		uint32_t pointIndex = 0;
+		uint32_t spotIndex = 0;
 		for (auto ent : viewLights)
 		{
 			const auto& light = viewLights.get<LightComponent>(ent);
@@ -520,6 +611,30 @@ namespace Syndra {
 					++pointIndex;
 				}
 				++r_Data.pointLightCount;
+			}
+			if (light.type == LightType::Spot)
+			{
+				auto spot = dynamic_cast<SpotLight*>(light.light.get());
+				if (spot && spotIndex < 1)
+				{
+					glm::vec3 direction = spot->GetDirection();
+					if (glm::length(direction) < 0.0001f)
+						direction = glm::vec3(0.0f, -1.0f, 0.0f);
+					direction = glm::normalize(direction);
+
+					const float innerCutoffRadians = glm::radians(spot->GetInnerCutOff());
+					const float outerCutoffRadians = glm::radians(spot->GetOuterCutOff());
+					const float cosInnerCutoff = std::cos(innerCutoffRadians);
+					const float cosOuterCutoff = std::cos(outerCutoffRadians);
+					const float range = std::max(0.1f, spot->GetRange());
+
+					r_Data.lightsData.sLight.position = glm::vec4(worldTranslation, 1.0f);
+					r_Data.lightsData.sLight.direction = glm::vec4(direction, 0.0f);
+					r_Data.lightsData.sLight.color = glm::vec4(spot->GetColor() * spot->GetIntensity(), 1.0f);
+					r_Data.lightsData.sLight.params = glm::vec4(cosInnerCutoff, cosOuterCutoff, range, outerCutoffRadians);
+					++spotIndex;
+				}
+				++r_Data.spotLightCount;
 			}
 		}
 
@@ -569,6 +684,7 @@ namespace Syndra {
 			ImGui::Text("Vulkan Deferred Renderer");
 			ImGui::Text("Directional lights: %u", r_Data.directionalLightCount);
 			ImGui::Text("Point lights: %u", r_Data.pointLightCount);
+			ImGui::Text("Spot lights: %u", r_Data.spotLightCount);
 			ImGui::Text("Visible mesh entities: %u", r_Data.visibleMeshEntityCount);
 			ImGui::Text("Culled mesh entities: %u", r_Data.culledMeshEntityCount);
 			ImGui::Checkbox("Shadows", &r_Data.useShadows);
@@ -582,6 +698,8 @@ namespace Syndra {
 			ImGui::DragFloat("Ortho Size", &r_Data.shadowOrthoSize, 0.1f, 5.0f, 200.0f);
 			ImGui::DragFloat("Near", &r_Data.shadowNearPlane, 0.1f, 0.1f, 50.0f);
 			ImGui::DragFloat("Far", &r_Data.shadowFarPlane, 1.0f, 5.0f, 500.0f);
+			ImGui::Text("Spot Shadow");
+			ImGui::DragFloat("Spot Near", &r_Data.spotShadowNearPlane, 0.01f, 0.01f, 10.0f);
 			ImGui::Separator();
 			ImGui::Text("GBuffer");
 			if (r_Data.geometryPass)

@@ -17,6 +17,39 @@
 
 namespace Syndra {
 
+	namespace
+	{
+		bool ComputeModelLocalCenter(const Model& model, glm::vec3& outCenter)
+		{
+			bool hasBounds = false;
+			glm::vec3 boundsMin(0.0f);
+			glm::vec3 boundsMax(0.0f);
+
+			for (const auto& mesh : model.meshes)
+			{
+				if (!mesh.HasBounds())
+					continue;
+
+				if (!hasBounds)
+				{
+					boundsMin = mesh.GetBoundsMin();
+					boundsMax = mesh.GetBoundsMax();
+					hasBounds = true;
+					continue;
+				}
+
+				boundsMin = glm::min(boundsMin, mesh.GetBoundsMin());
+				boundsMax = glm::max(boundsMax, mesh.GetBoundsMax());
+			}
+
+			if (!hasBounds)
+				return false;
+
+			outCenter = (boundsMin + boundsMax) * 0.5f;
+			return true;
+		}
+	}
+
 	EditorLayer::EditorLayer()
 		:Layer("Editor Layer")
 	{
@@ -416,6 +449,22 @@ namespace Syndra {
 			// Entity transform
 			auto& tc = selectedEntity.GetComponent<TransformComponent>();
 			glm::mat4 transform = m_ActiveScene->GetWorldTransform(selectedEntity);
+			glm::mat4 gizmoTransform = transform;
+
+			// Keep gizmo pivot on mesh local bounds center so imported glTF children
+			// with baked offsets do not snap gizmos to scene origin.
+			bool hasPivotOffset = false;
+			glm::vec3 localPivotOffset(0.0f);
+			if (selectedEntity.HasComponent<MeshComponent>())
+			{
+				const auto& meshComponent = selectedEntity.GetComponent<MeshComponent>();
+				if (ComputeModelLocalCenter(meshComponent.model, localPivotOffset) &&
+					glm::dot(localPivotOffset, localPivotOffset) > 1e-8f)
+				{
+					gizmoTransform = transform * glm::translate(glm::mat4(1.0f), localPivotOffset);
+					hasPivotOffset = true;
+				}
+			}
 
 			// Snapping
 			bool snap = Input::IsKeyPressed(Key::LeftControl);
@@ -427,18 +476,24 @@ namespace Syndra {
 			float snapValues[3] = { snapValue, snapValue, snapValue };
 
 			ImGuizmo::Manipulate(glm::value_ptr(cameraView), glm::value_ptr(cameraProjection),
-				(ImGuizmo::OPERATION)m_GizmoType, (ImGuizmo::MODE)m_GizmoMode, glm::value_ptr(transform),
+				(ImGuizmo::OPERATION)m_GizmoType, (ImGuizmo::MODE)m_GizmoMode, glm::value_ptr(gizmoTransform),
 				nullptr, snap ? snapValues : nullptr);
 
 			if (ImGuizmo::IsUsing())
 			{
 				glm::vec3 translation, rotation, scale;
-				glm::mat4 localTransform = transform;
+				glm::mat4 manipulatedWorldTransform = gizmoTransform;
+				if (hasPivotOffset)
+				{
+					manipulatedWorldTransform = gizmoTransform * glm::translate(glm::mat4(1.0f), -localPivotOffset);
+				}
+
+				glm::mat4 localTransform = manipulatedWorldTransform;
 				Entity parent = m_ActiveScene->GetParent(selectedEntity);
 				if (parent)
 				{
 					const glm::mat4 parentWorld = m_ActiveScene->GetWorldTransform(parent);
-					localTransform = glm::inverse(parentWorld) * transform;
+					localTransform = glm::inverse(parentWorld) * manipulatedWorldTransform;
 				}
 				Math::DecomposeTransform(localTransform, translation, rotation, scale);
 

@@ -11,6 +11,7 @@ set(SYNDRA_SOURCES
   src/Engine/Renderer/Environment.cpp
   src/Engine/Renderer/ForwardPlusRenderer.cpp
   src/Engine/Renderer/FrameBuffer.cpp
+  src/Engine/Renderer/GltfDecoder.cpp
   src/Engine/Renderer/LightManager.cpp
   src/Engine/Renderer/Material.cpp
   src/Engine/Renderer/Mesh.cpp
@@ -29,6 +30,7 @@ set(SYNDRA_SOURCES
   src/Engine/Renderer/VertexArray.cpp
   src/Engine/Scene/Components.cpp
   src/Engine/Scene/Entity.cpp
+  src/Engine/Scene/GltfSceneImporter.cpp
   src/Engine/Scene/Light.cpp
   src/Engine/Scene/Scene.cpp
   src/Engine/Scene/SceneCamera.cpp
@@ -87,6 +89,7 @@ set(SYNDRA_HEADERS
   src/Engine/Renderer/Environment.h
   src/Engine/Renderer/ForwardPlusRenderer.h
   src/Engine/Renderer/FrameBuffer.h
+  src/Engine/Renderer/GltfDecoder.h
   src/Engine/Renderer/GraphicsContext.h
   src/Engine/Renderer/LightManager.h
   src/Engine/Renderer/Material.h
@@ -107,6 +110,7 @@ set(SYNDRA_HEADERS
   src/Engine/Renderer/VertexArray.h
   src/Engine/Scene/Components.h
   src/Engine/Scene/Entity.h
+  src/Engine/Scene/GltfSceneImporter.h
   src/Engine/Scene/Light.h
   src/Engine/Scene/Scene.h
   src/Engine/Scene/SceneCamera.h

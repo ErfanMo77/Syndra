@@ -38,6 +38,7 @@ namespace Syndra {
 	class Mesh
 	{
 	public:
+		Mesh() = default;
 
 		std::vector<Vertex> vertices;
 		std::vector<unsigned int> indices;

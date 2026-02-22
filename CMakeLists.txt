@@ -38,6 +38,12 @@ endif()
 set(SYNDRA_VULKAN_INCLUDE_DIR "${SYNDRA_VULKAN_SDK}/Include")
 set(SYNDRA_VULKAN_LIB_DIR "${SYNDRA_VULKAN_SDK}/Lib")
 set(SYNDRA_VULKAN_BIN_DIR "${SYNDRA_VULKAN_SDK}/Bin")
+file(GLOB SYNDRA_VULKAN_RUNTIME_DLLS "${SYNDRA_VULKAN_BIN_DIR}/*.dll")
+file(GLOB SYNDRA_VULKAN_RUNTIME_JSONS "${SYNDRA_VULKAN_BIN_DIR}/*.json")
+set(SYNDRA_VULKAN_RUNTIME_FILES
+  ${SYNDRA_VULKAN_RUNTIME_DLLS}
+  ${SYNDRA_VULKAN_RUNTIME_JSONS}
+)
 
 if(NOT EXISTS "${SYNDRA_VULKAN_INCLUDE_DIR}")
   message(FATAL_ERROR "Vulkan SDK include directory not found: ${SYNDRA_VULKAN_INCLUDE_DIR}")
@@ -95,11 +101,19 @@ function(syndra_add_editor_runtime_deps target_name)
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
             "$<IF:$<CONFIG:Debug>,${assimp_debug},${assimp_release}>"
             "$<TARGET_FILE_DIR:${target_name}>"
-    COMMAND ${CMAKE_COMMAND} -E copy_directory
-            "${SYNDRA_VULKAN_BIN_DIR}"
-            "$<TARGET_FILE_DIR:${target_name}>"
     VERBATIM
   )
+
+  if(SYNDRA_VULKAN_RUNTIME_FILES)
+    add_custom_command(TARGET ${target_name} POST_BUILD
+      COMMAND ${CMAKE_COMMAND} -E copy_if_different
+              ${SYNDRA_VULKAN_RUNTIME_FILES}
+              "$<TARGET_FILE_DIR:${target_name}>"
+      VERBATIM
+    )
+  else()
+    message(WARNING "No Vulkan runtime files found under: ${SYNDRA_VULKAN_BIN_DIR}")
+  endif()
 endfunction()
 
 function(syndra_set_debug_working_dir target_name working_dir)

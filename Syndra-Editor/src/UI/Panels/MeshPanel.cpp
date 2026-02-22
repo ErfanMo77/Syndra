@@ -2,6 +2,10 @@
 #include "MeshPanel.h"
 #include "Engine/Utils/PlatformUtils.h"
 #include "Engine/Scene/Entity.h"
+#include "Engine/Scene/GltfSceneImporter.h"
+#include <algorithm>
+#include <cctype>
+#include <filesystem>
 
 namespace Syndra {
 
@@ -30,8 +34,8 @@ namespace Syndra {
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 5,4 });
 			if (ImGui::Button("Open")) {
 				auto path = FileDialogs::OpenFile("Syndra Model (*.*)\0*.*\0");
-				auto dir = std::filesystem::current_path();
 				if (path) {
+					auto dir = std::filesystem::current_path();
 					std::string filePath;
 					if (path->find(dir.string()) != std::string::npos) {
 						filePath = path->substr(dir.string().size());
@@ -40,40 +44,26 @@ namespace Syndra {
 						filePath = *path;
 					}
 
-					Model loadedModel(*path);
 					auto& meshComponent = entity.GetComponent<MeshComponent>();
 					Scene* scene = Entity::s_Scene;
-
-					// Import multi-mesh models as a hierarchy of child entities instead of a single flattened mesh owner.
-					if (scene && loadedModel.meshes.size() > 1)
+					const std::string extension = std::filesystem::path(*path).extension().string();
+					std::string lowerExtension = extension;
+					std::transform(lowerExtension.begin(), lowerExtension.end(), lowerExtension.begin(), [](unsigned char c) {
+						return static_cast<char>(std::tolower(c));
+					});
+					if (scene && (lowerExtension == ".gltf" || lowerExtension == ".glb"))
 					{
-						std::string baseName = entity.GetComponent<TagComponent>().Tag;
-						if (entity.HasComponent<RelationshipComponent>())
+						if (!GltfSceneImporter::ImportIntoEntity(*scene, entity, *path))
 						{
-							auto children = entity.GetComponent<RelationshipComponent>().Children;
-							for (entt::entity child : children)
-								scene->DestroyEntity(Entity{ child });
-						}
-
-						meshComponent.path.clear();
-						meshComponent.model = Model{};
-						if (entity.HasComponent<MaterialComponent>())
-							entity.RemoveComponent<MaterialComponent>();
-
-						for (size_t meshIndex = 0; meshIndex < loadedModel.meshes.size(); ++meshIndex)
-						{
-							auto child = scene->CreateEntity(baseName + "_Part" + std::to_string(meshIndex));
-							auto& childMesh = child->AddComponent<MeshComponent>();
-							childMesh.path = filePath;
-							childMesh.model = Model{};
-							childMesh.model.meshes.push_back(loadedModel.meshes[meshIndex]);
-							childMesh.model.syndraTextures = loadedModel.syndraTextures;
-							scene->SetParent(*child, entity);
+							SN_CORE_WARN("Failed to import glTF model '{}'.", *path);
 						}
 					}
 					else
 					{
+						Model loadedModel(*path);
 						tag = filePath;
+						meshComponent.MeshIndex = -1;
+						meshComponent.MeshName.clear();
 						meshComponent.model = std::move(loadedModel);
 					}
 				}

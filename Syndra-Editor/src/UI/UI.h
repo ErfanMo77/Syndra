@@ -20,7 +20,8 @@ namespace Syndra {
 			ImGui::Text(name.c_str());
 			ImGui::SameLine();
 			ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
-			return ImGui::SliderFloat("##value", value, min, max);
+			const std::string id = "##" + name + "_slider";
+			return ImGui::SliderFloat(id.c_str(), value, min, max);
 		}
 
 		static bool DragFloat(const std::string& name, float* value, float speed=0.1f, float min=0.0f, float max=100.0f)
@@ -32,7 +33,8 @@ namespace Syndra {
 			ImGui::SameLine();
 			ImGui::NextColumn();
 			ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x);
-			auto res = ImGui::DragFloat("##drag", value, speed, min, max);
+			const std::string id = "##" + name + "_drag";
+			auto res = ImGui::DragFloat(id.c_str(), value, speed, min, max);
 			ImGui::PopItemWidth();
 			ImGui::Columns(1);
 			return res;

@@ -25,7 +25,8 @@ layout(set = 0, binding = 0) uniform Camera
 
 layout(set = 0, binding = 3) uniform ShadowData
 {
-	mat4 lightViewProj;
+	mat4 dirLightViewProj;
+	mat4 spotLightViewProj;
 } shadowData;
 
 struct PointLight
@@ -40,10 +41,20 @@ struct DirLight
 	vec4 color;
 };
 
+struct SpotLight
+{
+	vec4 position;
+	vec4 direction;
+	vec4 color;
+	// x = cos(innerCutoff), y = cos(outerCutoff), z = range, w = outerCutoffRadians
+	vec4 params;
+};
+
 layout(set = 0, binding = 2) uniform Lights
 {
 	PointLight pLight[4];
 	DirLight dLight;
+	SpotLight sLight;
 } lights;
 
 layout(push_constant) uniform Push
@@ -52,6 +63,7 @@ layout(push_constant) uniform Push
 	float gamma;
 	float intensity;
 	int useShadows;
+	int hasSpotLight;
 	int useIBL;
 	float iblStrength;
 } push;
@@ -62,6 +74,7 @@ layout(set = 1, binding = 2) uniform sampler2D gAlbedo;
 layout(set = 1, binding = 3) uniform sampler2D gRoughMetalAO;
 layout(set = 1, binding = 4) uniform sampler2D shadowMap;
 layout(set = 1, binding = 5) uniform sampler2D environmentMap;
+layout(set = 1, binding = 6) uniform sampler2D spotShadowMap;
 
 layout(location = 0) in vec2 v_uv;
 
@@ -85,7 +98,7 @@ float ComputeDirectionalShadow(vec3 worldPosition, vec3 normal, vec3 lightDirect
 	if (push.useShadows == 0)
 		return 0.0;
 
-	vec4 lightSpacePosition = shadowData.lightViewProj * vec4(worldPosition, 1.0);
+	vec4 lightSpacePosition = shadowData.dirLightViewProj * vec4(worldPosition, 1.0);
 	vec3 projected = lightSpacePosition.xyz / max(lightSpacePosition.w, 0.0001);
 	vec2 shadowUV = projected.xy * 0.5 + 0.5;
 
@@ -95,6 +108,24 @@ float ComputeDirectionalShadow(vec3 worldPosition, vec3 normal, vec3 lightDirect
 	float closestDepth = texture(shadowMap, shadowUV).r;
 	float normalAlignment = clamp(dot(normal, lightDirection), 0.0, 1.0);
 	float bias = max(0.0005, 0.0025 * (1.0 - normalAlignment));
+	return (projected.z - bias > closestDepth) ? 1.0 : 0.0;
+}
+
+float ComputeSpotShadow(vec3 worldPosition, vec3 normal, vec3 lightDirection)
+{
+	if (push.useShadows == 0 || push.hasSpotLight == 0)
+		return 0.0;
+
+	vec4 lightSpacePosition = shadowData.spotLightViewProj * vec4(worldPosition, 1.0);
+	vec3 projected = lightSpacePosition.xyz / max(lightSpacePosition.w, 0.0001);
+	vec2 shadowUV = projected.xy * 0.5 + 0.5;
+
+	if (shadowUV.x < 0.0 || shadowUV.x > 1.0 || shadowUV.y < 0.0 || shadowUV.y > 1.0 || projected.z < 0.0 || projected.z > 1.0)
+		return 0.0;
+
+	float closestDepth = texture(spotShadowMap, shadowUV).r;
+	float normalAlignment = clamp(dot(normal, lightDirection), 0.0, 1.0);
+	float bias = max(0.0008, 0.0030 * (1.0 - normalAlignment));
 	return (projected.z - bias > closestDepth) ? 1.0 : 0.0;
 }
 
@@ -149,6 +180,31 @@ void main()
 		float attenuation = 1.0 / distanceSqr;
 		float ndotl = max(dot(normal, L), 0.0);
 		color += albedo * lights.pLight[i].color.rgb * ndotl * attenuation;
+	}
+
+	if (push.hasSpotLight == 1)
+	{
+		vec3 spotPos = lights.sLight.position.xyz;
+		vec3 spotDir = normalize(lights.sLight.direction.xyz);
+		vec3 L = spotPos - position;
+		float distanceSqr = max(dot(L, L), 0.001);
+		float distance = sqrt(distanceSqr);
+		L = normalize(L);
+
+		float theta = dot(normalize(-L), spotDir);
+		float innerCutoff = lights.sLight.params.x;
+		float outerCutoff = lights.sLight.params.y;
+		float epsilon = max(innerCutoff - outerCutoff, 0.0001);
+		float coneAttenuation = clamp((theta - outerCutoff) / epsilon, 0.0, 1.0);
+
+		float range = max(lights.sLight.params.z, 0.001);
+		float rangeAttenuation = clamp(1.0 - distance / range, 0.0, 1.0);
+		rangeAttenuation *= rangeAttenuation;
+		float attenuation = (1.0 / distanceSqr) * rangeAttenuation;
+
+		float ndotl = max(dot(normal, L), 0.0);
+		float spotShadow = ComputeSpotShadow(position, normal, L);
+		color += albedo * lights.sLight.color.rgb * ndotl * attenuation * coneAttenuation * (1.0 - spotShadow);
 	}
 
 	vec3 F0 = mix(vec3(0.04), albedo, metallic);

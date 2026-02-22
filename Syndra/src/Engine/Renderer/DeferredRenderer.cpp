@@ -167,9 +167,19 @@ namespace Syndra {
 				const glm::mat4 worldTransform = r_Data.scene->GetWorldTransform(Entity{ ent });
 				if (r_Data.scene->m_Registry.has<MaterialComponent>(ent)) {
 					auto& mat = r_Data.scene->m_Registry.get<MaterialComponent>(ent);
-					r_Data.geoShader->SetInt("transform.id", (uint32_t)ent);
-					r_Data.geoShader->SetMat4("transform.u_trans", worldTransform);
-					Renderer::Submit(mat.m_Material, mc.model);
+					auto material = r_Data.scene->GetMaterial(mat.MaterialId);
+					if (material)
+					{
+						r_Data.geoShader->SetInt("transform.id", (uint32_t)ent);
+						r_Data.geoShader->SetMat4("transform.u_trans", worldTransform);
+						Renderer::Submit(*material, mc.model);
+					}
+					else
+					{
+						r_Data.geoShader->SetInt("transform.id", (uint32_t)ent);
+						r_Data.geoShader->SetMat4("transform.u_trans", worldTransform);
+						Renderer::Submit(r_Data.geoShader, mc.model);
+					}
 				}
 				else
 				{

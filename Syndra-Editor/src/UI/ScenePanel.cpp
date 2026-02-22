@@ -310,12 +310,20 @@ namespace Syndra {
 						shader = SceneRenderer::ResolveShader("main");
 
 					if (shader)
-						m_SelectionContext.AddComponent<MaterialComponent>(shader);
+					{
+						auto material = Material::Create(shader);
+						if (material)
+						{
+							const uint64_t materialId = m_Context->RegisterMaterial(material, "Material");
+							if (materialId != 0)
+								m_SelectionContext.AddComponent<MaterialComponent>(materialId);
+						}
+					}
 					else
 						SN_CORE_WARN("No material shader is available for the current renderer backend.");
 				}
 				else
-					SN_CORE_WARN("This entity already has the Camera Component!");
+					SN_CORE_WARN("This entity already has the Material Component!");
 				ImGui::CloseCurrentPopup();
 			}
 

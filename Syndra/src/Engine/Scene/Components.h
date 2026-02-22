@@ -2,6 +2,7 @@
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <cstdint>
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/quaternion.hpp>
@@ -58,6 +59,8 @@ namespace Syndra {
 
 		Model model;
 		std::string path;
+		int32_t MeshIndex = -1;
+		std::string MeshName;
 
 		MeshComponent() = default;
 		MeshComponent(const MeshComponent&) = default;
@@ -114,22 +117,27 @@ namespace Syndra {
 			}
 			if (type == LightType::Spot) {
 				auto p = reinterpret_cast<SpotLight*>(other.light.get());
-				this->light = CreateRef<SpotLight>(p->GetColor(), p->GetIntensity());
+				this->light = CreateRef<SpotLight>(
+					p->GetColor(),
+					p->GetIntensity(),
+					p->GetPosition(),
+					p->GetDirection(),
+					p->GetInnerCutOff(),
+					p->GetOuterCutOff(),
+					p->GetRange());
 			}
 		}
 	};
 
 	struct MaterialComponent
 	{
-		Material m_Material;
+		uint64_t MaterialId = 0;
 
 		MaterialComponent() = default;
 		MaterialComponent(const MaterialComponent& material) = default;
-		MaterialComponent(const Ref<Material>& material)
-			:m_Material(*material)
-		{}
-		MaterialComponent(Ref<Shader> shader) {
-			m_Material = *Material::Create(shader);
+		MaterialComponent(uint64_t materialId)
+			: MaterialId(materialId)
+		{
 		}
 	};
 

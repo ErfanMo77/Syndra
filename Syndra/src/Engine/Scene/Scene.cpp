@@ -5,8 +5,10 @@
 #include "Engine/Scene/Components.h"
 #include "Engine/Core/Instrument.h"
 #include "Engine/Renderer/RenderCommand.h"
+#include "Engine/Renderer/Material.h"
 
 #include <algorithm>
+#include <unordered_set>
 
 namespace Syndra {
 
@@ -229,6 +231,120 @@ namespace Syndra {
 				continue;
 
 			DestroyEntityRecursive(Entity{ pendingEntity });
+		}
+
+		PruneUnusedMaterials();
+	}
+
+	uint64_t Scene::RegisterMaterial(const Ref<Material>& material, const std::string& name)
+	{
+		if (!material)
+			return 0;
+
+		uint64_t materialId = m_NextMaterialId;
+		while (materialId == 0 || m_Materials.find(materialId) != m_Materials.end())
+			++materialId;
+
+		m_NextMaterialId = materialId + 1;
+		m_Materials[materialId] = SceneMaterialRecord{ name, material };
+		return materialId;
+	}
+
+	Ref<Material> Scene::GetMaterial(uint64_t materialId) const
+	{
+		if (materialId == 0)
+			return nullptr;
+
+		const auto it = m_Materials.find(materialId);
+		if (it == m_Materials.end())
+			return nullptr;
+
+		return it->second.MaterialRef;
+	}
+
+	uint64_t Scene::CloneMaterial(uint64_t materialId, const std::string& newName)
+	{
+		const auto material = GetMaterial(materialId);
+		if (!material)
+			return 0;
+
+		auto clonedMaterial = CreateRef<Material>(*material);
+		std::string name = newName;
+		if (name.empty())
+			name = "Material Instance";
+
+		return RegisterMaterial(clonedMaterial, name);
+	}
+
+	void Scene::AssignMaterial(Entity entity, uint64_t materialId)
+	{
+		if (!entity || !m_Registry.valid(entity) || materialId == 0)
+			return;
+
+		if (entity.HasComponent<MaterialComponent>())
+		{
+			entity.GetComponent<MaterialComponent>().MaterialId = materialId;
+			return;
+		}
+
+		entity.AddComponent<MaterialComponent>(materialId);
+	}
+
+	std::vector<std::pair<uint64_t, std::string>> Scene::GetMaterialList() const
+	{
+		std::vector<std::pair<uint64_t, std::string>> list;
+		list.reserve(m_Materials.size());
+		for (const auto& [id, record] : m_Materials)
+		{
+			list.emplace_back(id, record.Name);
+		}
+
+		std::sort(list.begin(), list.end(), [](const auto& a, const auto& b) {
+			return a.first < b.first;
+		});
+		return list;
+	}
+
+	uint32_t Scene::GetMaterialUsageCount(uint64_t materialId)
+	{
+		if (materialId == 0)
+			return 0;
+
+		uint32_t usageCount = 0;
+		auto view = m_Registry.view<MaterialComponent>();
+		for (auto ent : view)
+		{
+			const auto& materialComponent = view.get<MaterialComponent>(ent);
+			if (materialComponent.MaterialId == materialId)
+				++usageCount;
+		}
+
+		return usageCount;
+	}
+
+	void Scene::PruneUnusedMaterials()
+	{
+		if (m_Materials.empty())
+			return;
+
+		std::unordered_set<uint64_t> usedMaterialIds;
+		auto view = m_Registry.view<MaterialComponent>();
+		for (auto ent : view)
+		{
+			const auto& materialComponent = view.get<MaterialComponent>(ent);
+			if (materialComponent.MaterialId != 0)
+				usedMaterialIds.insert(materialComponent.MaterialId);
+		}
+
+		for (auto it = m_Materials.begin(); it != m_Materials.end();)
+		{
+			if (usedMaterialIds.find(it->first) == usedMaterialIds.end())
+			{
+				it = m_Materials.erase(it);
+				continue;
+			}
+
+			++it;
 		}
 	}
 

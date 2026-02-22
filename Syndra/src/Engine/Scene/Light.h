@@ -82,12 +82,17 @@ namespace Syndra {
 		SpotLight() = default;
 		SpotLight(const glm::vec3 & color) : Light(color,10.0f) {}
 		SpotLight(const glm::vec3& color, float intensity) : Light(color, intensity) {}
-		SpotLight(const glm::vec3& color, float intensity, const glm::vec3& pos, const glm::vec3& dir, float cutOff, float outerCutOff)
-			:Light(color, intensity), m_Position(pos), m_Direction(dir), m_CutOff(cutOff), m_OuterCutOff(outerCutOff) {}
+		SpotLight(const glm::vec3& color, float intensity, const glm::vec3& pos, const glm::vec3& dir, float cutOff, float outerCutOff, float range = 50.0f)
+			:Light(color, intensity), m_Position(pos), m_Direction(dir), m_CutOff(cutOff), m_OuterCutOff(outerCutOff), m_Range(range) {}
 
 		SpotLight(const SpotLight& light) {
 			this->SetColor(light.GetColor());
 			this->SetIntensity(light.GetIntensity());
+			m_Position = light.GetPosition();
+			m_Direction = light.GetDirection();
+			m_CutOff = light.GetInnerCutOff();
+			m_OuterCutOff = light.GetOuterCutOff();
+			m_Range = light.GetRange();
 		}
 
 		virtual ~SpotLight() = default;
@@ -101,6 +106,8 @@ namespace Syndra {
 		void SetCutOff(float cutOff, float outerCutOff) { m_CutOff = cutOff; m_OuterCutOff = outerCutOff; }
 		float GetInnerCutOff() const { return m_CutOff; }
 		float GetOuterCutOff() const { return m_OuterCutOff; }
+		void SetRange(float range) { m_Range = range; }
+		float GetRange() const { return m_Range; }
 
 	private:
 		glm::vec3 m_Position = { 0.0f,0.0f,0.0f };
@@ -108,6 +115,7 @@ namespace Syndra {
 
 		float m_CutOff = 12.5f;
 		float m_OuterCutOff = 15.0f;
+		float m_Range = 50.0f;
 	};
 
 }

@@ -3,9 +3,13 @@
 
 #include "Engine/Scene/Entity.h"
 #include "Engine/Scene/Components.h"
+#include "Engine/Scene/GltfSceneImporter.h"
 #include "Engine/Utils/PlatformUtils.h"
+#include "Engine/Renderer/GltfDecoder.h"
 
 #include <fstream>
+#include <algorithm>
+#include <cctype>
 #include <filesystem>
 #include <unordered_map>
 #include <unordered_set>
@@ -203,8 +207,11 @@ namespace Syndra {
 			out << YAML::Key << "MeshComponent";
 			out << YAML::BeginMap; // MeshComponent
 
-			auto& path = entity.GetComponent<MeshComponent>().path;
-			out << YAML::Key << "Path" << YAML::Value << path;
+			const auto& meshComponent = entity.GetComponent<MeshComponent>();
+			out << YAML::Key << "Path" << YAML::Value << meshComponent.path;
+			out << YAML::Key << "MeshIndex" << YAML::Value << meshComponent.MeshIndex;
+			if (!meshComponent.MeshName.empty())
+				out << YAML::Key << "MeshName" << YAML::Value << meshComponent.MeshName;
 
 			out << YAML::EndMap; // MeshComponent
 		}
@@ -230,6 +237,7 @@ namespace Syndra {
 				out << YAML::Key << "Direction" << YAML::Value << dynamic_cast<SpotLight*>(pl.light.get())->GetDirection();
 				out << YAML::Key << "InnerCutOff" << YAML::Value << dynamic_cast<SpotLight*>(pl.light.get())->GetInnerCutOff();
 				out << YAML::Key << "OuterCutOff" << YAML::Value << dynamic_cast<SpotLight*>(pl.light.get())->GetOuterCutOff();
+				out << YAML::Key << "Range" << YAML::Value << dynamic_cast<SpotLight*>(pl.light.get())->GetRange();
 			default:
 				break;
 			}
@@ -240,17 +248,8 @@ namespace Syndra {
 		{
 			out << YAML::Key << "MaterialComponent";
 			out << YAML::BeginMap; // MaterialComponent
-			auto& material = entity.GetComponent<MaterialComponent>();
-			auto shader = material.m_Material.GetShader();
-			out << YAML::Key << "shader" << YAML::Value << shader->GetName();
-
-			out << YAML::Key << "Textures" << YAML::Value << YAML::BeginSeq;
-			out << material.m_Material.GetTextures();
-			out << YAML::EndSeq;
-
-			out << YAML::Key << "Constants" << YAML::Value << YAML::BeginSeq;
-			out << material.m_Material.GetCBuffer();
-			out << YAML::EndSeq;
+			const auto& material = entity.GetComponent<MaterialComponent>();
+			out << YAML::Key << "MaterialId" << YAML::Value << material.MaterialId;
 
 			out << YAML::EndMap; // MaterialComponent
 		}
@@ -280,6 +279,39 @@ namespace Syndra {
 		out << YAML::Key << "Far"      <<   YAML::Value << m_Scene->m_Camera->GetFar();
 		out << YAML::EndMap; // Camera
 
+		out << YAML::Key << "Materials" << YAML::Value << YAML::BeginSeq;
+		std::vector<uint64_t> materialIds;
+		materialIds.reserve(m_Scene->m_Materials.size());
+		for (const auto& [materialId, _] : m_Scene->m_Materials)
+			materialIds.push_back(materialId);
+		std::sort(materialIds.begin(), materialIds.end());
+
+		for (uint64_t materialId : materialIds)
+		{
+			const auto materialIt = m_Scene->m_Materials.find(materialId);
+			if (materialIt == m_Scene->m_Materials.end() || !materialIt->second.MaterialRef)
+				continue;
+
+			const auto& materialRecord = materialIt->second;
+			const auto& material = materialRecord.MaterialRef;
+			auto shader = material->GetShader();
+			if (!shader)
+				continue;
+
+			out << YAML::BeginMap;
+			out << YAML::Key << "Id" << YAML::Value << materialId;
+			out << YAML::Key << "Name" << YAML::Value << materialRecord.Name;
+			out << YAML::Key << "shader" << YAML::Value << shader->GetName();
+			out << YAML::Key << "Textures" << YAML::Value << YAML::BeginSeq;
+			out << material->GetTextures();
+			out << YAML::EndSeq;
+			out << YAML::Key << "Constants" << YAML::Value << YAML::BeginSeq;
+			out << material->GetCBuffer();
+			out << YAML::EndSeq;
+			out << YAML::EndMap;
+		}
+		out << YAML::EndSeq;
+
 		out << YAML::Key << "Entities" << YAML::Value << YAML::BeginSeq;
 		for (auto& entity : m_Scene->m_Entities)
 		{
@@ -307,240 +339,390 @@ namespace Syndra {
 		}
 
 		auto camera = data["Camera"];
-		auto yaw = camera["Yaw"].as<float>();
-		auto pitch = camera["Pitch"].as<float>();
-		auto distance = camera["distance"].as<float>();
-		auto fov = camera["FOV"].as <float> ();
-		auto nearClip = camera["Near"].as<float>();
-		auto farClip = camera["Far"].as<float>();
-
-		m_Scene->m_Camera->SetFarClip(farClip);
-		m_Scene->m_Camera->SetNearClip(nearClip);
-		m_Scene->m_Camera->SetFov(fov);
-		m_Scene->m_Camera->SetDistance(distance);
-		m_Scene->m_Camera->SetYawPitch(yaw,pitch);
-
-
-		auto entities = data["Entities"];
-		if (entities)
+		if (camera)
 		{
-			std::unordered_map<uint32_t, Entity> deserializedEntitiesById;
-			std::vector<std::pair<Entity, uint32_t>> pendingParentLinks;
-			std::unordered_set<uint32_t> serializedEntitiesWithChildren;
-			for (const auto& serializedEntity : entities)
-			{
-				auto relationshipComponent = serializedEntity["RelationshipComponent"];
-				if (!relationshipComponent)
-					continue;
+			auto yaw = camera["Yaw"].as<float>();
+			auto pitch = camera["Pitch"].as<float>();
+			auto distance = camera["distance"].as<float>();
+			auto fov = camera["FOV"].as<float>();
+			auto nearClip = camera["Near"].as<float>();
+			auto farClip = camera["Far"].as<float>();
 
-				const int64_t serializedParent = relationshipComponent["Parent"].as<int64_t>(-1);
-				if (serializedParent >= 0)
-					serializedEntitiesWithChildren.insert(static_cast<uint32_t>(serializedParent));
+			m_Scene->m_Camera->SetFarClip(farClip);
+			m_Scene->m_Camera->SetNearClip(nearClip);
+			m_Scene->m_Camera->SetFov(fov);
+			m_Scene->m_Camera->SetDistance(distance);
+			m_Scene->m_Camera->SetYawPitch(yaw, pitch);
+		}
+
+		auto isGltfPath = [](const std::string& path) {
+			std::string extension = std::filesystem::path(path).extension().string();
+			std::transform(extension.begin(), extension.end(), extension.begin(), [](unsigned char c) {
+				return static_cast<char>(std::tolower(c));
+			});
+			return extension == ".gltf" || extension == ".glb";
+		};
+
+		auto toAbsolutePath = [](const std::string& meshPath) {
+			if (meshPath.empty())
+				return std::string{};
+
+			std::string absolutePath = meshPath;
+			const auto currentPath = std::filesystem::current_path();
+			if (!absolutePath.empty() && (absolutePath[0] == '\\' || absolutePath[0] == '/'))
+				absolutePath = (currentPath.string() + absolutePath);
+
+			return absolutePath;
+		};
+
+		auto createMaterialFromNode = [&](const YAML::Node& materialNode, const std::string& entityNameFallback) -> Ref<Material>
+		{
+			std::string shaderName = materialNode["shader"] ? materialNode["shader"].as<std::string>() : std::string{};
+			Ref<Shader> shader;
+			if (!shaderName.empty())
+				shader = SceneRenderer::ResolveShader(shaderName);
+			if (!shader)
+				shader = SceneRenderer::GetDefaultMaterialShader();
+			if (!shader)
+				shader = SceneRenderer::ResolveShader("GeometryPass");
+			if (!shader)
+				shader = SceneRenderer::ResolveShader("main");
+			if (!shader)
+			{
+				SN_CORE_WARN("No compatible shader found while loading material for entity '{}'.", entityNameFallback);
+				return nullptr;
 			}
 
-			for (auto entity : entities)
+			auto material = Material::Create(shader);
+			auto& materialTextures = material->GetTextures();
+
+			if (auto textures = materialNode["Textures"])
 			{
-				uint32_t uuid = entity["Entity"].as<uint32_t>();
-
-				std::string name;
-				auto tagComponent = entity["TagComponent"];
-				if (tagComponent)
-					name = tagComponent["Tag"].as<std::string>();
-
-				SN_CORE_TRACE("Deserialized entity with ID = {0}, name = {1}", uuid, name);
-
-				auto deserializedEntity = m_Scene->CreateEntity(name);
-				deserializedEntitiesById[uuid] = *deserializedEntity;
-
-				if (auto relationshipComponent = entity["RelationshipComponent"])
+				for (auto texture : textures)
 				{
-					const int64_t parent = relationshipComponent["Parent"].as<int64_t>(-1);
-					if (parent >= 0)
-						pendingParentLinks.emplace_back(*deserializedEntity, static_cast<uint32_t>(parent));
+					const uint32_t binding = texture["binding"].as<uint32_t>();
+					const std::string texturePath = texture["path"].as<std::string>();
+					if (!texturePath.empty())
+						materialTextures[binding] = Texture2D::Create(texturePath);
 				}
-
-				auto transformComponent = entity["TransformComponent"];
-				if (transformComponent)
-				{
-					// Entities always have transforms
-					auto& tc = deserializedEntity->GetComponent<TransformComponent>();
-					tc.Translation = transformComponent["Translation"].as<glm::vec3>();
-					tc.Rotation = transformComponent["Rotation"].as<glm::vec3>();
-					tc.Scale = transformComponent["Scale"].as<glm::vec3>();
-				}
-
-				auto cameraComponent = entity["CameraComponent"];
-				if (cameraComponent)
-				{
-					auto& cc = deserializedEntity->AddComponent<CameraComponent>();
-
-					auto cameraProps = cameraComponent["Camera"];
-					cc.Camera.SetProjectionType((SceneCamera::ProjectionType)cameraProps["ProjectionType"].as<int>());
-
-					cc.Camera.SetPerspectiveVerticalFOV(cameraProps["PerspectiveFOV"].as<float>());
-					cc.Camera.SetPerspectiveNearClip(cameraProps["PerspectiveNear"].as<float>());
-					cc.Camera.SetPerspectiveFarClip(cameraProps["PerspectiveFar"].as<float>());
-
-					cc.Camera.SetOrthographicSize(cameraProps["OrthographicSize"].as<float>());
-					cc.Camera.SetOrthographicNearClip(cameraProps["OrthographicNear"].as<float>());
-					cc.Camera.SetOrthographicFarClip(cameraProps["OrthographicFar"].as<float>());
-
-					cc.Primary = cameraComponent["Primary"].as<bool>();
-					cc.FixedAspectRatio = cameraComponent["FixedAspectRatio"].as<bool>();
-				}
-
-				auto meshComponent = entity["MeshComponent"];
-				if (meshComponent)
-				{
-					auto dir = std::filesystem::current_path();
-					auto& mc = deserializedEntity->AddComponent<MeshComponent>();
-					mc.path = meshComponent["Path"].as<std::string>();
-					auto filepath = mc.path;
-					if (mc.path.find("\\") == 0) {
-						filepath = dir.string() + mc.path;
-					}
-					if (!filepath.empty())
-						mc.model = Model(filepath);
-
-					// Keep explicit material overrides intact on root entities.
-					const bool hasMaterialOverride = entity["MaterialComponent"].IsDefined();
-					const bool hasSerializedChildren = serializedEntitiesWithChildren.find(uuid) != serializedEntitiesWithChildren.end();
-					if (!hasMaterialOverride && !hasSerializedChildren && mc.model.meshes.size() > 1)
-					{
-						const std::string baseName = deserializedEntity->GetComponent<TagComponent>().Tag;
-						const std::string importedPath = mc.path;
-						std::vector<Mesh> importedMeshes = std::move(mc.model.meshes);
-						auto importedTextures = mc.model.syndraTextures;
-						const size_t importedMeshCount = importedMeshes.size();
-
-						mc.path.clear();
-						mc.model = Model{};
-
-						for (size_t meshIndex = 0; meshIndex < importedMeshes.size(); ++meshIndex)
-						{
-							auto childEntity = m_Scene->CreateEntity(baseName + "_Part" + std::to_string(meshIndex));
-							auto& childMesh = childEntity->AddComponent<MeshComponent>();
-							childMesh.path = importedPath;
-							childMesh.model = Model{};
-							childMesh.model.meshes.push_back(std::move(importedMeshes[meshIndex]));
-							childMesh.model.syndraTextures = importedTextures;
-							m_Scene->SetParent(*childEntity, *deserializedEntity);
-						}
-
-						SN_CORE_INFO("Expanded model '{}' into {} mesh entities under '{}'.", importedPath, importedMeshCount, baseName);
-					}
-				}
-
-				auto lightComponent = entity["LightComponent"];
-				if (lightComponent)
-				{
-					auto& pl = deserializedEntity->AddComponent<LightComponent>();
-					pl.light->SetColor(lightComponent["Color"].as<glm::vec3>());
-					auto strType = lightComponent["Type"].as<std::string>();
-					auto intensity = lightComponent["Intensity"].as<float>();
-					pl.light->SetIntensity(intensity);
-					if (strType == "Directional") {
-						pl.type = LightType::Directional;
-						pl.light = CreateRef<DirectionalLight>(pl.light->GetColor(), intensity, lightComponent["Direction"].as<glm::vec3>());
-					}
-					if (strType == "Point") {
-						pl.type = LightType::Point;
-						auto pos = transformComponent["Translation"].as<glm::vec3>();
-						pl.light = CreateRef<PointLight>(pl.light->GetColor(), intensity, pos, lightComponent["Range"].as<float>());
-					}
-					if (strType == "Spot") {
-						pl.type = LightType::Spot;
-						auto dir = lightComponent["Direction"].as<glm::vec3>();
-						auto pos = transformComponent["Translation"].as<glm::vec3>();
-						auto iCutOff = lightComponent["InnerCutOff"].as<float>();
-						auto oCutOff = lightComponent["OuterCutOff"].as<float>();
-						pl.light = CreateRef<SpotLight>(pl.light->GetColor(), intensity, pos, dir, iCutOff, oCutOff);
-					}
-					//TODO Area light
-
-				}
-
-				auto materialComponent = entity["MaterialComponent"];
-				if (materialComponent)
-				{
-					auto dir = std::filesystem::current_path();
-					auto shaderName = materialComponent["shader"].as<std::string>();
-					Ref<Shader> shader = SceneRenderer::ResolveShader(shaderName);
-					if (!shader)
-					{
-						SN_CORE_WARN("Missing shader '{}' during scene load. Falling back to default material shader.", shaderName);
-						shader = SceneRenderer::GetDefaultMaterialShader();
-					}
-					if (!shader)
-					{
-						SN_CORE_WARN("No compatible shader found for material component on entity '{}'. Material was skipped.", name);
-						continue;
-					}
-
-					auto material = Material::Create(shader);
-
-					auto& materialTextures = material->GetTextures();
-
-					auto textures = materialComponent["Textures"];
-					if (textures) {
-						for (auto texture : textures)
-						{
-							auto binding = texture["binding"].as<uint32_t>();
-							auto texturePath = texture["path"].as<std::string>();
-							if (!texturePath.empty()) {
-								materialTextures[binding] = Texture2D::Create(texturePath);
-							}
-						}
-					}
-
-					if (auto cbuffer = materialComponent["Constants"])
-					{
-						material->Set("tiling", cbuffer[0]["Tiling"].as<float>());
-
-						material->Set("HasAlbedoMap", cbuffer[1]["Use Albedo"].as<int>());
-						material->Set("push.material.color", cbuffer[1]["Albedo"].as<glm::vec4>());
-
-						material->Set("HasMetallicMap", cbuffer[2]["Use MetallicMap"].as<int>());
-						material->Set("push.material.MetallicFactor", cbuffer[2]["Metallic Factor"].as<float>());
-
-						material->Set("HasNormalMap", cbuffer[3]["Use NormalMap"].as<int>());
-
-						material->Set("HasRoughnessMap", cbuffer[4]["Use RoughnessMap"].as<int>());
-						material->Set("push.material.RoughnessFactor", cbuffer[4]["Roughness Factor"].as<float>());
-
-						material->Set("HasAOMap", cbuffer[5]["Use AOMap"].as<int>());
-						material->Set("push.material.AO", cbuffer[5]["AO"].as<float>());
-					}
-
-
-					deserializedEntity->AddComponent<MaterialComponent>(material);
-
-					//mc.path = materialComponent["Path"].as<std::string>();
-					//auto filepath = mc.path;
-					//if (mc.path.find("\\") == 0) {
-					//	filepath = dir.string() + mc.path;
-					//}
-					//mc.model = Model(filepath);
-				}
-
 			}
 
-			for (const auto& [child, serializedParent] : pendingParentLinks)
+			if (auto cbuffer = materialNode["Constants"]; cbuffer && cbuffer.size() >= 6)
 			{
-				const auto parentIt = deserializedEntitiesById.find(serializedParent);
-				if (parentIt == deserializedEntitiesById.end())
-				{
-					SN_CORE_WARN("Missing parent entity {} while restoring hierarchy for child {}.", serializedParent, static_cast<uint32_t>(child));
+				material->Set("tiling", cbuffer[0]["Tiling"].as<float>());
+				material->Set("HasAlbedoMap", cbuffer[1]["Use Albedo"].as<int>());
+				material->Set("push.material.color", cbuffer[1]["Albedo"].as<glm::vec4>());
+				material->Set("HasMetallicMap", cbuffer[2]["Use MetallicMap"].as<int>());
+				material->Set("push.material.MetallicFactor", cbuffer[2]["Metallic Factor"].as<float>());
+				material->Set("HasNormalMap", cbuffer[3]["Use NormalMap"].as<int>());
+				material->Set("HasRoughnessMap", cbuffer[4]["Use RoughnessMap"].as<int>());
+				material->Set("push.material.RoughnessFactor", cbuffer[4]["Roughness Factor"].as<float>());
+				material->Set("HasAOMap", cbuffer[5]["Use AOMap"].as<int>());
+				material->Set("push.material.AO", cbuffer[5]["AO"].as<float>());
+			}
+
+			return material;
+		};
+
+		m_Scene->m_Materials.clear();
+		m_Scene->m_NextMaterialId = 1;
+		if (auto materialsNode = data["Materials"])
+		{
+			for (const auto& materialNode : materialsNode)
+			{
+				const uint64_t serializedId = materialNode["Id"] ? materialNode["Id"].as<uint64_t>() : 0;
+				const std::string materialName = materialNode["Name"] ? materialNode["Name"].as<std::string>() : std::string("Material");
+				auto material = createMaterialFromNode(materialNode, materialName);
+				if (!material)
 					continue;
+
+				uint64_t materialId = serializedId;
+				if (materialId == 0 || m_Scene->m_Materials.find(materialId) != m_Scene->m_Materials.end())
+				{
+					materialId = m_Scene->m_NextMaterialId++;
+					while (materialId == 0 || m_Scene->m_Materials.find(materialId) != m_Scene->m_Materials.end())
+						materialId = m_Scene->m_NextMaterialId++;
 				}
 
-				m_Scene->SetParent(child, parentIt->second);
+				m_Scene->m_Materials[materialId] = Scene::SceneMaterialRecord{ materialName, material };
+				m_Scene->m_NextMaterialId = std::max(m_Scene->m_NextMaterialId, materialId + 1);
 			}
 		}
 
+		auto entities = data["Entities"];
+		if (!entities)
+			return true;
+
+		struct PendingLegacyGltfImport
+		{
+			Entity Target;
+			std::string AbsolutePath;
+		};
+
+		std::unordered_map<uint32_t, Entity> deserializedEntitiesById;
+		std::vector<std::pair<Entity, uint32_t>> pendingParentLinks;
+		std::unordered_set<uint32_t> serializedEntitiesWithChildren;
+		std::vector<PendingLegacyGltfImport> pendingLegacyGltfImports;
+		std::unordered_map<std::string, DecodedGltfScene> decodedGltfCache;
+
+		for (const auto& serializedEntity : entities)
+		{
+			auto relationshipComponent = serializedEntity["RelationshipComponent"];
+			if (!relationshipComponent)
+				continue;
+
+			const int64_t serializedParent = relationshipComponent["Parent"].as<int64_t>(-1);
+			if (serializedParent >= 0)
+				serializedEntitiesWithChildren.insert(static_cast<uint32_t>(serializedParent));
+		}
+
+		for (const auto& entity : entities)
+		{
+			uint32_t uuid = entity["Entity"].as<uint32_t>();
+
+			std::string name;
+			auto tagComponent = entity["TagComponent"];
+			if (tagComponent)
+				name = tagComponent["Tag"].as<std::string>();
+
+			SN_CORE_TRACE("Deserialized entity with ID = {0}, name = {1}", uuid, name);
+
+			auto deserializedEntity = m_Scene->CreateEntity(name);
+			deserializedEntitiesById[uuid] = *deserializedEntity;
+
+			int64_t serializedParent = -1;
+			if (auto relationshipComponent = entity["RelationshipComponent"])
+			{
+				serializedParent = relationshipComponent["Parent"].as<int64_t>(-1);
+				if (serializedParent >= 0)
+					pendingParentLinks.emplace_back(*deserializedEntity, static_cast<uint32_t>(serializedParent));
+			}
+
+			auto transformComponent = entity["TransformComponent"];
+			if (transformComponent)
+			{
+				auto& tc = deserializedEntity->GetComponent<TransformComponent>();
+				tc.Translation = transformComponent["Translation"].as<glm::vec3>();
+				tc.Rotation = transformComponent["Rotation"].as<glm::vec3>();
+				tc.Scale = transformComponent["Scale"].as<glm::vec3>();
+			}
+
+			auto cameraComponent = entity["CameraComponent"];
+			if (cameraComponent)
+			{
+				auto& cc = deserializedEntity->AddComponent<CameraComponent>();
+
+				auto cameraProps = cameraComponent["Camera"];
+				cc.Camera.SetProjectionType((SceneCamera::ProjectionType)cameraProps["ProjectionType"].as<int>());
+				cc.Camera.SetPerspectiveVerticalFOV(cameraProps["PerspectiveFOV"].as<float>());
+				cc.Camera.SetPerspectiveNearClip(cameraProps["PerspectiveNear"].as<float>());
+				cc.Camera.SetPerspectiveFarClip(cameraProps["PerspectiveFar"].as<float>());
+				cc.Camera.SetOrthographicSize(cameraProps["OrthographicSize"].as<float>());
+				cc.Camera.SetOrthographicNearClip(cameraProps["OrthographicNear"].as<float>());
+				cc.Camera.SetOrthographicFarClip(cameraProps["OrthographicFar"].as<float>());
+				cc.Primary = cameraComponent["Primary"].as<bool>();
+				cc.FixedAspectRatio = cameraComponent["FixedAspectRatio"].as<bool>();
+			}
+
+			auto meshComponent = entity["MeshComponent"];
+			if (meshComponent)
+			{
+				auto& mc = deserializedEntity->AddComponent<MeshComponent>();
+				mc.path = meshComponent["Path"].as<std::string>();
+				mc.MeshIndex = meshComponent["MeshIndex"] ? meshComponent["MeshIndex"].as<int32_t>() : -1;
+				mc.MeshName = meshComponent["MeshName"] ? meshComponent["MeshName"].as<std::string>() : std::string{};
+
+				std::string absolutePath = toAbsolutePath(mc.path);
+
+				if (!absolutePath.empty())
+				{
+					if (isGltfPath(absolutePath) && mc.MeshIndex >= 0)
+					{
+						auto decodedIt = decodedGltfCache.find(absolutePath);
+						if (decodedIt == decodedGltfCache.end())
+						{
+							DecodedGltfScene decodedScene;
+							if (DecodeGltf(absolutePath, decodedScene))
+								decodedIt = decodedGltfCache.emplace(absolutePath, std::move(decodedScene)).first;
+						}
+
+						if (decodedIt != decodedGltfCache.end() &&
+							static_cast<size_t>(mc.MeshIndex) < decodedIt->second.Primitives.size())
+						{
+							const auto& primitive = decodedIt->second.Primitives[mc.MeshIndex];
+							mc.model = Model{};
+							mc.model.meshes.push_back(primitive.Mesh);
+							mc.model.syndraTextures = decodedIt->second.Textures;
+							if (mc.MeshName.empty())
+								mc.MeshName = primitive.Name;
+						}
+						else
+						{
+							mc.model = Model(absolutePath);
+						}
+					}
+					else
+					{
+						mc.model = Model(absolutePath);
+					}
+				}
+
+				const bool hasMeshIndex = meshComponent["MeshIndex"].IsDefined();
+				const bool hasSerializedChildren = serializedEntitiesWithChildren.find(uuid) != serializedEntitiesWithChildren.end();
+				if (isGltfPath(absolutePath) && !hasMeshIndex && serializedParent < 0 && !hasSerializedChildren)
+				{
+					pendingLegacyGltfImports.push_back(PendingLegacyGltfImport{ *deserializedEntity, absolutePath });
+				}
+			}
+
+			auto lightComponent = entity["LightComponent"];
+			if (lightComponent)
+			{
+				auto& pl = deserializedEntity->AddComponent<LightComponent>();
+				pl.light->SetColor(lightComponent["Color"].as<glm::vec3>());
+				const std::string strType = lightComponent["Type"].as<std::string>();
+				const auto intensity = lightComponent["Intensity"].as<float>();
+				pl.light->SetIntensity(intensity);
+
+				if (strType == "Directional")
+				{
+					pl.type = LightType::Directional;
+					pl.light = CreateRef<DirectionalLight>(pl.light->GetColor(), intensity, lightComponent["Direction"].as<glm::vec3>());
+				}
+				if (strType == "Point")
+				{
+					pl.type = LightType::Point;
+					auto pos = deserializedEntity->GetComponent<TransformComponent>().Translation;
+					pl.light = CreateRef<PointLight>(pl.light->GetColor(), intensity, pos, lightComponent["Range"].as<float>());
+				}
+				if (strType == "Spot")
+				{
+					pl.type = LightType::Spot;
+					auto dir = lightComponent["Direction"].as<glm::vec3>();
+					auto pos = deserializedEntity->GetComponent<TransformComponent>().Translation;
+					auto iCutOff = lightComponent["InnerCutOff"].as<float>();
+					auto oCutOff = lightComponent["OuterCutOff"].as<float>();
+					auto range = lightComponent["Range"] ? lightComponent["Range"].as<float>() : 50.0f;
+					pl.light = CreateRef<SpotLight>(pl.light->GetColor(), intensity, pos, dir, iCutOff, oCutOff, range);
+				}
+			}
+
+			auto materialComponent = entity["MaterialComponent"];
+			if (materialComponent)
+			{
+				if (materialComponent["MaterialId"])
+				{
+					const uint64_t materialId = materialComponent["MaterialId"].as<uint64_t>();
+					if (m_Scene->GetMaterial(materialId))
+						deserializedEntity->AddComponent<MaterialComponent>(materialId);
+					else
+						SN_CORE_WARN("Entity '{}' references missing material id {}.", name, materialId);
+				}
+				else
+				{
+					auto material = createMaterialFromNode(materialComponent, name);
+					if (material)
+					{
+						const uint64_t materialId = m_Scene->RegisterMaterial(material, "Material");
+						if (materialId != 0)
+							deserializedEntity->AddComponent<MaterialComponent>(materialId);
+					}
+				}
+			}
+		}
+
+		for (const auto& [child, serializedParent] : pendingParentLinks)
+		{
+			const auto parentIt = deserializedEntitiesById.find(serializedParent);
+			if (parentIt == deserializedEntitiesById.end())
+			{
+				SN_CORE_WARN("Missing parent entity {} while restoring hierarchy for child {}.", serializedParent, static_cast<uint32_t>(child));
+				continue;
+			}
+
+			m_Scene->SetParent(child, parentIt->second);
+		}
+
+		{
+			auto view = m_Scene->m_Registry.view<MeshComponent, MaterialComponent>();
+			for (auto entityHandle : view)
+			{
+				auto& meshComponent = view.get<MeshComponent>(entityHandle);
+				auto& materialComponent = view.get<MaterialComponent>(entityHandle);
+				const std::string absolutePath = toAbsolutePath(meshComponent.path);
+				if (!isGltfPath(absolutePath) || meshComponent.MeshIndex < 0)
+					continue;
+
+				auto decodedIt = decodedGltfCache.find(absolutePath);
+				if (decodedIt == decodedGltfCache.end())
+				{
+					DecodedGltfScene decodedScene;
+					if (DecodeGltf(absolutePath, decodedScene))
+						decodedIt = decodedGltfCache.emplace(absolutePath, std::move(decodedScene)).first;
+				}
+
+				if (decodedIt == decodedGltfCache.end())
+					continue;
+
+				if (static_cast<size_t>(meshComponent.MeshIndex) >= decodedIt->second.Primitives.size())
+					continue;
+
+				auto material = m_Scene->GetMaterial(materialComponent.MaterialId);
+				if (!material)
+					continue;
+
+				const auto& primitive = decodedIt->second.Primitives[meshComponent.MeshIndex];
+				const auto& materialData = primitive.Mesh.materialData;
+				auto& materialTextures = material->GetTextures();
+
+				auto assignTextureIfMissing = [&](uint32_t textureId, uint32_t binding)
+				{
+					if (textureId == 0)
+						return;
+
+					auto existing = materialTextures.find(binding);
+					if (existing != materialTextures.end() && existing->second)
+						return;
+
+					for (const auto& texture : decodedIt->second.Textures)
+					{
+						if (texture && texture->GetRendererID() == textureId)
+						{
+							materialTextures[binding] = texture;
+							break;
+						}
+					}
+				};
+
+				assignTextureIfMissing(materialData.AlbedoTextureID, 0);
+				assignTextureIfMissing(materialData.MetallicTextureID, 1);
+				assignTextureIfMissing(materialData.NormalTextureID, 2);
+				assignTextureIfMissing(materialData.RoughnessTextureID, 3);
+				assignTextureIfMissing(materialData.AOTextureID, 4);
+			}
+		}
+
+		for (const auto& pendingImport : pendingLegacyGltfImports)
+		{
+			if (!pendingImport.Target)
+				continue;
+			if (!m_Scene->m_Registry.valid(pendingImport.Target))
+				continue;
+			if (m_Scene->GetParent(pendingImport.Target))
+				continue;
+			if (pendingImport.AbsolutePath.empty())
+				continue;
+
+			if (!GltfSceneImporter::ImportIntoEntity(*m_Scene, pendingImport.Target, pendingImport.AbsolutePath))
+			{
+				SN_CORE_WARN("Failed to auto-migrate legacy glTF entity {} from '{}'.",
+					static_cast<uint32_t>(pendingImport.Target),
+					pendingImport.AbsolutePath);
+			}
+		}
+
+		m_Scene->PruneUnusedMaterials();
 		return true;
 	}
-
-
 
 }

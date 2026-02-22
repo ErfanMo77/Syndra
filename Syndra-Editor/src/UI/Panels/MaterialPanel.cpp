@@ -2,6 +2,7 @@
 #include "MaterialPanel.h"
 #include "Engine/Utils/PlatformUtils.h"
 #include "Engine/ImGui/ImGuiLayer.h"
+#include "Engine/Scene/Scene.h"
 
 
 namespace Syndra {
@@ -18,29 +19,80 @@ namespace Syndra {
 		if (UI::DrawComponent<MaterialComponent>(ICON_FA_PAINT_BRUSH" Material", entity, true, &MaterialRemoved))
 		{
 			auto& component = entity.GetComponent<MaterialComponent>();
+			Scene* scene = Entity::s_Scene;
+			if (scene == nullptr)
+			{
+				ImGui::TextDisabled("Scene context is unavailable.");
+				ImGui::TreePop();
+				return;
+			}
+
+			auto material = scene->GetMaterial(component.MaterialId);
 
 			ImGui::Columns(2);
 			ImGui::SetColumnWidth(0, 80);
 			ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{ 0, 0 });
-			ImGui::Text("Shader\0");
+			ImGui::Text("Material");
 
 			ImGui::PopStyleVar();
 			ImGui::NextColumn();
 			ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x);
-			ImGui::Text("PBR shader\0");
+			const auto materialList = scene->GetMaterialList();
+			std::string selectedLabel = "Material";
+			for (const auto& [materialId, materialName] : materialList)
+			{
+				if (materialId == component.MaterialId)
+				{
+					selectedLabel = materialName + "##" + std::to_string(materialId);
+					break;
+				}
+			}
+			if (ImGui::BeginCombo("##MaterialSelector", selectedLabel.c_str()))
+			{
+				for (const auto& [materialId, materialName] : materialList)
+				{
+					const bool isSelected = materialId == component.MaterialId;
+					const std::string label = materialName + "##" + std::to_string(materialId);
+					if (ImGui::Selectable(label.c_str(), isSelected))
+					{
+						scene->AssignMaterial(entity, materialId);
+						component.MaterialId = materialId;
+						material = scene->GetMaterial(component.MaterialId);
+					}
+					if (isSelected)
+						ImGui::SetItemDefaultFocus();
+				}
+				ImGui::EndCombo();
+			}
 			ImGui::PopItemWidth();
 			ImGui::Columns(1);
+			if (!material)
+			{
+				ImGui::TextDisabled("Material %llu is missing.", static_cast<unsigned long long>(component.MaterialId));
+				ImGui::TreePop();
+				return;
+			}
+			ImGui::Text("Users: %u", scene->GetMaterialUsageCount(component.MaterialId));
+			if (ImGui::Button("Make Unique"))
+			{
+				const uint64_t uniqueMaterialId = scene->CloneMaterial(component.MaterialId, "Material Instance");
+				if (uniqueMaterialId != 0)
+				{
+					scene->AssignMaterial(entity, uniqueMaterialId);
+					component.MaterialId = uniqueMaterialId;
+					material = scene->GetMaterial(component.MaterialId);
+				}
+			}
 
 			ImGui::Separator();
 
-			ImGuiIO& io = ImGui::GetIO();
-			std::vector<Sampler>& samplers = component.m_Material.GetSamplers();
-			auto& materialTextures = component.m_Material.GetTextures();
-			const auto& buffer = component.m_Material.GetCBuffer();
+			std::vector<Sampler>& samplers = material->GetSamplers();
+			auto& materialTextures = material->GetTextures();
+			const auto& buffer = material->GetCBuffer();
 
 			float tiling = buffer.tiling;
 			if (UI::DragFloat("Tiling", &tiling, 0.05f, 0.001f, 100)) {
-				component.m_Material.Set("tiling", tiling);
+				material->Set("tiling", tiling);
 			}
 
 			for (auto& sampler : samplers)
@@ -56,7 +108,7 @@ namespace Syndra {
 					ImGui::Text(sampler.name.c_str());
 
 					m_TextureId = ImGuiLayer::GetTextureID(m_EmptyTexture->GetRendererID());
-					auto& texture = component.m_Material.GetTexture(sampler);
+					auto& texture = material->GetTexture(sampler);
 					if (texture)
 					{
 						m_TextureId = ImGuiLayer::GetTextureID(texture->GetRendererID());
@@ -75,37 +127,37 @@ namespace Syndra {
 					if (sampler.binding == 0) {
 						glm::vec4 color = buffer.material.color;
 						if (ImGui::ColorEdit4("Albedo", glm::value_ptr(color), ImGuiColorEditFlags_NoInputs)) {
-							component.m_Material.Set("push.material.color", color);
+							material->Set("push.material.color", color);
 						}
-						component.m_Material.Set("HasAlbedoMap", sampler.isUsed);
+						material->Set("HasAlbedoMap", sampler.isUsed);
 					}
 					//metal factor
 					if (sampler.binding == 1) {
 						float metal = buffer.material.MetallicFactor;
 						if (UI::SliderFloat("Metallic", &metal, 0.0f, 1.0f)) {
-							component.m_Material.Set("push.material.MetallicFactor", metal);
+							material->Set("push.material.MetallicFactor", metal);
 						}
-						component.m_Material.Set("HasMetallicMap", sampler.isUsed);
+						material->Set("HasMetallicMap", sampler.isUsed);
 					}
 					//Use Normal map
 					if (sampler.binding == 2) {
-						component.m_Material.Set("HasNormalMap", sampler.isUsed);
+						material->Set("HasNormalMap", sampler.isUsed);
 					}
 					//Roughness factor
 					if (sampler.binding == 3) {
 						float roughness = buffer.material.RoughnessFactor;
 						if (UI::SliderFloat("Roughness", &roughness, 0.0f, 1.0f)) {
-							component.m_Material.Set("push.material.RoughnessFactor", roughness);
+							material->Set("push.material.RoughnessFactor", roughness);
 						}
-						component.m_Material.Set("HasRoughnessMap", sampler.isUsed);
+						material->Set("HasRoughnessMap", sampler.isUsed);
 					}
 					//Ambient Occlusion factor
 					if (sampler.binding == 4) {
 						float AO = buffer.material.AO;
 						if (UI::SliderFloat("Ambient Occlusion", &AO, 0.0f, 1.0f)) {
-							component.m_Material.Set("push.material.AO", AO);
+							material->Set("push.material.AO", AO);
 						}
-						component.m_Material.Set("HasAOMap", sampler.isUsed);
+						material->Set("HasAOMap", sampler.isUsed);
 					}
 					ImGui::PopID();
 				}
@@ -114,7 +166,10 @@ namespace Syndra {
 		}
 
 		if (MaterialRemoved) {
+			Scene* scene = Entity::s_Scene;
 			entity.RemoveComponent<MaterialComponent>();
+			if (scene)
+				scene->PruneUnusedMaterials();
 			MaterialRemoved = false;
 		}
 	}
